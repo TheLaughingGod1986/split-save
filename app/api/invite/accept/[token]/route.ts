@@ -322,23 +322,30 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
     }
     
-    // Create user profile
-    const { error: profileError } = await supabaseAdmin
-      .from('user_profiles')
-      .insert({
-        user_id: newUser.user.id,
-        income: 0,
-        payday: 'last-working-day',
-        currency: 'USD',
-        country_code: 'US',
-        personal_allowance: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-    
-    if (profileError) {
-      console.error('7. Profile creation error:', profileError)
-      return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
+    // Create user profile (optional - don't fail if this doesn't work)
+    try {
+      const { error: profileError } = await supabaseAdmin
+        .from('user_profiles')
+        .insert({
+          user_id: newUser.user.id,
+          income: 0,
+          payday: 'last-working-day',
+          currency: 'USD',
+          country_code: 'US',
+          personal_allowance: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      
+      if (profileError) {
+        console.error('7. Profile creation error (non-fatal):', profileError)
+        // Don't fail the whole process if profile creation fails
+      } else {
+        console.log('7. User profile created successfully')
+      }
+    } catch (profileError) {
+      console.error('7. Profile creation error (caught):', profileError)
+      // Don't fail the whole process if profile creation fails
     }
     
     // Update invitation with user_id and mark as accepted
