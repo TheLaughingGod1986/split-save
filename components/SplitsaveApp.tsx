@@ -16,6 +16,7 @@ export function SplitsaveApp() {
   const [profileCompletionShown, setProfileCompletionShown] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // Currency utility functions
   const getCurrencySymbol = (currency: string) => {
@@ -267,11 +268,12 @@ export function SplitsaveApp() {
       const result = await apiClient.post('/expenses', expenseData)
       
       if (result.requiresApproval) {
-        alert('Expense requires partner approval')
+        showToast('Expense requires partner approval', 'warning')
         // Refresh approvals
         const approvalsData = await apiClient.get('/approvals')
         setApprovals(approvalsData)
       } else {
+        showToast('Expense added successfully!', 'success')
         // Refresh expenses
         const expensesData = await apiClient.get('/expenses')
         setExpenses(expensesData)
@@ -292,10 +294,15 @@ export function SplitsaveApp() {
       const result = await apiClient.post('/goals', goalData)
       
       if (result.requiresApproval) {
-        alert('Goal requires partner approval')
+        showToast('Goal requires partner approval', 'warning')
         // Refresh approvals
         const approvalsData = await apiClient.get('/approvals')
         setApprovals(approvalsData)
+      } else {
+        showToast('Goal created successfully!', 'success')
+        // Refresh goals
+        const goalsData = await apiClient.get('/goals')
+        setGoals(goalsData)
       }
     } catch (err: any) {
       // Check if it's a partnership error
@@ -311,6 +318,7 @@ export function SplitsaveApp() {
   const approveRequest = async (approvalId: string) => {
     try {
       await apiClient.post(`/approvals/${approvalId}/approve`, {})
+      showToast('Request approved successfully!', 'success')
       
       // Refresh data
       const [expensesData, goalsData, approvalsData] = await Promise.all([
@@ -331,6 +339,7 @@ export function SplitsaveApp() {
   const declineRequest = async (approvalId: string) => {
     try {
       await apiClient.post(`/approvals/${approvalId}/decline`, {})
+      showToast('Request declined', 'warning')
       
       // Refresh approvals
       const approvalsData = await apiClient.get('/approvals')
@@ -341,99 +350,120 @@ export function SplitsaveApp() {
     }
   }
 
+  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
+    const toast = document.createElement('div')
+    toast.className = `toast toast-${type} show`
+    toast.textContent = message
+    
+    document.body.appendChild(toast)
+    
+    setTimeout(() => {
+      toast.classList.remove('show')
+      setTimeout(() => {
+        document.body.removeChild(toast)
+      }, 300)
+    }, 5000)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your data...</p>
+          <div className="loading-spinner mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your data...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">SplitSave</h1>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SplitSave</h1>
+            </div>
+            
+            {/* Desktop User Menu */}
+            <div className="hidden md:flex items-center space-x-4">
               <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
               <button
                 onClick={signOut}
-                className="text-sm text-purple-600 hover:text-purple-500"
+                className="text-sm text-purple-600 hover:text-purple-500 transition-colors"
               >
                 Sign out
               </button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="bg-gray-50 border-b">
+      {/* Mobile Menu */}
+      {showMobileMenu && (
+        <div className="md:hidden bg-white border-b shadow-lg">
+          <div className="px-4 py-2 space-y-2">
+            <div className="text-sm text-gray-600 py-2">
+              Welcome, {user?.email}
+            </div>
+            <button
+              onClick={signOut}
+              className="w-full text-left text-sm text-purple-600 hover:text-purple-500 py-2"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation - Desktop */}
+      <div className="hidden md:block bg-gray-50 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+          <nav className="nav-tabs">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'dashboard'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${currentView === 'dashboard' ? 'active' : ''}`}
             >
               Dashboard
             </button>
             <button
               onClick={() => setCurrentView('expenses')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'expenses'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${currentView === 'expenses' ? 'active' : ''}`}
             >
               Expenses
             </button>
             <button
               onClick={() => setCurrentView('goals')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'goals'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${currentView === 'goals' ? 'active' : ''}`}
             >
               Goals
             </button>
             <button
               onClick={() => setCurrentView('approvals')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'approvals'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${currentView === 'approvals' ? 'active' : ''}`}
             >
               Approvals ({approvals.length})
             </button>
             <button
               onClick={() => setCurrentView('partnerships')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'partnerships'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${currentView === 'partnerships' ? 'active' : ''}`}
             >
               Partnerships ({profile?.partnerships?.length || 0})
             </button>
             <button
               onClick={() => setCurrentView('profile')}
-              data-view="profile"
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'profile'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${currentView === 'profile' ? 'active' : ''}`}
             >
               Profile
             </button>
@@ -441,10 +471,48 @@ export function SplitsaveApp() {
         </div>
       </div>
 
+      {/* Mobile Navigation */}
+      <div className="md:hidden bg-white border-b">
+        <div className="overflow-x-auto">
+          <div className="flex space-x-1 px-4 py-2">
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+              { id: 'expenses', label: 'Expenses', icon: '💰' },
+              { id: 'goals', label: 'Goals', icon: '🎯' },
+              { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
+              { id: 'partnerships', label: 'Partners', icon: '🤝' },
+              { id: 'profile', label: 'Profile', icon: '👤' }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id)}
+                className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  currentView === item.id
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-lg mb-1">{item.icon}</div>
+                  <div className="relative">
+                    {item.label}
+                    {item.badge && item.badge > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Error Display */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 {error}
@@ -453,10 +521,10 @@ export function SplitsaveApp() {
                     <p className="text-red-600 mb-2">
                       SplitSave is designed for couples and partners to manage shared finances together.
                     </p>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <button
                         onClick={() => setCurrentView('profile')}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
                       >
                         Complete Profile First
                       </button>
@@ -469,7 +537,7 @@ export function SplitsaveApp() {
               </div>
               <button
                 onClick={() => setError('')}
-                className="ml-2 text-red-500 hover:text-red-700 text-lg font-bold"
+                className="ml-2 text-red-500 hover:text-red-700 text-lg font-bold transition-colors"
               >
                 ×
               </button>
@@ -479,7 +547,7 @@ export function SplitsaveApp() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {currentView === 'dashboard' && (
           <DashboardView
             expenses={expenses}
@@ -523,6 +591,27 @@ export function SplitsaveApp() {
             setProfileCompletionShown(false) // Reset flag when profile is updated
           }} />
         )}
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden mobile-nav">
+        <div className="flex justify-around">
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+            { id: 'expenses', label: 'Expenses', icon: '💰' },
+            { id: 'goals', label: 'Goals', icon: '🎯' },
+            { id: 'profile', label: 'Profile', icon: '👤' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setCurrentView(item.id)}
+              className={`mobile-nav-item ${currentView === item.id ? 'active' : ''}`}
+            >
+              <span className="text-lg">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
