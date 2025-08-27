@@ -57,7 +57,16 @@ export async function POST(
       return NextResponse.json({ error: 'Request already processed' }, { status: 400 })
     }
 
-    console.log('✅ Approval API - Request is pending, proceeding with approval')
+    // Prevent users from approving their own requests
+    if (approval.requested_by_user_id === user.id) {
+      console.error('❌ Approval API - User cannot approve their own request:', {
+        user_id: user.id,
+        requested_by: approval.requested_by_user_id
+      })
+      return NextResponse.json({ error: 'You cannot approve your own request' }, { status: 403 })
+    }
+
+    console.log('✅ Approval API - Request is pending and from partner, proceeding with approval')
 
     // Update approval status
     console.log('🔍 Approval API - Updating approval status to approved')

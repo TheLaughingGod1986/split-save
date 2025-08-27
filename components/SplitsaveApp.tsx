@@ -326,6 +326,7 @@ export function SplitsaveApp() {
       setPartnerships(partnershipsData?.partnerships || [])
     } catch (err) {
       setError('Failed to load data')
+      toast.error('Failed to load data')
       console.error('Load data error:', err)
     } finally {
       setLoading(false)
@@ -360,8 +361,10 @@ export function SplitsaveApp() {
       // Check if it's a partnership error
       if (err.status === 400 && err.message?.includes('partnership')) {
         setError('Partnership required: You need to be connected with a partner to add shared expenses')
+        toast.warning('Partnership required: You need to be connected with a partner to add shared expenses')
       } else {
         setError('Failed to add expense')
+        toast.error('Failed to add expense')
       }
       console.error('Add expense error:', err)
     }
@@ -386,8 +389,10 @@ export function SplitsaveApp() {
       // Check if it's a partnership error
       if (err.status === 400 && err.message?.includes('partnership')) {
         setError('Partnership required: You need to be connected with a partner to create shared savings goals')
+        toast.warning('Partnership required: You need to be connected with a partner to create shared savings goals')
       } else {
         setError('Failed to add goal')
+        toast.error('Failed to add goal')
       }
       console.error('Add goal error:', err)
     }
@@ -410,6 +415,7 @@ export function SplitsaveApp() {
       setApprovals(approvalsData)
     } catch (err) {
       setError('Failed to approve request')
+      toast.error('Failed to approve request')
       console.error('Approve error:', err)
     }
   }
@@ -424,6 +430,7 @@ export function SplitsaveApp() {
       setApprovals(approvalsData)
     } catch (err) {
       setError('Failed to decline request')
+      toast.error('Failed to decline request')
       console.error('Decline error:', err)
     }
   }
