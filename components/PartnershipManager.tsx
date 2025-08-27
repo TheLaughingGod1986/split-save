@@ -26,7 +26,11 @@ interface PartnershipsResponse {
   invitations: PartnershipInvitation[]
 }
 
-export default function PartnershipManager() {
+interface PartnershipManagerProps {
+  onPartnershipsUpdate?: (partnerships: Partnership[]) => void
+}
+
+export default function PartnershipManager({ onPartnershipsUpdate }: PartnershipManagerProps) {
   const { user } = useAuth()
   const [partnerships, setPartnerships] = useState<Partnership[]>([])
   const [invitations, setInvitations] = useState<PartnershipInvitation[]>([])
@@ -46,8 +50,14 @@ export default function PartnershipManager() {
       console.log('📡 API Response:', response)
       console.log('🤝 Partnerships:', response.partnerships || [])
       console.log('📧 Invitations:', response.invitations || [])
-      setPartnerships(response.partnerships || [])
+      const partnershipsData = response.partnerships || []
+      setPartnerships(partnershipsData)
       setInvitations(response.invitations || [])
+      
+      // Notify parent component of partnerships update
+      if (onPartnershipsUpdate) {
+        onPartnershipsUpdate(partnershipsData)
+      }
     } catch (error) {
       console.error('❌ Failed to load partnerships:', error)
       setError('Failed to load partnerships')

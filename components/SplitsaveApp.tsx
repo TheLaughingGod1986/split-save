@@ -17,6 +17,7 @@ export function SplitsaveApp() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [partnerships, setPartnerships] = useState<any[]>([])
 
   // Currency utility functions
   const getCurrencySymbol = (currency: string) => {
@@ -459,7 +460,7 @@ export function SplitsaveApp() {
               onClick={() => setCurrentView('partnerships')}
               className={`nav-tab ${currentView === 'partnerships' ? 'active' : ''}`}
             >
-              Partnerships ({profile?.partnerships?.length || 0})
+              Partnerships ({partnerships.length})
             </button>
             <button
               onClick={() => setCurrentView('profile')}
@@ -583,7 +584,9 @@ export function SplitsaveApp() {
           />
         )}
         {currentView === 'partnerships' && (
-          <PartnershipManager />
+          <PartnershipManager 
+            onPartnershipsUpdate={(partnershipsData) => setPartnerships(partnershipsData)}
+          />
         )}
         {currentView === 'profile' && (
           <ProfileManager onProfileUpdate={(updatedProfile) => {
