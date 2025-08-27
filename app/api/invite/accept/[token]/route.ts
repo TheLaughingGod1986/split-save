@@ -45,6 +45,10 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
       
       // Find the existing user
       const existingUser = existingAuthUser.users.find(user => user.email === invitation.to_email)
+      console.log('6a. Existing user found:', existingUser?.id, existingUser?.email)
+      
+      console.log('6b. About to update invitation with token:', token)
+      console.log('6c. Invitation data:', invitation)
       
       // Update invitation with user_id and mark as accepted
       const { error: updateError } = await supabaseAdmin
@@ -58,6 +62,12 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
       
       if (updateError) {
         console.error('7. Invitation update error:', updateError)
+        console.error('7a. Update details:', {
+          token,
+          invitationId: invitation.id,
+          existingUserId: existingUser?.id,
+          invitationData: invitation
+        })
         return NextResponse.json({ error: 'Failed to update invitation' }, { status: 500 })
       }
       
