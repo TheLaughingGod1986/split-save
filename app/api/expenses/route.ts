@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { expenseSchema } from '@/lib/validation'
+import { z } from 'zod'
 
 export async function GET(req: NextRequest) {
   const user = await authenticateRequest(req)
@@ -46,12 +47,22 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
+    console.log('🔍 Expenses API - Received body:', body)
+    console.log('🔍 Expenses API - Body types:', {
+      name: typeof body.name,
+      amount: typeof body.amount,
+      category: typeof body.category,
+      message: typeof body.message
+    })
+    
     const expenseData = expenseSchema.parse(body)
+    console.log('✅ Expenses API - Validated data:', expenseData)
     
     // Check if requires approval (expenses over $100)
     const requiresApproval = expenseData.amount > 100
 
     if (requiresApproval) {
+      console.log('🔍 Expenses API - Creating approval request for amount:', expenseData.amount)
       // Create approval request
       const { data: approval, error } = await supabaseAdmin
         .from('approval_requests')
@@ -66,14 +77,17 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (error) {
+        console.error('❌ Expenses API - Approval request creation error:', error)
         return NextResponse.json({ error: 'Failed to create approval request' }, { status: 400 })
       }
 
+      console.log('✅ Expenses API - Approval request created:', approval.id)
       return NextResponse.json({
         requiresApproval: true,
         approvalRequestId: approval.id
       }, { status: 201 })
     } else {
+      console.log('🔍 Expenses API - Creating expense directly for amount:', expenseData.amount)
       // Create expense directly
       const { data: expense, error } = await supabaseAdmin
         .from('expenses')
@@ -92,13 +106,18 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (error) {
+        console.error('❌ Expenses API - Direct expense creation error:', error)
         return NextResponse.json({ error: 'Failed to add expense' }, { status: 400 })
       }
 
+      console.log('✅ Expenses API - Expense created directly:', expense.id)
       return NextResponse.json(expense, { status: 201 })
     }
   } catch (error) {
-    console.error('Add expense error:', error)
+    console.error('❌ Expenses API - Add expense error:', error)
+    if (error instanceof z.ZodError) {
+      console.error('❌ Expenses API - Validation errors:', error.errors)
+    }
     return NextResponse.json({ error: 'Invalid input data' }, { status: 400 })
   }
 }

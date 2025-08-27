@@ -62,12 +62,11 @@ export async function POST(
         .from('expenses')
         .insert({
           partnership_id: approval.partnership_id,
-          name: expenseData.name,
+          description: expenseData.name,
           amount: expenseData.amount,
           category: expenseData.category,
-          frequency: expenseData.frequency,
-          added_by: approval.requested_by,
-          status: 'active'
+          added_by_user_id: approval.requested_by_user_id,
+          date: new Date().toISOString().split('T')[0]
         })
 
       if (expenseError) {
@@ -81,10 +80,9 @@ export async function POST(
           partnership_id: approval.partnership_id,
           name: goalData.name,
           target_amount: goalData.targetAmount,
-          goal_type: goalData.goalType,
+          description: goalData.description,
           priority: goalData.priority || 1,
-          added_by: approval.requested_by,
-          status: 'active'
+          added_by_user_id: approval.requested_by_user_id
         })
 
       if (goalError) {

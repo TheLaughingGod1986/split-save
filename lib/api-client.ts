@@ -137,7 +137,6 @@ export interface Expense {
   name: string
   amount: number
   category: string
-  frequency: string
   added_by: string
   status: string
   created_at: string

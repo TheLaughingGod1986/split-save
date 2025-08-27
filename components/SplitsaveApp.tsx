@@ -3,11 +3,59 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
+
+// Dark mode hook
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(false)
+  
+  useEffect(() => {
+    // Check system preference
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    setIsDark(mediaQuery.matches)
+    
+    // Listen for changes
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches)
+    mediaQuery.addEventListener('change', handler)
+    
+    // Check localStorage for manual override
+    const saved = localStorage.getItem('darkMode')
+    if (saved !== null) {
+      setIsDark(saved === 'true')
+    }
+    
+    return () => mediaQuery.removeEventListener('change', handler)
+  }, [])
+  
+  const toggleDarkMode = useCallback(() => {
+    const newMode = !isDark
+    setIsDark(newMode)
+    localStorage.setItem('darkMode', newMode.toString())
+    
+    // Apply to document
+    if (newMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDark])
+  
+  useEffect(() => {
+    // Apply theme to document
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDark])
+  
+  return { isDark, toggleDarkMode }
+}
 import { ProfileManager } from './ProfileManager'
 import PartnershipManager from './PartnershipManager'
 
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
+  const { isDark, toggleDarkMode } = useDarkMode()
   const [currentView, setCurrentView] = useState('dashboard')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
@@ -417,6 +465,23 @@ export function SplitsaveApp() {
             
             {/* Desktop User Menu */}
             <div className="hidden md:flex items-center space-x-4">
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              
               <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {user?.email}</span>
               <button
                 onClick={signOut}
@@ -446,6 +511,18 @@ export function SplitsaveApp() {
             <div className="text-sm text-gray-600 dark:text-gray-300 py-2">
               Welcome, {user?.email}
             </div>
+            
+            {/* Mobile Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2 transition-colors flex items-center"
+            >
+              <span className="mr-2">
+                {isDark ? '☀️' : '🌙'}
+              </span>
+              {isDark ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            
             <button
               onClick={signOut}
               className="w-full text-left text-sm text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300 py-2 transition-colors"
@@ -715,26 +792,26 @@ function DashboardView({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
       
       {/* Welcome Message - Progressive Disclosure */}
       {profileCompletion < 100 && (
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-200">
-          <h3 className="text-lg font-medium text-purple-900 mb-2">Welcome to SplitSave!</h3>
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
+          <h3 className="text-lg font-medium text-purple-900 dark:text-purple-100 mb-2">Welcome to SplitSave!</h3>
           
           {profileCompletion === 0 && (
             <>
-              <p className="text-purple-700">
+              <p className="text-purple-700 dark:text-purple-300">
                 Get started by setting up your profile and creating your first shared expense or savings goal.
               </p>
               <div className="mt-4">
                 <button 
                   onClick={onNavigateToProfile}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700"
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
                 >
                   Set Up Profile →
                 </button>
-                <p className="text-sm text-purple-600 mt-2">
+                <p className="text-sm text-purple-600 dark:text-purple-400 mt-2">
                   Configure your income and personal allowance to get started with shared expenses and savings goals.
                 </p>
               </div>
@@ -743,22 +820,22 @@ function DashboardView({
           
           {profileCompletion > 0 && profileCompletion < 90 && (
             <>
-              <p className="text-purple-700">
+              <p className="text-purple-700 dark:text-purple-300">
                 You're making great progress! Complete your profile setup to unlock all features.
               </p>
               <div className="mt-4">
                 <button 
                   onClick={onNavigateToProfile}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700"
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
                 >
                   Complete Profile →
                 </button>
                 <div className="mt-2">
-                  <div className="flex items-center justify-between text-sm text-purple-600 mb-1">
+                  <div className="flex items-center justify-between text-sm text-purple-600 dark:text-purple-400 mb-1">
                     <span>Profile Completion</span>
                     <span>{profileCompletion}%</span>
                   </div>
-                  <div className="w-full bg-purple-200 rounded-full h-2">
+                  <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
                     <div 
                       className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
                       style={{ width: `${profileCompletion}%` }}
@@ -771,22 +848,22 @@ function DashboardView({
           
           {profileCompletion >= 90 && profileCompletion < 100 && (
             <>
-              <p className="text-purple-700">
+              <p className="text-purple-700 dark:text-purple-300">
                 Almost there! Just a few more details to complete your profile.
               </p>
               <div className="mt-4">
                 <button 
                   onClick={onNavigateToProfile}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700"
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
                 >
                   Finish Profile →
                 </button>
                 <div className="mt-2">
-                  <div className="flex items-center justify-between text-sm text-purple-600 mb-1">
+                  <div className="flex items-center justify-between text-sm text-purple-600 dark:text-purple-400 mb-1">
                     <span>Profile Completion</span>
                     <span>{profileCompletion}%</span>
                   </div>
-                  <div className="w-full bg-purple-200 rounded-full h-2">
+                  <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
                     <div 
                       className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
                       style={{ width: `${profileCompletion}%` }}
@@ -801,7 +878,7 @@ function DashboardView({
 
       {/* Profile Complete Success Message */}
       {shouldShowCompletionMessage && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -809,8 +886,8 @@ function DashboardView({
               </svg>
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-medium text-green-900">Profile Complete! 🎉</h3>
-              <p className="text-green-700 mt-1">
+              <h3 className="text-lg font-medium text-green-900 dark:text-green-100">Profile Complete! 🎉</h3>
+              <p className="text-green-700 dark:text-green-300 mt-1">
                 Your profile is fully set up. Ready to create your first shared expense or savings goal?
               </p>
             </div>
@@ -820,7 +897,7 @@ function DashboardView({
 
       {/* Partnership Status */}
       {!hasPartnership && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -828,8 +905,8 @@ function DashboardView({
               </svg>
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-medium text-blue-900">Partnership Required</h3>
-              <p className="text-blue-700 mt-1">
+              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Partnership Required</h3>
+              <p className="text-blue-700 dark:text-blue-300 mt-1">
                 To use SplitSave's full features, you need to connect with a partner. 
                 This enables shared expenses, savings goals, and collaborative financial planning.
               </p>
@@ -839,38 +916,38 @@ function DashboardView({
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Monthly Expenses</h3>
-          <p className="text-3xl font-bold text-purple-600">{currencySymbol}{totalExpenses.toFixed(2)}</p>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Monthly Expenses</h3>
+          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{currencySymbol}{totalExpenses.toFixed(2)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {expenses?.length === 0 ? 'No expenses yet' : `${expenses?.length} shared expense${expenses?.length === 1 ? '' : 's'}`}
           </p>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Total Saved</h3>
-          <p className="text-3xl font-bold text-green-600">{currencySymbol}{totalGoals.toFixed(2)}</p>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Total Saved</h3>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{currencySymbol}{totalGoals.toFixed(2)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {goals?.length === 0 ? 'No goals yet' : `${goals?.length} active goal${goals?.length === 1 ? '' : 's'}`}
           </p>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Goals Progress</h3>
-          <p className="text-3xl font-bold text-blue-600">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Goals Progress</h3>
+          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
             {totalTarget > 0 ? Math.round((totalGoals / totalTarget) * 100) : 0}%
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {totalTarget > 0 ? 'Target: ' + currencySymbol + totalTarget.toFixed(2) : 'Set your first goal'}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Expenses</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Expenses</h3>
           {expenses?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <div className="text-4xl mb-2">{currencyEmoji}</div>
               <p className="text-sm">No shared expenses yet</p>
               <p className="text-xs mt-1">Add your first expense to get started</p>
@@ -879,18 +956,18 @@ function DashboardView({
             <div className="space-y-3">
               {expenses?.slice(0, 5).map((expense) => (
                 <div key={expense.id} className="flex justify-between items-center">
-                  <span className="text-gray-700">{expense.name}</span>
-                  <span className="font-medium">{currencySymbol}{expense.amount.toFixed(2)}</span>
+                  <span className="text-gray-700 dark:text-gray-300">{expense.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{currencySymbol}{expense.amount.toFixed(2)}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Active Goals</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Active Goals</h3>
           {goals?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <div className="text-4xl mb-2">🎯</div>
               <p className="text-sm">No savings goals yet</p>
               <p className="text-xs mt-1">Create your first goal to start saving</p>
@@ -900,12 +977,12 @@ function DashboardView({
               {goals?.slice(0, 5).map((goal) => (
                 <div key={goal.id} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700">{goal.name}</span>
-                    <span className="font-medium">
+                    <span className="text-gray-700 dark:text-gray-300">{goal.name}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {currencySymbol}{goal.saved_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-purple-600 h-2 rounded-full" 
                       style={{ width: `${Math.min((goal.saved_amount / goal.target_amount) * 100, 100)}%` }}
@@ -1238,7 +1315,6 @@ function ApprovalsView({
                       <p><strong>Name:</strong> {approval.request_data.name}</p>
                       <p><strong>Amount:</strong> {currencySymbol}{approval.request_data.amount}</p>
                       <p><strong>Category:</strong> {approval.request_data.category}</p>
-                      <p><strong>Frequency:</strong> {approval.request_data.frequency}</p>
                     </>
                   )}
                   
