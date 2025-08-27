@@ -54,6 +54,7 @@ function useDarkMode() {
 import { ProfileManager } from './ProfileManager'
 import PartnershipManager from './PartnershipManager'
 import PWAInstallPrompt from './PWAInstallPrompt'
+import SafetyPotManager from './SafetyPotManager'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 
 export function SplitsaveApp() {
@@ -570,6 +571,12 @@ export function SplitsaveApp() {
               Goals
             </button>
             <button
+              onClick={() => setCurrentView('safety-pot')}
+              className={`nav-tab ${currentView === 'safety-pot' ? 'active' : ''}`}
+            >
+              Safety Pot
+            </button>
+            <button
               onClick={() => setCurrentView('approvals')}
               className={`nav-tab ${currentView === 'approvals' ? 'active' : ''}`}
             >
@@ -599,6 +606,7 @@ export function SplitsaveApp() {
               { id: 'dashboard', label: 'Dashboard', icon: '📊' },
               { id: 'expenses', label: 'Expenses', icon: '💰' },
               { id: 'goals', label: 'Goals', icon: '🎯' },
+              { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
               { id: 'partnerships', label: 'Partners', icon: '🤝' },
               { id: 'profile', label: 'Profile', icon: '👤' }
@@ -695,6 +703,13 @@ export function SplitsaveApp() {
             userCountry={profile?.country_code}
           />
         )}
+        {currentView === 'safety-pot' && (
+          <SafetyPotManager 
+            currencySymbol={currencySymbol}
+            monthlyExpenses={expenses ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0}
+            onUpdate={loadData}
+          />
+        )}
         {currentView === 'approvals' && (
           <ApprovalsView 
             approvals={approvals} 
@@ -727,6 +742,7 @@ export function SplitsaveApp() {
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
             { id: 'expenses', label: 'Expenses', icon: '💰' },
             { id: 'goals', label: 'Goals', icon: '🎯' },
+            { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
             { id: 'profile', label: 'Profile', icon: '👤' }
           ].map((item) => (
             <button
