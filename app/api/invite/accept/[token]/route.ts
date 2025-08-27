@@ -41,8 +41,45 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
     const userExists = existingAuthUser.users.some(user => user.email === invitation.to_email)
     
     if (userExists) {
-      console.log('6. User already exists in auth system, redirecting to sign in')
-      // User exists, redirect them to sign in
+      console.log('6. User already exists in auth system, creating partnership automatically')
+      
+      // Find the existing user
+      const existingUser = existingAuthUser.users.find(user => user.email === invitation.to_email)
+      
+      // Update invitation with user_id and mark as accepted
+      const { error: updateError } = await supabaseAdmin
+        .from('partnership_invitations')
+        .update({ 
+          to_user_id: existingUser!.id,
+          status: 'accepted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invitationId)
+      
+      if (updateError) {
+        console.error('7. Invitation update error:', updateError)
+        return NextResponse.json({ error: 'Failed to update invitation' }, { status: 500 })
+      }
+      
+      // Create the partnership
+      const { error: partnershipError } = await supabaseAdmin
+        .from('partnerships')
+        .insert({
+          user1_id: invitation.from_user_id,
+          user2_id: existingUser!.id,
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      
+      if (partnershipError) {
+        console.error('8. Partnership creation error:', partnershipError)
+        return NextResponse.json({ error: 'Failed to create partnership' }, { status: 500 })
+      }
+      
+      console.log('9. Success! Partnership established with existing user')
+      
+      // Return success page with redirect
       const html = `
         <!DOCTYPE html>
         <html>
@@ -57,13 +94,14 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
             .message { color: #666; margin-bottom: 20px; }
             .button { background: #6366f1; color: white; padding: 12px 24px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-block; }
             .button:hover { background: #4f46e5; }
+            .success { color: #059669; font-weight: bold; }
           </style>
         </head>
         <body>
           <div class="container">
             <h1>Partnership Invitation</h1>
-            <p class="message">You already have an account with SplitSave!</p>
-            <p class="message">Please sign in to your account to accept this partnership invitation.</p>
+            <p class="success">Partnership established successfully! 🎉</p>
+            <p class="message">You can now sign in to your account and see your new partnership.</p>
             <a href="/" class="button">Go to SplitSave</a>
           </div>
         </body>
