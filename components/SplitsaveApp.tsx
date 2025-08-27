@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
 import { ProfileManager } from './ProfileManager'
@@ -219,13 +219,15 @@ export function SplitsaveApp() {
   const currencySymbol = profile?.currency ? getCurrencySymbol(profile.currency) : '$'
   const currencyEmoji = profile?.currency ? getCurrencyEmoji(profile.currency) : '💰'
 
-  // Load data from backend
+    // Load data from backend
   const loadData = async () => {
     try {
       setLoading(true)
       console.log('🔄 Loading data for user:', user?.id)
       
-      const [expensesData, goalsData, approvalsData, profileData] = await Promise.all([
+
+      
+      const dataPromise = Promise.all([
         apiClient.get('/expenses').catch((err) => {
           console.log('📊 Expenses API response:', err)
           // If no partnership, return null instead of empty array
@@ -245,26 +247,34 @@ export function SplitsaveApp() {
           console.log('✅ Approvals API response:', err)
           if (err.status === 400 && err.message?.includes('partnership')) {
             return null
-            }
+          }
           return []
         }),
         apiClient.get('/auth/profile').catch((err) => {
           console.log('👤 Profile API response:', err)
           return null
+        }),
+        apiClient.get('/invite').catch((err) => {
+          console.log('🤝 Partnerships API response:', err)
+          return { partnerships: [], invitations: [] }
         })
       ])
+      
+      const [expensesData, goalsData, approvalsData, profileData, partnershipsData] = await dataPromise
       
       console.log('📊 Data loaded:', {
         expenses: expensesData,
         goals: goalsData,
         approvals: approvalsData,
-        profile: profileData
+        profile: profileData,
+        partnerships: partnershipsData
       })
       
       setExpenses(expensesData)
       setGoals(goalsData)
       setApprovals(approvalsData)
       setProfile(profileData)
+      setPartnerships(partnershipsData?.partnerships || [])
     } catch (err) {
       setError('Failed to load data')
       console.error('Load data error:', err)
@@ -276,8 +286,11 @@ export function SplitsaveApp() {
   useEffect(() => {
     if (user) {
       loadData()
+    } else {
+      // Reset loading state when user is not available
+      setLoading(false)
     }
-  }, [user])
+  }, [user?.id]) // Only depend on user ID, not the entire loadData function
 
   const addExpense = async (expenseData: any) => {
     try {
@@ -602,10 +615,8 @@ export function SplitsaveApp() {
           <PartnershipManager 
             onPartnershipsUpdate={(partnershipsData) => {
               setPartnerships(partnershipsData)
-              // Refresh data when partnerships change
-              if (partnershipsData.length > 0 && user) {
-                loadData()
-              }
+              // Don't call loadData() here - it creates an infinite loop
+              // The main app data is loaded separately when the component mounts
             }}
           />
         )}

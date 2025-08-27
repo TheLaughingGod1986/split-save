@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient } from '@/lib/api-client'
 
@@ -9,6 +9,16 @@ interface Partnership {
   user2_id: string
   status: string
   created_at: string
+  user1?: {
+    id: string
+    name: string
+    email: string
+  }
+  user2?: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 interface PartnershipInvitation {
@@ -39,11 +49,7 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  useEffect(() => {
-    loadPartnershipData()
-  }, [])
-
-  const loadPartnershipData = async () => {
+  const loadPartnershipData = useCallback(async () => {
     try {
       console.log('🔍 Loading partnership data...')
       const response = await apiClient.getPartnerships()
@@ -62,7 +68,11 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       console.error('❌ Failed to load partnerships:', error)
       setError('Failed to load partnerships')
     }
-  }
+  }, [onPartnershipsUpdate])
+
+  useEffect(() => {
+    loadPartnershipData()
+  }, [loadPartnershipData])
 
   const sendInvitation = async () => {
     if (!toEmail.trim()) {
@@ -96,20 +106,29 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     }
   }
 
-  const getPartnerName = async (partnership: Partnership) => {
+  const getPartnerName = (partnership: Partnership) => {
     try {
-      const partnerId = partnership.user1_id === user?.id ? partnership.user2_id : partnership.user1_id
+      const currentUserId = user?.id
+      if (!currentUserId) return 'Unknown Partner'
       
-      // Try to get partner name from the partnerships response if it includes user data
-      if (partnership.user1 && partnership.user1.id === partnerId) {
-        return partnership.user1.name || partnership.user1.email || 'Unknown Partner'
-      }
-      if (partnership.user2 && partnership.user2.id === partnerId) {
-        return partnership.user2.name || partnership.user2.email || 'Unknown Partner'
+      // Determine which user is the partner (not the current user)
+      let partnerUser
+      if (partnership.user1_id === currentUserId) {
+        partnerUser = partnership.user2
+      } else {
+        partnerUser = partnership.user1
       }
       
-      // Fallback to partner ID if no user data available
-      return partnerId
+      // Return partner's name if available, otherwise email, otherwise fallback
+      if (partnerUser?.name && partnerUser.name !== 'User') {
+        return partnerUser.name
+      } else if (partnerUser?.email) {
+        return partnerUser.email
+      } else {
+        // Fallback to truncated ID if no user details available
+        const partnerId = partnership.user1_id === currentUserId ? partnership.user2_id : partnership.user1_id
+        return `Partner (${partnerId.slice(0, 8)}...)`
+      }
     } catch (error) {
       return 'Unknown Partner'
     }
@@ -175,25 +194,28 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     return new Date(dateString).toLocaleDateString()
   }
 
+  // Add loading state to prevent flashing
+  if (loading && partnerships.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Partnerships</h2>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading partnerships...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Partnerships</h2>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={loadPartnershipData}
-            className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            🔄 Refresh
-          </button>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-            title="Refresh page to update expenses/goals access"
-          >
-            🔄 Page Refresh
-          </button>
-        </div>
+        {/* Removed unnecessary refresh buttons - app is working properly now */}
       </div>
 
       {error && (
@@ -208,18 +230,7 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         </div>
       )}
 
-      {/* Partnership Status Info */}
-      {partnerships.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded">
-          <div className="flex items-center space-x-2">
-            <span>ℹ️</span>
-            <span>
-              <strong>Partnership Active!</strong> You can now access Expenses and Goals. 
-              If you don't see them, use the "Page Refresh" button above.
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Removed unnecessary partnership status info message */}
 
       {/* Send Partnership Invitation */}
       <div className="bg-white rounded-lg shadow p-6">

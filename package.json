@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "db:types": "supabase gen types typescript --project-id YOUR_PROJECT_ID > lib/supabase-types.ts",
-    "vercel-build": "next build"
+    "vercel-build": "next build",
+    "build:clean": "./scripts/build.sh",
+    "deploy": "./scripts/deploy.sh"
   },
   "dependencies": {
     "next": "^14.0.0",

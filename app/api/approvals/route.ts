@@ -17,13 +17,14 @@ export async function GET(req: NextRequest) {
       .from('approval_requests')
       .select(`
         *,
-        requested_by_user:users!approval_requests_requested_by_fkey(id, name)
+        requested_by_user:users!approval_requests_requested_by_user_id_fkey(id, name)
       `)
       .eq('partnership_id', user.partnershipId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
 
     if (error) {
+      console.error('Approvals fetch error:', error)
       return NextResponse.json({ error: 'Failed to fetch approvals' }, { status: 500 })
     }
 

@@ -123,6 +123,10 @@ class ApiClient {
   async cancelInvitation(invitationId: string): Promise<any> {
     return this.delete(`/partnerships/invitations/${invitationId}`)
   }
+
+  async removePartnership(partnershipId: string): Promise<any> {
+    return this.delete(`/partnerships?id=${partnershipId}`)
+  }
 }
 
 export const apiClient = new ApiClient()
@@ -193,6 +197,16 @@ export interface Partnership {
   user2_id: string
   status: string
   created_at: string
+  user1?: {
+    id: string
+    name: string
+    email: string
+  }
+  user2?: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 export interface PartnershipInvitation {

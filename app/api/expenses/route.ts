@@ -14,15 +14,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { data: expenses, error } = await supabaseAdmin
-      .from('expenses')
-      .select(`
-        *,
-        added_by_user:users!expenses_added_by_fkey(id, name)
-      `)
-      .eq('partnership_id', user.partnershipId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
+          const { data: expenses, error } = await supabaseAdmin
+        .from('expenses')
+        .select(`
+          *,
+          added_by_user:users!expenses_added_by_user_id_fkey(id, name)
+        `)
+        .eq('partnership_id', user.partnershipId)
+        .order('created_at', { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 })
@@ -58,7 +57,7 @@ export async function POST(req: NextRequest) {
         .from('approval_requests')
         .insert({
           partnership_id: user.partnershipId,
-          requested_by: user.id,
+          requested_by_user_id: user.id, // Use correct column name
           request_type: 'expense_add',
           request_data: expenseData,
           message: expenseData.message || null
@@ -80,16 +79,15 @@ export async function POST(req: NextRequest) {
         .from('expenses')
         .insert({
           partnership_id: user.partnershipId,
-          name: expenseData.name,
+          description: expenseData.name, // Map name to description
           amount: expenseData.amount,
           category: expenseData.category,
-          frequency: expenseData.frequency,
-          added_by: user.id,
-          status: 'active'
+          date: new Date().toISOString().split('T')[0], // Use current date
+          added_by_user_id: user.id // Use correct column name
         })
         .select(`
           *,
-          added_by_user:users!expenses_added_by_fkey(id, name)
+          added_by_user:users!expenses_added_by_user_id_fkey(id, name)
         `)
         .single()
 

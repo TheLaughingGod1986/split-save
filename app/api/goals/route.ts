@@ -18,13 +18,13 @@ export async function GET(req: NextRequest) {
       .from('goals')
       .select(`
         *,
-        added_by_user:users!goals_added_by_fkey(id, name)
+        added_by_user:users!goals_added_by_user_id_fkey(id, name)
       `)
       .eq('partnership_id', user.partnershipId)
-      .eq('status', 'active')
-      .order('priority', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) {
+      console.error('Goals fetch error:', error)
       return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 })
     }
 
@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
       .from('approval_requests')
       .insert({
         partnership_id: user.partnershipId,
-        requested_by: user.id,
-        request_type: 'goal_add',
+        requested_by_user_id: user.id,
+        request_type: 'goal',
         request_data: goalData,
         message: goalData.message || null
       })
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
+      console.error('Approval request creation error:', error)
       return NextResponse.json({ error: 'Failed to create approval request' }, { status: 400 })
     }
 

@@ -1,4 +1,5 @@
 # Supabase Edge Functions (Deno-specific, not compatible with Node.js)
+# These are deployed separately using Supabase CLI: supabase functions deploy
 supabase/functions/
 
 # SQL files

@@ -13,7 +13,11 @@ export async function GET(request: NextRequest) {
     console.log('1. Fetching partnerships for user:', user.id)
     const { data: partnerships, error } = await supabaseAdmin
       .from('partnerships')
-      .select('*')
+      .select(`
+        *,
+        user1:users!partnerships_user1_id_fkey(id, name, email),
+        user2:users!partnerships_user2_id_fkey(id, name, email)
+      `)
       .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
 
     if (error) {
