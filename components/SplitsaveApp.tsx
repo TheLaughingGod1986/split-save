@@ -53,6 +53,7 @@ function useDarkMode() {
 }
 import { ProfileManager } from './ProfileManager'
 import PartnershipManager from './PartnershipManager'
+import PWAInstallPrompt from './PWAInstallPrompt'
 
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
@@ -690,6 +691,7 @@ export function SplitsaveApp() {
             goals={goals} 
             onAddGoal={addGoal}
             currencySymbol={currencySymbol}
+            userCountry={profile?.country_code}
           />
         )}
         {currentView === 'approvals' && (
@@ -737,6 +739,9 @@ export function SplitsaveApp() {
           ))}
         </div>
       </div>
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   )
 }
@@ -1217,7 +1222,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
 }
 
 // Goals View Component
-function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddGoal: (data: any) => void, currencySymbol: string }) {
+function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: Goal[], onAddGoal: (data: any) => void, currencySymbol: string, userCountry?: string }) {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -1225,6 +1230,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
     targetDate: '',
     description: '',
     category: '',
+    priority: '1',
     message: ''
   })
 
@@ -1251,7 +1257,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
       ...formData,
       targetAmount: parseFloat(formData.targetAmount)
     })
-    setFormData({ name: '', targetAmount: '', targetDate: '', description: '', category: '', message: '' })
+    setFormData({ name: '', targetAmount: '', targetDate: '', description: '', category: '', priority: '1', message: '' })
     setShowForm(false)
   }
 
@@ -1350,7 +1356,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
                 required
               >
                 <option value="">Select a category</option>
-                <option value="Vacation">🏖️ Vacation</option>
+                <option value="Vacation">{userCountry === 'US' ? '🏖️ Vacation' : '🏖️ Holiday'}</option>
                 <option value="Vehicle">🚗 Vehicle</option>
                 <option value="Home">🏠 Home</option>
                 <option value="Emergency Fund">🆘 Emergency Fund</option>
@@ -1362,6 +1368,21 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
                 <option value="Furniture">🪑 Furniture</option>
                 <option value="Hobby">🎨 Hobby</option>
                 <option value="Other">📦 Other</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Priority</label>
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                className="form-input"
+                required
+              >
+                <option value="1">1 - Highest Priority (Funds allocated first)</option>
+                <option value="2">2 - High Priority</option>
+                <option value="3">3 - Medium Priority</option>
+                <option value="4">4 - Low Priority</option>
+                <option value="5">5 - Lowest Priority (Funds allocated last)</option>
               </select>
             </div>
             <div className="form-group">
