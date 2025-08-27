@@ -1025,28 +1025,28 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
   if (!hasPartnership) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Shared Expenses</h2>
-        </div>
-        
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-8 rounded-lg border border-blue-200 text-center">
-          <div className="text-4xl mb-4">🤝</div>
-          <h3 className="text-xl font-medium text-blue-900 mb-2">Partnership Required</h3>
-          <p className="text-blue-700 mb-4">
-            To add shared expenses, you need to be connected with a partner. 
-            This allows you to split costs and track shared financial goals together.
+              <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Shared Expenses</h2>
+      </div>
+      
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-8 rounded-lg border border-blue-200 dark:border-blue-800 text-center">
+        <div className="text-4xl mb-4">🤝</div>
+        <h3 className="text-xl font-medium text-blue-900 dark:text-blue-100 mb-2">Partnership Required</h3>
+        <p className="text-blue-700 dark:text-blue-300 mb-4">
+          To add shared expenses, you need to be connected with a partner. 
+          This allows you to split costs and track shared financial goals together.
+        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-blue-600 dark:text-blue-400">
+            <strong>Next steps:</strong>
           </p>
-          <div className="space-y-2">
-            <p className="text-sm text-blue-600">
-              <strong>Next steps:</strong>
-            </p>
-            <ul className="text-sm text-blue-600 space-y-1">
-              <li>• Partner with someone to start sharing expenses</li>
-              <li>• Set up shared financial goals</li>
-              <li>• Track spending together</li>
-            </ul>
-          </div>
+          <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
+            <li>• Partner with someone to start sharing expenses</li>
+            <li>• Set up shared financial goals</li>
+            <li>• Track spending together</li>
+          </ul>
         </div>
+      </div>
       </div>
     )
   }
@@ -1054,88 +1054,125 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Shared Expenses</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Shared Expenses</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+          className="btn btn-primary px-4 py-2"
         >
           {showForm ? 'Cancel' : 'Add Expense'}
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="form-section">
+          <div className="form-section-header">
+            <h3 className="form-section-title">Add New Expense</h3>
+            <p className="form-section-subtitle">Create a new shared expense with your partner</p>
+          </div>
+          
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+            <div className="form-group">
+              <label className="form-label">Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
+                placeholder="e.g., Groceries, Rent, Utilities"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Amount</label>
+            <div className="form-group">
+              <label className="form-label">Amount</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.amount}
                 onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
+                placeholder="0.00"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
+            <div className="form-group">
+              <label className="form-label">Category</label>
               <input
                 type="text"
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
+                placeholder="e.g., Food, Housing, Transportation"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Message</label>
+            <div className="form-group">
+              <label className="form-label">Message (Optional)</label>
               <textarea
                 value={formData.message}
                 onChange={(e) => setFormData({...formData, message: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
                 rows={3}
+                placeholder="Add any additional notes about this expense..."
               ></textarea>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700"
-            >
-              Add Expense
-            </button>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+              >
+                Add Expense
+              </button>
+            </div>
           </form>
         </div>
       )}
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {expenses?.map((expense) => (
-            <li key={expense.id} className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">{expense.description || expense.name}</h3>
-                  <p className="text-sm text-gray-500">{expense.category}</p>
+      {expenses && expenses.length > 0 ? (
+        <div className="form-section">
+          <div className="form-section-header">
+            <h3 className="form-section-title">Recent Expenses</h3>
+            <p className="form-section-subtitle">Your shared expenses with your partner</p>
+          </div>
+          
+          <div className="space-y-4">
+            {expenses.map((expense) => (
+              <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">{expense.description || expense.name}</h4>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+                      {expense.category}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Added by {expense.added_by_user?.name || 'Unknown'}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{currencySymbol}{expense.amount.toFixed(2)}</p>
-                  <p className="text-sm text-gray-500">
-                    Added by {expense.added_by_user?.name || 'Unknown'}
-                  </p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{currencySymbol}{expense.amount.toFixed(2)}</p>
                 </div>
               </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="form-section">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">💰</div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No expenses yet</h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              Start by adding your first shared expense with your partner
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1165,109 +1202,146 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Savings Goals</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Savings Goals</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+          className="btn btn-primary px-4 py-2"
         >
           {showForm ? 'Cancel' : 'Add Goal'}
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="form-section">
+          <div className="form-section-header">
+            <h3 className="form-section-title">Create New Savings Goal</h3>
+            <p className="form-section-subtitle">Set a financial goal to save towards with your partner</p>
+          </div>
+          
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Goal Name</label>
+            <div className="form-group">
+              <label className="form-label">Goal Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
+                placeholder="e.g., Vacation Fund, New Car, Emergency Fund"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Target Amount</label>
+            <div className="form-group">
+              <label className="form-label">Target Amount</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.targetAmount}
                 onChange={(e) => setFormData({...formData, targetAmount: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
+                placeholder="0.00"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+            <div className="form-group">
+              <label className="form-label">Description</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
                 rows={3}
+                placeholder="Describe what you're saving for..."
               ></textarea>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Priority</label>
+            <div className="form-group">
+              <label className="form-label">Priority</label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({...formData, priority: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-select"
               >
-                <option value="1">1 - Highest</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5 - Lowest</option>
+                <option value="1">1 - Highest Priority</option>
+                <option value="2">2 - High Priority</option>
+                <option value="3">3 - Medium Priority</option>
+                <option value="4">4 - Low Priority</option>
+                <option value="5">5 - Lowest Priority</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Message</label>
+            <div className="form-group">
+              <label className="form-label">Message (Optional)</label>
               <textarea
                 value={formData.message}
                 onChange={(e) => setFormData({...formData, message: e.target.value})}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="form-input"
                 rows={3}
+                placeholder="Add any additional notes about this goal..."
               ></textarea>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700"
-            >
-              Add Goal
-            </button>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+              >
+                Add Goal
+              </button>
+            </div>
           </form>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {goals.map((goal) => (
-          <div key={goal.id} className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{goal.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">{goal.description}</p>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span>Progress</span>
-                <span className="font-medium">
-                  {currencySymbol}{goal.saved_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
-                </span>
-              </div>
-              
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-purple-600 h-2 rounded-full" 
-                  style={{ width: `${Math.min((goal.saved_amount / goal.target_amount) * 100, 100)}%` }}
-                ></div>
-              </div>
-              
-              <div className="text-xs text-gray-500">
-                Priority: {goal.priority}
-              </div>
-            </div>
+      {goals && goals.length > 0 ? (
+        <div className="form-section">
+          <div className="form-section-header">
+            <h3 className="form-section-title">Your Savings Goals</h3>
+            <p className="form-section-subtitle">Track your progress towards financial goals</p>
           </div>
-        ))}
-      </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {goals.map((goal) => (
+              <div key={goal.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{goal.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{goal.description}</p>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-300">Progress</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {currencySymbol}{goal.saved_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-purple-600 h-2 rounded-full" 
+                      style={{ width: `${Math.min((goal.saved_amount / goal.target_amount) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Priority: {goal.priority}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="form-section">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🎯</div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No savings goals yet</h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              Create your first goal to start saving together
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1286,63 +1360,84 @@ function ApprovalsView({
 }) {
   if (approvals.length === 0) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">No Pending Approvals</h2>
-        <p className="text-gray-500">You're all caught up!</p>
+      <div className="form-section">
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No Pending Approvals</h2>
+          <p className="text-gray-500 dark:text-gray-400">You're all caught up!</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Pending Approvals</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pending Approvals</h2>
       
       <div className="space-y-4">
         {approvals.map((approval) => (
-          <div key={approval.id} className="bg-white p-6 rounded-lg shadow">
+          <div key={approval.id} className="form-section">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    approval.request_type === 'expense_add' 
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
+                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+                  }`}>
+                    {approval.request_type === 'expense_add' ? '💰 Expense' : '🎯 Goal'}
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Requested by {approval.requested_by_user?.name || 'Unknown'}
+                  </span>
+                </div>
+                
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
                   {approval.request_type === 'expense_add' ? 'New Expense' : 'New Goal'}
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Requested by {approval.requested_by_user?.name || 'Unknown'}
-                </p>
                 
-                <div className="mt-4 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   {approval.request_type === 'expense_add' && (
                     <>
-                      <p><strong>Name:</strong> {approval.request_data.name}</p>
-                      <p><strong>Amount:</strong> {currencySymbol}{approval.request_data.amount}</p>
-                      <p><strong>Category:</strong> {approval.request_data.category}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Name:</span> {approval.request_data.name}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Amount:</span> {currencySymbol}{approval.request_data.amount}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Category:</span> {approval.request_data.category}</p>
+                      </div>
                     </>
                   )}
                   
                   {approval.request_type === 'goal_add' && (
                     <>
-                      <p><strong>Name:</strong> {approval.request_data.name}</p>
-                      <p><strong>Target Amount:</strong> {currencySymbol}{approval.request_data.targetAmount}</p>
-                      <p><strong>Description:</strong> {approval.request_data.description}</p>
-                      <p><strong>Priority:</strong> {approval.request_data.priority}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Name:</span> {approval.request_data.name}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Target Amount:</span> {currencySymbol}{approval.request_data.targetAmount}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Description:</span> {approval.request_data.description}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Priority:</span> {approval.request_data.priority}</p>
+                      </div>
                     </>
                   )}
-                  
-                  {approval.message && (
-                    <p><strong>Message:</strong> {approval.message}</p>
-                  )}
                 </div>
+                
+                {approval.message && (
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="font-medium">Message:</span> {approval.message}
+                    </p>
+                  </div>
+                )}
               </div>
               
-              <div className="flex space-x-2 ml-4">
+              <div className="flex flex-col space-y-2 ml-4">
                 <button
                   onClick={() => onApprove(approval.id)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                  className="btn btn-success px-4 py-2"
                 >
                   Approve
                 </button>
                 <button
                   onClick={() => onDecline(approval.id)}
-                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                  className="btn btn-danger px-4 py-2"
                 >
                   Decline
                 </button>

@@ -199,12 +199,12 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Partnerships</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Partnerships</h2>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="form-section">
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading partnerships...</p>
+            <div className="loading-spinner mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading partnerships...</p>
           </div>
         </div>
       </div>
@@ -214,18 +214,24 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Partnerships</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Partnerships</h2>
         {/* Removed unnecessary refresh buttons - app is working properly now */}
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-center">
+          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg flex items-center">
+          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
           {success}
         </div>
       )}
@@ -233,11 +239,15 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       {/* Removed unnecessary partnership status info message */}
 
       {/* Send Partnership Invitation */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Send Partnership Invitation</h3>
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Send Partnership Invitation</h3>
+          <p className="form-section-subtitle">Invite someone to become your financial partner</p>
+        </div>
+        
         <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">
               Partner's Email
             </label>
             <input
@@ -246,20 +256,20 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
               value={toEmail}
               onChange={(e) => setToEmail(e.target.value)}
               placeholder="Enter partner's email address"
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="form-input"
             />
           </div>
           <div className="flex space-x-3">
             <button
               onClick={sendInvitation}
               disabled={loading}
-              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50"
+              className="btn btn-primary"
             >
               {loading ? 'Sending...' : 'Send Invitation'}
             </button>
             <button
               onClick={() => setToEmail('')}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              className="btn btn-secondary"
             >
               Cancel
             </button>
@@ -268,27 +278,35 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       </div>
 
       {/* Active Partnerships */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Partnerships</h3>
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Active Partnerships</h3>
+          <p className="form-section-subtitle">Your current financial partnerships</p>
+        </div>
+        
         {partnerships.length === 0 ? (
-          <p className="text-gray-500">No active partnerships yet.</p>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">🤝</div>
+            <p className="text-gray-500 dark:text-gray-400">No active partnerships yet.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Send an invitation to get started!</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {partnerships.map((partnership) => (
-              <div key={partnership.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <div key={partnership.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
-                    <span className="text-gray-700 font-medium">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
                       Partner: {getPartnerName(partnership)}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       Created: {new Date(partnership.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
                 <button
                   onClick={() => handleRemovePartnership(partnership.id)}
-                  className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors"
+                  className="btn btn-danger px-3 py-1 text-sm"
                   title="Remove partnership"
                 >
                   Remove
