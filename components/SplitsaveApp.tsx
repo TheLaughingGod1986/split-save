@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
 import { ProfileManager } from './ProfileManager'
-import { PartnershipManager } from './PartnershipManager'
+import PartnershipManager from './PartnershipManager'
 
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
