@@ -54,7 +54,7 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
           status: 'accepted',
           updated_at: new Date().toISOString()
         })
-        .eq('id', invitationId)
+        .eq('id', token)
       
       if (updateError) {
         console.error('7. Invitation update error:', updateError)
