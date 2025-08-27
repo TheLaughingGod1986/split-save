@@ -130,6 +130,15 @@ export async function POST(request: NextRequest) {
 
     console.log('18. Invitation created successfully, sending email...')
 
+    // Get user profile data for the email
+    const { data: userProfile, error: profileError } = await supabaseAdmin
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
+      .single()
+
+    const fromUserName = userProfile?.name || 'SplitSave User'
+
     // Send invitation email
     try {
       console.log('18a. About to call Edge Function...')
@@ -145,7 +154,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           invitationId: invitation.id,
           toEmail: toEmail,
-          fromUserName: user.name || 'SplitSave User',
+          fromUserName: fromUserName,
           fromUserEmail: user.email
         }),
       })
