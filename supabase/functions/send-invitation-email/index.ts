@@ -27,7 +27,7 @@ serve(async (req)=>{
       throw new Error('Missing required fields');
     }
     // Create the invitation link
-    const invitationLink = `${Deno.env.get('FRONTEND_URL') || 'http://localhost:3000'}/api/invite/accept/${invitationId}`;
+    const invitationLink = `${Deno.env.get('FRONTEND_URL') || 'https://splitsave.community'}/api/invite/accept/${invitationId}`;
     // Email template
     const emailHtml = `
       <!DOCTYPE html>
@@ -116,7 +116,7 @@ This email was sent by SplitSave on behalf of ${fromUserName}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev',
+        from: 'noreply@splitsave.community',
         to: [toEmail],
         subject: `${fromUserName} invited you to join SplitSave`,
         html: emailHtml,
