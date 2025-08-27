@@ -67,4 +67,3 @@ CREATE POLICY "Users can update their own payment status" ON public.contribution
 
 -- Grant permissions to authenticated users
 GRANT ALL ON public.contributions TO authenticated;
-GRANT USAGE ON SEQUENCE contributions_id_seq TO authenticated;

@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate the request
-    const { user, error: authError } = await authenticateRequest(request)
-    if (authError || !user) {
+    const user = await authenticateRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

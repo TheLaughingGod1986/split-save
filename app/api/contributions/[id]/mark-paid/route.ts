@@ -8,8 +8,8 @@ export async function POST(
 ) {
   try {
     // Authenticate the request
-    const { user, error: authError } = await authenticateRequest(request)
-    if (authError || !user) {
+    const user = await authenticateRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

@@ -60,7 +60,7 @@ export default function ContributionManager({ currencySymbol, onUpdate }: Contri
       setSaving(true)
       setError('')
       
-      const result = await apiClient.post(`/contributions/${contributionId}/mark-paid`)
+      const result = await apiClient.post(`/contributions/${contributionId}/mark-paid`, {})
       
       if (result.isComplete) {
         setSuccess(result.message)

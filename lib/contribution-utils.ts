@@ -172,8 +172,8 @@ export function calculateContributionStatus(
     partnerAmount,
     userPaid,
     partnerPaid,
-    userPaidDate: currentUserId === contribution.user1_id ? contribution.user1_paid_date : contribution.user2_paid_date,
-    partnerPaidDate: currentUserId === contribution.user1_id ? contribution.user2_paid_date : contribution.user1_paid_date,
+    userPaidDate: contribution.user1_paid_date,
+    partnerPaidDate: contribution.user2_paid_date,
     status,
     daysUntilDue,
     isOverdue
