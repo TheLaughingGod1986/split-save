@@ -223,3 +223,18 @@ export interface PartnershipsResponse {
   partnerships: Partnership[]
   invitations: PartnershipInvitation[]
 }
+
+export interface MonthlyContribution {
+  id: string
+  partnership_id: string
+  month: string // YYYY-MM format
+  user1_amount: number
+  user2_amount: number
+  user1_paid: boolean
+  user2_paid: boolean
+  user1_paid_date?: string
+  user2_paid_date?: string
+  total_required: number
+  created_at: string
+  updated_at: string
+}
