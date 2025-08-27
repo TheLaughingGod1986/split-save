@@ -318,34 +318,48 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       </div>
 
       {/* Sent Invitations */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Sent Invitations</h3>
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Sent Invitations</h3>
+          <p className="form-section-subtitle">Invitations you've sent to potential partners</p>
+        </div>
+        
         {invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending').length === 0 ? (
-          <p className="text-gray-500">No pending invitations sent.</p>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">📤</div>
+            <p className="text-gray-500 dark:text-gray-400">No pending invitations sent.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Send an invitation to start a partnership!</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {invitations
               .filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
               .map((invitation) => (
-                <div key={invitation.id} className="p-3 bg-gray-50 rounded">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-700">
-                      To: {invitation.to_email}
-                      {invitation.to_user_id && <span className="text-sm text-gray-500"> (existing user)</span>}
-                      {!invitation.to_user_id && <span className="text-sm text-blue-600"> (new user)</span>}
-                    </span>
-                    <span className={`text-sm px-2 py-1 rounded ${
-                      invitation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      invitation.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
+                <div key={invitation.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">
+                        To: {invitation.to_email}
+                      </span>
+                      {invitation.to_user_id && (
+                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(existing user)</span>
+                      )}
+                      {!invitation.to_user_id && (
+                        <span className="text-sm text-blue-600 dark:text-blue-400 ml-2">(new user)</span>
+                      )}
+                    </div>
+                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                      invitation.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200' :
+                      invitation.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+                      'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
                     }`}>
                       {invitation.status}
                     </span>
                   </div>
                   
                   {invitation.status === 'pending' && !invitation.to_user_id && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 mb-2">
+                    <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                         Send this link to your partner to create their account and accept the invitation:
                       </p>
                       <div className="flex items-center space-x-2">
@@ -353,23 +367,25 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
                           type="text"
                           value={getInvitationLink(invitation) || ''}
                           readOnly
-                          className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 bg-gray-100"
+                          className="flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                         />
                         <button
                           onClick={() => getInvitationLink(invitation) && copyInvitationLink(getInvitationLink(invitation)!)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                          className="btn btn-primary px-3 py-2 text-sm"
                         >
                           Copy
                         </button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         Expires: {formatExpiryDate(invitation.expires_at)}
                       </p>
                     </div>
                   )}
                   
                   {isInvitationExpired(invitation) && (
-                    <p className="text-sm text-red-600 mt-1">This invitation has expired</p>
+                    <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <p className="text-sm text-red-600 dark:text-red-400">This invitation has expired</p>
+                    </div>
                   )}
                 </div>
               ))}
@@ -378,13 +394,21 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       </div>
 
       {/* Received Invitations */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Received Invitations</h3>
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Received Invitations</h3>
+          <p className="form-section-subtitle">Invitations from others to become partners</p>
+        </div>
+        
         {invitations.filter(inv => 
           (inv.to_user_id === user?.id || inv.to_email === user?.email) && 
           inv.status === 'pending'
         ).length === 0 ? (
-          <p className="text-gray-500">No pending invitations received.</p>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">📥</div>
+            <p className="text-gray-500 dark:text-gray-400">No pending invitations received.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">You'll see partnership requests here!</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {invitations
@@ -393,25 +417,25 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
                 inv.status === 'pending'
               )
               .map((invitation) => (
-                <div key={invitation.id} className="p-3 bg-gray-50 rounded">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-700">
+                <div key={invitation.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
                       From: {invitation.from_user_id}
                     </span>
-                    <span className="text-sm text-yellow-800 bg-yellow-100 px-2 py-1 rounded">
+                    <span className="text-sm text-yellow-800 dark:text-yellow-200 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full font-medium">
                       Pending
                     </span>
                   </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => respondToInvitation(invitation.id, 'accept')}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                      className="btn btn-success px-3 py-2 text-sm"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => respondToInvitation(invitation.id, 'decline')}
-                      className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                      className="btn btn-danger px-3 py-2 text-sm"
                     >
                       Decline
                     </button>
