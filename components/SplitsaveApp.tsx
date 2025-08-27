@@ -54,6 +54,7 @@ function useDarkMode() {
 import { ProfileManager } from './ProfileManager'
 import PartnershipManager from './PartnershipManager'
 import PWAInstallPrompt from './PWAInstallPrompt'
+import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
@@ -908,6 +909,46 @@ function DashboardView({
                 Your profile is fully set up. Ready to create your first shared expense or savings goal?
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payday Information Section */}
+      {profile?.payday && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">📅</span>
+              <div>
+                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Next Payday</h3>
+                <p className="text-blue-700 dark:text-blue-300">
+                  {getNextPaydayDescription(profile.payday)}
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  {calculateNextPayday(profile.payday).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+            </div>
+            
+            {isTodayPayday(profile.payday) && (
+              <div className="text-right">
+                <div className="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+                  🎉 Today!
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Payday Reminder */}
+          <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>💡 Reminder:</strong> Don't forget to contribute to your shared expenses and savings goals on payday!
+            </p>
           </div>
         </div>
       )}

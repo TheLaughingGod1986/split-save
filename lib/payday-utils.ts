@@ -1,0 +1,230 @@
+/**
+ * Payday calculation utilities for SplitSave
+ * Handles advanced payday options like "last Friday of month" and "last working day"
+ */
+
+export interface PaydayOption {
+  value: string
+  label: string
+  type: 'fixed' | 'relative' | 'custom'
+}
+
+export const PAYDAY_OPTIONS: PaydayOption[] = [
+  { value: '1', label: '1st of month', type: 'fixed' },
+  { value: '15', label: '15th of month', type: 'fixed' },
+  { value: 'last-friday', label: 'Last Friday of month', type: 'relative' },
+  { value: 'last-working-day', label: 'Last working day of month', type: 'relative' },
+  { value: 'custom', label: 'Custom date', type: 'custom' },
+]
+
+/**
+ * Calculate the next payday based on the payday option
+ */
+export function calculateNextPayday(paydayOption: string, customDate?: string): Date {
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+  
+  switch (paydayOption) {
+    case '1':
+      return getNextMonthDate(1, currentMonth, currentYear)
+    
+    case '15':
+      return getNextMonthDate(15, currentMonth, currentYear)
+    
+    case 'last-friday':
+      return getLastFridayOfMonth(currentMonth, currentYear)
+    
+    case 'last-working-day':
+      return getLastWorkingDayOfMonth(currentMonth, currentYear)
+    
+    case 'custom':
+      if (customDate) {
+        return calculateCustomPayday(customDate, currentMonth, currentYear)
+      }
+      // Fallback to 1st of month if no custom date
+      return getNextMonthDate(1, currentMonth, currentYear)
+    
+    default:
+      // If it's a number, treat as day of month
+      const day = parseInt(paydayOption)
+      if (!isNaN(day) && day >= 1 && day <= 31) {
+        return getNextMonthDate(day, currentMonth, currentYear)
+      }
+      // Fallback to 1st of month
+      return getNextMonthDate(1, currentMonth, currentYear)
+  }
+}
+
+/**
+ * Get the next occurrence of a specific day in a month
+ */
+function getNextMonthDate(day: number, currentMonth: number, currentYear: number): Date {
+  const currentDate = new Date()
+  let targetMonth = currentMonth
+  let targetYear = currentYear
+  
+  // If we're past this day this month, move to next month
+  if (currentDate.getDate() >= day) {
+    targetMonth++
+    if (targetMonth > 11) {
+      targetMonth = 0
+      targetYear++
+    }
+  }
+  
+  const nextPayday = new Date(targetYear, targetMonth, day)
+  
+  // Adjust for months with fewer days (e.g., Feb 30th becomes Feb 28th/29th)
+  while (nextPayday.getMonth() !== targetMonth) {
+    nextPayday.setDate(nextPayday.getDate() - 1)
+  }
+  
+  return nextPayday
+}
+
+/**
+ * Get the last Friday of the current or next month
+ */
+function getLastFridayOfMonth(currentMonth: number, currentYear: number): Date {
+  const currentDate = new Date()
+  let targetMonth = currentMonth
+  let targetYear = currentYear
+  
+  // If we're past the last Friday this month, move to next month
+  const lastFridayThisMonth = getLastFridayOfSpecificMonth(currentMonth, currentYear)
+  if (currentDate > lastFridayThisMonth) {
+    targetMonth++
+    if (targetMonth > 11) {
+      targetMonth = 0
+      targetYear++
+    }
+  }
+  
+  return getLastFridayOfSpecificMonth(targetMonth, targetYear)
+}
+
+/**
+ * Get the last Friday of a specific month
+ */
+function getLastFridayOfSpecificMonth(month: number, year: number): Date {
+  // Get the last day of the month
+  const lastDay = new Date(year, month + 1, 0)
+  const lastDayOfWeek = lastDay.getDay()
+  
+  // Calculate days to subtract to get to Friday (5)
+  let daysToSubtract = (lastDayOfWeek - 5 + 7) % 7
+  if (daysToSubtract === 0) daysToSubtract = 7
+  
+  const lastFriday = new Date(lastDay)
+  lastFriday.setDate(lastDay.getDate() - daysToSubtract)
+  
+  return lastFriday
+}
+
+/**
+ * Get the last working day of the current or next month
+ */
+function getLastWorkingDayOfMonth(currentMonth: number, currentYear: number): Date {
+  const currentDate = new Date()
+  let targetMonth = currentMonth
+  let targetYear = currentYear
+  
+  // If we're past the last working day this month, move to next month
+  const lastWorkingDayThisMonth = getLastWorkingDayOfSpecificMonth(currentMonth, currentYear)
+  if (currentDate > lastWorkingDayThisMonth) {
+    targetMonth++
+    if (targetMonth > 11) {
+      targetMonth = 0
+      targetYear++
+    }
+  }
+  
+  return getLastWorkingDayOfSpecificMonth(targetMonth, targetYear)
+}
+
+/**
+ * Get the last working day of a specific month
+ */
+function getLastWorkingDayOfSpecificMonth(month: number, year: number): Date {
+  // Get the last day of the month
+  const lastDay = new Date(year, month + 1, 0)
+  let currentDay = new Date(lastDay)
+  
+  // Go backwards until we find a working day (Monday-Friday)
+  while (currentDay.getDay() === 0 || currentDay.getDay() === 6) { // Sunday = 0, Saturday = 6
+    currentDay.setDate(currentDay.getDate() - 1)
+  }
+  
+  return currentDay
+}
+
+/**
+ * Calculate custom payday based on a specific date string
+ */
+function calculateCustomPayday(customDate: string, currentMonth: number, currentYear: number): Date {
+  // Parse custom date (format: "DD" or "DD-MM")
+  const parts = customDate.split('-')
+  let day: number
+  let month: number
+  
+  if (parts.length === 1) {
+    // Just day number
+    day = parseInt(parts[0])
+    month = currentMonth
+  } else if (parts.length === 2) {
+    // Day and month
+    day = parseInt(parts[0])
+    month = parseInt(parts[1]) - 1 // Month is 0-indexed
+  } else {
+    // Invalid format, fallback to 1st of month
+    return getNextMonthDate(1, currentMonth, currentYear)
+  }
+  
+  // Validate day and month
+  if (isNaN(day) || day < 1 || day > 31 || isNaN(month) || month < 0 || month > 11) {
+    return getNextMonthDate(1, currentMonth, currentYear)
+  }
+  
+  return getNextMonthDate(day, month, currentYear)
+}
+
+/**
+ * Get a human-readable description of when the next payday is
+ */
+export function getNextPaydayDescription(paydayOption: string, customDate?: string): string {
+  const nextPayday = calculateNextPayday(paydayOption, customDate)
+  const now = new Date()
+  const diffTime = nextPayday.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) {
+    return 'Today!'
+  } else if (diffDays === 1) {
+    return 'Tomorrow'
+  } else if (diffDays < 0) {
+    return 'Overdue'
+  } else {
+    return `In ${diffDays} day${diffDays === 1 ? '' : 's'}`
+  }
+}
+
+/**
+ * Check if today is payday
+ */
+export function isTodayPayday(paydayOption: string, customDate?: string): boolean {
+  const nextPayday = calculateNextPayday(paydayOption, customDate)
+  const today = new Date()
+  
+  return nextPayday.toDateString() === today.toDateString()
+}
+
+/**
+ * Get the number of days until next payday
+ */
+export function getDaysUntilPayday(paydayOption: string, customDate?: string): number {
+  const nextPayday = calculateNextPayday(paydayOption, customDate)
+  const now = new Date()
+  const diffTime = nextPayday.getTime() - now.getTime()
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}

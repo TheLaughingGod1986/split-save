@@ -47,13 +47,9 @@ const countryCodes = [
   { code: 'NZ', name: 'New Zealand', currency: 'NZD' },
 ]
 
-const paydayOptions = [
-  { value: '1', label: '1st of month' },
-  { value: '15', label: '15th of month' },
-  { value: 'last-friday', label: 'Last Friday of month' },
-  { value: 'last-working-day', label: 'Last working day of month' },
-  { value: 'custom', label: 'Custom date' },
-]
+import { PAYDAY_OPTIONS, calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
+
+const paydayOptions = PAYDAY_OPTIONS
 
 export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile: UserProfile) => void }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -515,6 +511,33 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
               <p className="form-help-text">
                 We'll remind you to contribute on your payday
               </p>
+              
+              {/* Payday Preview */}
+              {formData.payday && formData.payday !== 'custom' && (
+                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-blue-600 dark:text-blue-400">📅</span>
+                    <div>
+                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        Next Payday: {getNextPaydayDescription(formData.payday)}
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                        {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      {isTodayPayday(formData.payday) && (
+                        <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                          🎉 Today is payday!
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -527,6 +550,28 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                 onChange={(e) => setFormData({...formData, payday: e.target.value})}
                 className="form-input"
               />
+              
+              {/* Custom Payday Preview */}
+              {formData.payday && formData.payday !== 'custom' && (
+                <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-green-600 dark:text-green-400">📅</span>
+                    <div>
+                      <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                        Next Payday: {getNextPaydayDescription(formData.payday)}
+                      </p>
+                      <p className="text-xs text-green-600 dark:text-green-400">
+                        {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
