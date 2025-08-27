@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const expenseSchema = z.object({
-  name: z.string().min(1).max(200),
+  description: z.string().min(1).max(200),
   amount: z.number().positive(),
   category: z.string().min(1).max(50),
   message: z.string().optional()
@@ -10,8 +10,9 @@ export const expenseSchema = z.object({
 export const goalSchema = z.object({
   name: z.string().min(1).max(200),
   targetAmount: z.number().positive(),
+  targetDate: z.string().optional(),
   description: z.string().optional(),
-  priority: z.number().int().min(1).optional(),
+  category: z.string().min(1).max(50).optional(),
   message: z.string().optional()
 })
 

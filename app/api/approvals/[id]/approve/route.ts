@@ -93,7 +93,7 @@ export async function POST(
         .from('expenses')
         .insert({
           partnership_id: approval.partnership_id,
-          description: expenseData.name,
+          description: expenseData.description,
           amount: expenseData.amount,
           category: expenseData.category,
           added_by_user_id: approval.requested_by_user_id,
@@ -113,6 +113,7 @@ export async function POST(
           partnership_id: approval.partnership_id,
           name: goalData.name,
           target_amount: goalData.targetAmount,
+          target_date: goalData.targetDate || null,
           description: goalData.description,
           added_by_user_id: approval.requested_by_user_id
         })

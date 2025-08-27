@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     console.log('🔍 Expenses API - Received body:', body)
     console.log('🔍 Expenses API - Body types:', {
-      name: typeof body.name,
+      description: typeof body.description,
       amount: typeof body.amount,
       category: typeof body.category,
       message: typeof body.message
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         .from('expenses')
         .insert({
           partnership_id: user.partnershipId,
-          description: expenseData.name, // Map name to description
+          description: expenseData.description,
           amount: expenseData.amount,
           category: expenseData.category,
           date: new Date().toISOString().split('T')[0], // Use current date
