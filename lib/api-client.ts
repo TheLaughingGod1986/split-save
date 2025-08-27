@@ -198,9 +198,11 @@ export interface Partnership {
 export interface PartnershipInvitation {
   id: string
   from_user_id: string
-  to_user_id: string
+  to_user_id?: string
+  to_email: string
   status: string
   created_at: string
+  expires_at: string
 }
 
 export interface PartnershipsResponse {
