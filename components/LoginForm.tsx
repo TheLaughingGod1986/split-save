@@ -101,7 +101,7 @@ export function LoginForm() {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="form-section bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm py-8 px-6 shadow-xl rounded-2xl border border-white/20 dark:border-gray-700/50">
+        <div className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm py-8 px-6 shadow-xl rounded-2xl border border-white/20 dark:border-gray-700/50">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {isSignUp ? 'Create your account' : 'Welcome back'}
@@ -121,8 +121,8 @@ export function LoginForm() {
               </div>
             )}
             
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="form-group">
+              <label htmlFor="email" className="form-label">
                 Email address
               </label>
               <div className="relative">
@@ -136,10 +136,10 @@ export function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setEmailFocused(true)}
                   onBlur={() => setEmailFocused(false)}
-                  className={`w-full px-4 py-3 border-2 rounded-lg transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
+                  className={`form-input ${
                     emailFocused 
                       ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   } ${
                     email && !validateEmail(email) ? 'border-red-500 dark:border-red-400' : ''
                   }`}
@@ -158,8 +158,8 @@ export function LoginForm() {
               )}
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">
                 Password
               </label>
               <div className="relative">
@@ -173,10 +173,10 @@ export function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
-                  className={`w-full px-4 py-3 pr-12 border-2 rounded-lg transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
+                  className={`form-input pr-12 ${
                     passwordFocused 
                       ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   } ${
                     password && !validatePassword(password) ? 'border-red-500 dark:border-red-400' : ''
                   }`}
@@ -206,8 +206,8 @@ export function LoginForm() {
 
             {/* Password strength indicator for sign up */}
             {isSignUp && password && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+              <div className="form-group">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
                   <span>Password strength:</span>
                   <span className={password.length >= 8 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400'}>
                     {password.length >= 8 ? 'Strong' : 'Weak'}

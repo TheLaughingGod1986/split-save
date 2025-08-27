@@ -134,11 +134,12 @@ export const apiClient = new ApiClient()
 // Type definitions for API responses
 export interface Expense {
   id: string
-  name: string
+  description: string
   amount: number
   category: string
-  added_by: string
-  status: string
+  date: string
+  added_by_user_id: string
+  partnership_id: string
   created_at: string
   added_by_user?: {
     id: string
@@ -150,11 +151,11 @@ export interface Goal {
   id: string
   name: string
   target_amount: number
-  saved_amount: number
-  goal_type: string
-  priority: number
-  added_by: string
-  status: string
+  current_amount: number
+  target_date?: string
+  description?: string
+  added_by_user_id: string
+  partnership_id: string
   created_at: string
   added_by_user?: {
     id: string

@@ -745,7 +745,7 @@ function DashboardView({
   currencyEmoji: string
 }) {
   const totalExpenses = expenses ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0
-  const totalGoals = goals ? goals.reduce((sum, goal) => sum + goal.saved_amount, 0) : 0
+  const totalGoals = goals ? goals.reduce((sum, goal) => sum + goal.current_amount, 0) : 0
   const totalTarget = goals ? goals.reduce((sum, goal) => sum + goal.target_amount, 0) : 0
 
   // Calculate profile completion percentage based on actual profile data
@@ -951,7 +951,7 @@ function DashboardView({
             <div className="space-y-3">
               {expenses?.slice(0, 5).map((expense) => (
                 <div key={expense.id} className="flex justify-between items-center">
-                  <span className="text-gray-700 dark:text-gray-300">{expense.name}</span>
+                  <span className="text-gray-700 dark:text-gray-300">{expense.description}</span>
                   <span className="font-medium text-gray-900 dark:text-white">{currencySymbol}{expense.amount.toFixed(2)}</span>
                 </div>
               ))}
@@ -974,13 +974,13 @@ function DashboardView({
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700 dark:text-gray-300">{goal.name}</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {currencySymbol}{goal.saved_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
+                      {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-purple-600 h-2 rounded-full" 
-                      style={{ width: `${Math.min((goal.saved_amount / goal.target_amount) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
                     ></div>
                   </div>
                 </div>
@@ -1140,7 +1140,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
             {expenses.map((expense) => (
               <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">{expense.description || expense.name}</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">{expense.description}</h4>
                   <div className="flex items-center space-x-2 mt-1">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
                       {expense.category}
@@ -1307,19 +1307,19 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-300">Progress</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {currencySymbol}{goal.saved_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
+                      {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
                     </span>
                   </div>
                   
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-purple-600 h-2 rounded-full" 
-                      style={{ width: `${Math.min((goal.saved_amount / goal.target_amount) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
                     ></div>
                   </div>
                   
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Priority: {goal.priority}
+                    Target Date: {goal.target_date ? new Date(goal.target_date).toLocaleDateString() : 'Not set'}
                   </div>
                 </div>
               </div>
