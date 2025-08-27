@@ -408,19 +408,19 @@ export function SplitsaveApp() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+      <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SplitSave</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">SplitSave</h1>
             </div>
             
             {/* Desktop User Menu */}
             <div className="hidden md:flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {user?.email}</span>
               <button
                 onClick={signOut}
-                className="text-sm text-purple-600 hover:text-purple-500 transition-colors"
+                className="text-sm text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
               >
                 Sign out
               </button>
@@ -429,7 +429,7 @@ export function SplitsaveApp() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -441,14 +441,14 @@ export function SplitsaveApp() {
 
       {/* Mobile Menu */}
       {showMobileMenu && (
-        <div className="md:hidden bg-white border-b shadow-lg">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg">
           <div className="px-4 py-2 space-y-2">
-            <div className="text-sm text-gray-600 py-2">
+            <div className="text-sm text-gray-600 dark:text-gray-300 py-2">
               Welcome, {user?.email}
             </div>
             <button
               onClick={signOut}
-              className="w-full text-left text-sm text-purple-600 hover:text-purple-500 py-2"
+              className="w-full text-left text-sm text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300 py-2 transition-colors"
             >
               Sign out
             </button>
@@ -457,7 +457,7 @@ export function SplitsaveApp() {
       )}
 
       {/* Navigation - Desktop */}
-      <div className="hidden md:block bg-gray-50 border-b">
+      <div className="hidden md:block bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="nav-tabs">
             <button
@@ -501,7 +501,7 @@ export function SplitsaveApp() {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden bg-white border-b">
+      <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="overflow-x-auto">
           <div className="flex space-x-1 px-4 py-2">
             {[
@@ -517,8 +517,8 @@ export function SplitsaveApp() {
                 onClick={() => setCurrentView(item.id)}
                 className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   currentView === item.id
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <div className="text-center">
@@ -576,7 +576,7 @@ export function SplitsaveApp() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
         {currentView === 'dashboard' && (
           <DashboardView
             expenses={expenses}
@@ -643,7 +643,7 @@ export function SplitsaveApp() {
               className={`mobile-nav-item ${currentView === item.id ? 'active' : ''}`}
             >
               <span className="text-lg">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="text-xs">{item.label}</span>
             </button>
           ))}
         </div>
@@ -928,7 +928,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
     name: '',
     amount: '',
     category: '',
-    frequency: 'monthly'
+    message: ''
   })
 
   // Check if we have a partnership (expenses array will be null if no partnership)
@@ -940,7 +940,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
       ...formData,
       amount: parseFloat(formData.amount)
     })
-    setFormData({ name: '', amount: '', category: '', frequency: 'monthly' })
+    setFormData({ name: '', amount: '', category: '', message: '' })
     setShowForm(false)
   }
 
@@ -1021,16 +1021,13 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Frequency</label>
-              <select
-                value={formData.frequency}
-                onChange={(e) => setFormData({...formData, frequency: e.target.value})}
+              <label className="block text-sm font-medium text-gray-700">Message</label>
+              <textarea
+                value={formData.message}
+                onChange={(e) => setFormData({...formData, message: e.target.value})}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="weekly">Weekly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+                rows={3}
+              ></textarea>
             </div>
             <button
               type="submit"
@@ -1048,8 +1045,8 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
             <li key={expense.id} className="px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900">{expense.name}</h3>
-                  <p className="text-sm text-gray-500">{expense.category} • {expense.frequency}</p>
+                  <h3 className="text-sm font-medium text-gray-900">{expense.description || expense.name}</h3>
+                  <p className="text-sm text-gray-500">{expense.category}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{currencySymbol}{expense.amount.toFixed(2)}</p>
@@ -1072,8 +1069,9 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
   const [formData, setFormData] = useState({
     name: '',
     targetAmount: '',
-    goalType: '',
-    priority: '1'
+    description: '',
+    priority: '1',
+    message: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1083,7 +1081,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
       targetAmount: parseFloat(formData.targetAmount),
       priority: parseInt(formData.priority)
     })
-    setFormData({ name: '', targetAmount: '', goalType: '', priority: '1' })
+    setFormData({ name: '', targetAmount: '', description: '', priority: '1', message: '' })
     setShowForm(false)
   }
 
@@ -1124,14 +1122,13 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Goal Type</label>
-              <input
-                type="text"
-                value={formData.goalType}
-                onChange={(e) => setFormData({...formData, goalType: e.target.value})}
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-              />
+                rows={3}
+              ></textarea>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Priority</label>
@@ -1147,6 +1144,15 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
                 <option value="5">5 - Lowest</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Message</label>
+              <textarea
+                value={formData.message}
+                onChange={(e) => setFormData({...formData, message: e.target.value})}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                rows={3}
+              ></textarea>
+            </div>
             <button
               type="submit"
               className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700"
@@ -1161,7 +1167,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol }: { goals: Goal[], onAddG
         {goals.map((goal) => (
           <div key={goal.id} className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-2">{goal.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">{goal.goal_type}</p>
+            <p className="text-sm text-gray-500 mb-4">{goal.description}</p>
             
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -1240,7 +1246,7 @@ function ApprovalsView({
                     <>
                       <p><strong>Name:</strong> {approval.request_data.name}</p>
                       <p><strong>Target Amount:</strong> {currencySymbol}{approval.request_data.targetAmount}</p>
-                      <p><strong>Goal Type:</strong> {approval.request_data.goalType}</p>
+                      <p><strong>Description:</strong> {approval.request_data.description}</p>
                       <p><strong>Priority:</strong> {approval.request_data.priority}</p>
                     </>
                   )}

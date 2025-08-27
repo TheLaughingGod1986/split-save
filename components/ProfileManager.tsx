@@ -364,104 +364,120 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="loading-spinner"></div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow rounded-lg">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Profile & Income</h2>
-          <p className="text-sm text-gray-600 mt-1">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full">
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profile & Income</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 mt-2">
             Manage your personal information and financial details
           </p>
         </div>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Error/Success Messages */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-center">
+          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg flex items-center">
+          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          {success}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Personal Information Section */}
+        <div className="form-section">
+          <div className="form-section-header">
+            <h2 className="form-section-title">Personal Information</h2>
+            <p className="form-section-subtitle">Basic details about yourself</p>
+          </div>
           
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-              {success}
-            </div>
-          )}
-
-          {/* Personal Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="form-input"
+                placeholder="Enter your full name"
                 required
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Country
-                </label>
-                <select
-                  value={formData.countryCode}
-                  onChange={(e) => {
-                    const selectedCountry = countryCodes.find(c => c.code === e.target.value)
-                    setFormData({
-                      ...formData, 
-                      countryCode: e.target.value,
-                      currency: selectedCountry?.currency || 'USD'
-                    })
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="">Select country</option>
-                  {countryCodes.map(country => (
-                    <option key={country.code} value={country.code}>
-                      {country.name} ({country.currency})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Currency
-                </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
-                  {getCurrencySymbol(formData.currency)} {formData.currency}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Automatically set based on country
-                </p>
-              </div>
+            <div className="form-group">
+              <label className="form-label">Country</label>
+              <select
+                value={formData.countryCode}
+                onChange={(e) => {
+                  const selectedCountry = countryCodes.find(c => c.code === e.target.value)
+                  setFormData({
+                    ...formData, 
+                    countryCode: e.target.value,
+                    currency: selectedCountry?.currency || 'USD'
+                  })
+                }}
+                className="form-select"
+              >
+                <option value="">Select country</option>
+                {countryCodes.map(country => (
+                  <option key={country.code} value={country.code}>
+                    {country.name} ({country.currency})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Financial Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Financial Information</h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="form-group">
+            <label className="form-label">Currency</label>
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <span className="text-2xl">{getCurrencyEmoji(formData.currency)}</span>
+              <span className="text-lg font-medium text-gray-900 dark:text-white">
+                {getCurrencySymbol(formData.currency)} {formData.currency}
+              </span>
+            </div>
+            <p className="form-help-text">
+              Automatically set based on your country selection
+            </p>
+          </div>
+        </div>
+
+        {/* Financial Information Section */}
+        <div className="form-section">
+          <div className="form-section-header">
+            <h2 className="form-section-title">Financial Information</h2>
+            <p className="form-section-subtitle">Details about your income and financial preferences</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="form-group">
+              <label className="form-label">
                 Monthly Income ({getCurrencySymbol(formData.currency)})
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-500">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
                   {getCurrencySymbol(formData.currency)}
                 </span>
                 <input
@@ -470,23 +486,21 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                   min="0"
                   value={formData.income}
                   onChange={(e) => setFormData({...formData, income: e.target.value})}
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="form-input pl-8"
                   placeholder="0.00"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="form-help-text">
                 This helps calculate fair expense splits with your partner
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payday
-              </label>
+            <div className="form-group">
+              <label className="form-label">Payday</label>
               <select
                 value={formData.payday}
                 onChange={(e) => handlePaydayChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="form-select"
               >
                 <option value="">Select payday</option>
                 {paydayOptions.map(option => (
@@ -495,136 +509,150 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="form-help-text">
                 We'll remind you to contribute on your payday
               </p>
             </div>
-
-            {showCustomPayday && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Custom Payday Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.payday}
-                  onChange={(e) => setFormData({...formData, payday: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monthly Personal Allowance ({getCurrencySymbol(formData.currency)})
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-500">
-                  {getCurrencySymbol(formData.currency)}
-                </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.personalAllowance}
-                  onChange={(e) => setFormData({...formData, personalAllowance: e.target.value})}
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="0.00"
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Money you keep for personal expenses (optional)
-              </p>
-            </div>
           </div>
 
-          {/* Summary */}
-          {formData.income && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Income Summary</h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Monthly Income:</span>
-                  <span className="font-medium">{getCurrencySymbol(formData.currency)}{parseFloat(formData.income || '0').toFixed(2)}</span>
-                </div>
-                {formData.personalAllowance && (
-                  <div className="flex justify-between">
-                    <span>Personal Allowance:</span>
-                    <span className="font-medium">{getCurrencySymbol(formData.currency)}{parseFloat(formData.personalAllowance).toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-medium">
-                    {parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') >= 0 
-                      ? 'Available for Shared Expenses:'
-                      : 'Shortfall for Shared Expenses:'
-                    }
-                  </span>
-                  <span className={`font-medium ${
-                    parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') >= 0
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}>
-                    {getCurrencySymbol(formData.currency)}
-                    {Math.abs(parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0')).toFixed(2)}
-                  </span>
-                </div>
-                
-                {/* Warning message for negative amounts */}
-                {parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') < 0 && (
-                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <h5 className="text-sm font-medium text-red-800">Personal Allowance Exceeds Income</h5>
-                        <p className="text-sm text-red-700 mt-1">
-                          Your personal allowance is higher than your income. Consider reducing your personal allowance 
-                          or increasing your income to have funds available for shared expenses.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Positive guidance for healthy amounts */}
-                {parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') >= 0 && (
-                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <h5 className="text-sm font-medium text-green-800">Healthy Balance</h5>
-                        <p className="text-sm text-green-700 mt-1">
-                          You have a good balance between personal spending and shared expenses. 
-                          This amount can be used for rent, bills, groceries, and other shared costs.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+          {showCustomPayday && (
+            <div className="form-group">
+              <label className="form-label">Custom Payday Date</label>
+              <input
+                type="date"
+                value={formData.payday}
+                onChange={(e) => setFormData({...formData, payday: e.target.value})}
+                className="form-input"
+              />
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? 'Saving...' : 'Save Profile'}
-            </button>
+          <div className="form-group">
+            <label className="form-label">
+              Monthly Personal Allowance ({getCurrencySymbol(formData.currency)})
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                {getCurrencySymbol(formData.currency)}
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.personalAllowance}
+                onChange={(e) => setFormData({...formData, personalAllowance: e.target.value})}
+                className="form-input pl-8"
+                placeholder="0.00"
+              />
+            </div>
+            <p className="form-help-text">
+              Money you keep for personal expenses (optional)
+            </p>
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Income Summary Section */}
+        {formData.income && (
+          <div className="form-section">
+            <div className="form-section-header">
+              <h2 className="form-section-title">Income Summary</h2>
+              <p className="form-section-subtitle">Overview of your financial breakdown</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {getCurrencySymbol(formData.currency)}{parseFloat(formData.income || '0').toFixed(2)}
+                </div>
+                <div className="text-sm text-blue-600 dark:text-blue-400">Monthly Income</div>
+              </div>
+              
+              {formData.personalAllowance && (
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {getCurrencySymbol(formData.currency)}{parseFloat(formData.personalAllowance).toFixed(2)}
+                  </div>
+                  <div className="text-sm text-green-600 dark:text-green-400">Personal Allowance</div>
+                </div>
+              )}
+              
+              <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className={`text-2xl font-bold ${
+                  parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') >= 0
+                    ? 'text-purple-600 dark:text-purple-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {getCurrencySymbol(formData.currency)}
+                  {Math.abs(parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0')).toFixed(2)}
+                </div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">
+                  {parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') >= 0 
+                    ? 'Available for Shared Expenses'
+                    : 'Shortfall for Shared Expenses'
+                  }
+                </div>
+              </div>
+            </div>
+            
+            {/* Warning/Positive Messages */}
+            {parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') < 0 && (
+              <div className="status-error p-4 rounded-lg">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h5 className="text-sm font-medium">Personal Allowance Exceeds Income</h5>
+                    <p className="text-sm mt-1">
+                      Your personal allowance is higher than your income. Consider reducing your personal allowance 
+                      or increasing your income to have funds available for shared expenses.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {parseFloat(formData.income || '0') - parseFloat(formData.personalAllowance || '0') >= 0 && (
+              <div className="status-success p-4 rounded-lg">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h5 className="text-sm font-medium">Healthy Balance</h5>
+                    <p className="text-sm mt-1">
+                      You have a good balance between personal spending and shared expenses. 
+                      This amount can be used for rent, bills, groceries, and other shared costs.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn btn-primary px-8 py-3 text-lg font-medium"
+          >
+            {saving ? (
+              <>
+                <div className="loading-spinner mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              'Save Profile'
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

@@ -4,14 +4,13 @@ export const expenseSchema = z.object({
   name: z.string().min(1).max(200),
   amount: z.number().positive(),
   category: z.string().min(1).max(50),
-  frequency: z.enum(['monthly', 'weekly', 'yearly']),
   message: z.string().optional()
 })
 
 export const goalSchema = z.object({
   name: z.string().min(1).max(200),
   targetAmount: z.number().positive(),
-  goalType: z.string().min(1).max(50),
+  description: z.string().optional(),
   priority: z.number().int().min(1).optional(),
   message: z.string().optional()
 })

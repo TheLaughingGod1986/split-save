@@ -123,7 +123,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased text-gray-900 bg-gray-50">
+      <body className="antialiased text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900">
         <AuthProvider>
           {children}
         </AuthProvider>
