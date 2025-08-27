@@ -376,34 +376,103 @@ input::placeholder, textarea::placeholder {
 /* Toast Notifications */
 .toast {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
   z-index: 100;
   padding: 1rem 1.5rem;
   border-radius: 0.5rem;
   box-shadow: var(--shadow-elevated);
-  transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
   backdrop-filter: blur(10px);
+  font-weight: 500;
+  max-width: 24rem;
+  word-wrap: break-word;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
+/* Position variants */
+.toast-top-right {
+  top: 1rem;
+  right: 1rem;
+  transform: translateX(100%);
+}
+
+.toast-top-left {
+  top: 1rem;
+  left: 1rem;
+  transform: translateX(-100%);
+}
+
+.toast-bottom-right {
+  bottom: 1rem;
+  right: 1rem;
+  transform: translateX(100%);
+}
+
+.toast-bottom-left {
+  bottom: 1rem;
+  left: 1rem;
+  transform: translateX(-100%);
+}
+
+.toast-top-center {
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+}
+
+.toast-bottom-center {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+}
+
+/* Show state */
 .toast.show {
-  transform: translateX(0);
+  transform: translateX(0) translateY(0);
 }
 
+.toast-top-center.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-bottom-center.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Toast types */
 .toast-success {
   background-color: var(--accent-color);
   color: var(--text-inverse);
+  border-left: 4px solid #059669;
 }
 
 .toast-error {
   background-color: var(--danger-color);
   color: var(--text-inverse);
+  border-left: 4px solid #dc2626;
 }
 
 .toast-warning {
   background-color: var(--warning-color);
   color: var(--text-inverse);
+  border-left: 4px solid #d97706;
+}
+
+.toast-info {
+  background-color: var(--primary-color);
+  color: var(--text-inverse);
+  border-left: 4px solid #7c3aed;
+}
+
+/* Hover effects */
+.toast:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-elevated), 0 0 0 2px var(--primary-color);
+}
+
+/* Dark mode adjustments */
+.dark .toast {
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-primary);
 }
 
 /* Accessibility */

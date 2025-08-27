@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient, type UserProfile } from '@/lib/api-client'
+import { toast } from '@/lib/toast'
 
 interface ProfileFormData {
   name: string
@@ -147,11 +148,13 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
         onProfileUpdate(updatedProfile)
       }
       setSuccess('Profile updated successfully!')
+      toast.success('Profile updated successfully!')
       
       // Hide success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       setError('Failed to update profile')
+      toast.error('Failed to update profile')
       console.error('Update profile error:', err)
     } finally {
       setSaving(false)

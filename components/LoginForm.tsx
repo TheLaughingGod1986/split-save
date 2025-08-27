@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -34,7 +35,7 @@ export function LoginForm() {
         })
         if (error) throw error
         // Show success message for sign up
-        showToast('Check your email for the confirmation link!', 'success')
+        toast.success('Check your email for the confirmation link!')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -44,27 +45,10 @@ export function LoginForm() {
       }
     } catch (error: any) {
       setError(error.message)
-      showToast(error.message, 'error')
+      toast.error(error.message)
     } finally {
       setLoading(false)
     }
-  }
-
-  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
-    // Create toast element
-    const toast = document.createElement('div')
-    toast.className = `toast toast-${type} show`
-    toast.textContent = message
-    
-    document.body.appendChild(toast)
-    
-    // Remove toast after 5 seconds
-    setTimeout(() => {
-      toast.classList.remove('show')
-      setTimeout(() => {
-        document.body.removeChild(toast)
-      }, 300)
-    }, 5000)
   }
 
   const validateEmail = (email: string) => {

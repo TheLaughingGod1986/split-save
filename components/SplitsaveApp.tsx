@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
+import { toast } from '@/lib/toast'
 
 // Dark mode hook
 function useDarkMode() {
@@ -345,12 +346,12 @@ export function SplitsaveApp() {
       const result = await apiClient.post('/expenses', expenseData)
       
       if (result.requiresApproval) {
-        showToast('Expense requires partner approval', 'warning')
+        toast.warning('Expense requires partner approval')
         // Refresh approvals
         const approvalsData = await apiClient.get('/approvals')
         setApprovals(approvalsData)
       } else {
-        showToast('Expense added successfully!', 'success')
+        toast.success('Expense added successfully!')
         // Refresh expenses
         const expensesData = await apiClient.get('/expenses')
         setExpenses(expensesData)
@@ -371,12 +372,12 @@ export function SplitsaveApp() {
       const result = await apiClient.post('/goals', goalData)
       
       if (result.requiresApproval) {
-        showToast('Goal requires partner approval', 'warning')
+        toast.warning('Goal requires partner approval')
         // Refresh approvals
         const approvalsData = await apiClient.get('/approvals')
         setApprovals(approvalsData)
       } else {
-        showToast('Goal created successfully!', 'success')
+        toast.success('Goal created successfully!')
         // Refresh goals
         const goalsData = await apiClient.get('/goals')
         setGoals(goalsData)
@@ -395,7 +396,7 @@ export function SplitsaveApp() {
   const approveRequest = async (approvalId: string) => {
     try {
       await apiClient.post(`/approvals/${approvalId}/approve`, {})
-      showToast('Request approved successfully!', 'success')
+      toast.success('Request approved successfully!')
       
       // Refresh data
       const [expensesData, goalsData, approvalsData] = await Promise.all([
@@ -416,7 +417,7 @@ export function SplitsaveApp() {
   const declineRequest = async (approvalId: string) => {
     try {
       await apiClient.post(`/approvals/${approvalId}/decline`, {})
-      showToast('Request declined', 'warning')
+      toast.warning('Request declined')
       
       // Refresh approvals
       const approvalsData = await apiClient.get('/approvals')
@@ -427,20 +428,7 @@ export function SplitsaveApp() {
     }
   }
 
-  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
-    const toast = document.createElement('div')
-    toast.className = `toast toast-${type} show`
-    toast.textContent = message
-    
-    document.body.appendChild(toast)
-    
-    setTimeout(() => {
-      toast.classList.remove('show')
-      setTimeout(() => {
-        document.body.removeChild(toast)
-      }, 300)
-    }, 5000)
-  }
+
 
   if (loading) {
     return (

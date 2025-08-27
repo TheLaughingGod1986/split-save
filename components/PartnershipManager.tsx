@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient } from '@/lib/api-client'
+import { toast } from '@/lib/toast'
 
 interface Partnership {
   id: string
@@ -87,10 +88,12 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     try {
       const response = await apiClient.sendPartnershipInvitation(toEmail.trim())
       setSuccess(response.message || 'Invitation sent successfully!')
+      toast.success('Partnership invitation sent successfully!')
       setToEmail('')
       await loadPartnershipData() // Refresh the data
     } catch (error: any) {
       setError(error.message || 'Failed to send invitation')
+      toast.error('Failed to send invitation')
     } finally {
       setLoading(false)
     }
@@ -100,9 +103,11 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     try {
       await apiClient.respondToInvitation(invitationId, action)
       setSuccess(`Invitation ${action}ed successfully!`)
+      toast.success(`Invitation ${action}ed successfully!`)
       await loadPartnershipData() // Refresh the data
     } catch (error: any) {
       setError(error.message || `Failed to ${action} invitation`)
+      toast.error(`Failed to ${action} invitation`)
     }
   }
 
@@ -144,18 +149,20 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       // Call API to remove partnership
       await apiClient.removePartnership(partnershipId)
       setSuccess('Partnership removed successfully!')
+      toast.success('Partnership removed successfully!')
       await loadPartnershipData() // Refresh the data
       
-              // Notify parent component of partnerships update
-        if (onPartnershipsUpdate) {
-          const updatedPartnerships = partnerships.filter(p => p.id !== partnershipId)
-          onPartnershipsUpdate(updatedPartnerships)
-        }
-        
-        // Force a page refresh to update auth middleware
-        window.location.reload()
+      // Notify parent component of partnerships update
+      if (onPartnershipsUpdate) {
+        const updatedPartnerships = partnerships.filter(p => p.id !== partnershipId)
+        onPartnershipsUpdate(updatedPartnerships)
+      }
+      
+      // Force a page refresh to update auth middleware
+      window.location.reload()
     } catch (error: any) {
       setError(error.message || 'Failed to remove partnership')
+      toast.error('Failed to remove partnership')
     } finally {
       setLoading(false)
     }
@@ -180,8 +187,10 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     try {
       await navigator.clipboard.writeText(link)
       setSuccess('Invitation link copied to clipboard!')
+      toast.success('Invitation link copied to clipboard!')
     } catch (error) {
       setError('Failed to copy link')
+      toast.error('Failed to copy link')
     }
   }
 
