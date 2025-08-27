@@ -220,45 +220,60 @@ export function SplitsaveApp() {
   const currencyEmoji = profile?.currency ? getCurrencyEmoji(profile.currency) : '💰'
 
   // Load data from backend
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        const [expensesData, goalsData, approvalsData, profileData] = await Promise.all([
-          apiClient.get('/expenses').catch((err) => {
-            // If no partnership, return null instead of empty array
-            if (err.status === 400 && err.message?.includes('partnership')) {
-              return null
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      console.log('🔄 Loading data for user:', user?.id)
+      
+      const [expensesData, goalsData, approvalsData, profileData] = await Promise.all([
+        apiClient.get('/expenses').catch((err) => {
+          console.log('📊 Expenses API response:', err)
+          // If no partnership, return null instead of empty array
+          if (err.status === 400 && err.message?.includes('partnership')) {
+            return null
+          }
+          return []
+        }),
+        apiClient.get('/goals').catch((err) => {
+          console.log('🎯 Goals API response:', err)
+          if (err.status === 400 && err.message?.includes('partnership')) {
+            return null
+          }
+          return []
+        }),
+        apiClient.get('/approvals').catch((err) => {
+          console.log('✅ Approvals API response:', err)
+          if (err.status === 400 && err.message?.includes('partnership')) {
+            return null
             }
-            return []
-          }),
-          apiClient.get('/goals').catch((err) => {
-            if (err.status === 400 && err.message?.includes('partnership')) {
-              return null
-            }
-            return []
-          }),
-          apiClient.get('/approvals').catch((err) => {
-            if (err.status === 400 && err.message?.includes('partnership')) {
-              return null
-            }
-            return []
-          }),
-          apiClient.get('/auth/profile').catch(() => null)
-        ])
-        
-        setExpenses(expensesData)
-        setGoals(goalsData)
-        setApprovals(approvalsData)
-        setProfile(profileData)
-      } catch (err) {
-        setError('Failed to load data')
-        console.error('Load data error:', err)
-      } finally {
-        setLoading(false)
-      }
+          return []
+        }),
+        apiClient.get('/auth/profile').catch((err) => {
+          console.log('👤 Profile API response:', err)
+          return null
+        })
+      ])
+      
+      console.log('📊 Data loaded:', {
+        expenses: expensesData,
+        goals: goalsData,
+        approvals: approvalsData,
+        profile: profileData
+      })
+      
+      setExpenses(expensesData)
+      setGoals(goalsData)
+      setApprovals(approvalsData)
+      setProfile(profileData)
+    } catch (err) {
+      setError('Failed to load data')
+      console.error('Load data error:', err)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     if (user) {
       loadData()
     }
@@ -585,7 +600,13 @@ export function SplitsaveApp() {
         )}
         {currentView === 'partnerships' && (
           <PartnershipManager 
-            onPartnershipsUpdate={(partnershipsData) => setPartnerships(partnershipsData)}
+            onPartnershipsUpdate={(partnershipsData) => {
+              setPartnerships(partnershipsData)
+              // Refresh data when partnerships change
+              if (partnershipsData.length > 0 && user) {
+                loadData()
+              }
+            }}
           />
         )}
         {currentView === 'profile' && (

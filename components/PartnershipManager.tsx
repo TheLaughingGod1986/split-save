@@ -96,11 +96,50 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     }
   }
 
-  const getPartnerName = (partnership: Partnership) => {
-    if (partnership.user1_id === user?.id) {
-      return partnership.user2_id
+  const getPartnerName = async (partnership: Partnership) => {
+    try {
+      const partnerId = partnership.user1_id === user?.id ? partnership.user2_id : partnership.user1_id
+      
+      // Try to get partner name from the partnerships response if it includes user data
+      if (partnership.user1 && partnership.user1.id === partnerId) {
+        return partnership.user1.name || partnership.user1.email || 'Unknown Partner'
+      }
+      if (partnership.user2 && partnership.user2.id === partnerId) {
+        return partnership.user2.name || partnership.user2.email || 'Unknown Partner'
+      }
+      
+      // Fallback to partner ID if no user data available
+      return partnerId
+    } catch (error) {
+      return 'Unknown Partner'
     }
-    return partnership.user1_id
+  }
+
+  const handleRemovePartnership = async (partnershipId: string) => {
+    if (!confirm('Are you sure you want to remove this partnership? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      setLoading(true)
+      // Call API to remove partnership
+      await apiClient.removePartnership(partnershipId)
+      setSuccess('Partnership removed successfully!')
+      await loadPartnershipData() // Refresh the data
+      
+              // Notify parent component of partnerships update
+        if (onPartnershipsUpdate) {
+          const updatedPartnerships = partnerships.filter(p => p.id !== partnershipId)
+          onPartnershipsUpdate(updatedPartnerships)
+        }
+        
+        // Force a page refresh to update auth middleware
+        window.location.reload()
+    } catch (error: any) {
+      setError(error.message || 'Failed to remove partnership')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getInvitationType = (invitation: PartnershipInvitation) => {
@@ -140,12 +179,21 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Partnerships</h2>
-        <button
-          onClick={loadPartnershipData}
-          className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          🔄 Refresh
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={loadPartnershipData}
+            className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            🔄 Refresh
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            title="Refresh page to update expenses/goals access"
+          >
+            🔄 Page Refresh
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -157,6 +205,19 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
           {success}
+        </div>
+      )}
+
+      {/* Partnership Status Info */}
+      {partnerships.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded">
+          <div className="flex items-center space-x-2">
+            <span>ℹ️</span>
+            <span>
+              <strong>Partnership Active!</strong> You can now access Expenses and Goals. 
+              If you don't see them, use the "Page Refresh" button above.
+            </span>
+          </div>
         </div>
       )}
 
@@ -204,10 +265,23 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
           <div className="space-y-3">
             {partnerships.map((partnership) => (
               <div key={partnership.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                <span className="text-gray-700">Partner ID: {getPartnerName(partnership)}</span>
-                <span className="text-sm text-gray-500">
-                  Created: {new Date(partnership.created_at).toLocaleDateString()}
-                </span>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-gray-700 font-medium">
+                      Partner: {getPartnerName(partnership)}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      Created: {new Date(partnership.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRemovePartnership(partnership.id)}
+                  className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors"
+                  title="Remove partnership"
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>
@@ -217,12 +291,12 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       {/* Sent Invitations */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Sent Invitations</h3>
-        {invitations.filter(inv => inv.from_user_id === user?.id).length === 0 ? (
-          <p className="text-gray-500">No invitations sent yet.</p>
+        {invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending').length === 0 ? (
+          <p className="text-gray-500">No pending invitations sent.</p>
         ) : (
           <div className="space-y-3">
             {invitations
-              .filter(inv => inv.from_user_id === user?.id)
+              .filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
               .map((invitation) => (
                 <div key={invitation.id} className="p-3 bg-gray-50 rounded">
                   <div className="flex items-center justify-between mb-2">
