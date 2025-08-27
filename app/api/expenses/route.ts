@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         .insert({
           partnership_id: user.partnershipId,
           requested_by_user_id: user.id, // Use correct column name
-          request_type: 'expense_add',
+          request_type: 'expense', // Fixed: was 'expense_add', should be 'expense'
           request_data: expenseData,
           message: expenseData.message || null
         })

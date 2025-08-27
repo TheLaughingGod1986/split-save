@@ -84,7 +84,7 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
       {/* Hero Section for CRO */}
       <div className="text-center mb-8">
         <div className="mx-auto w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mb-4">
@@ -92,19 +92,19 @@ export function LoginForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
           </svg>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
           SplitSave
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
           The smart way for couples and partners to manage shared expenses and build financial harmony together
         </p>
         
         {/* Social Proof */}
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center">
             <div className="flex -space-x-1 mr-2">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white"></div>
+                <div key={i} className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full border-2 border-white dark:border-gray-800"></div>
               ))}
             </div>
             <span>Join 10,000+ happy couples</span>
@@ -117,19 +117,19 @@ export function LoginForm() {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white/80 backdrop-blur-sm py-8 px-6 shadow-xl rounded-2xl border border-white/20">
+        <div className="form-section bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm py-8 px-6 shadow-xl rounded-2xl border border-white/20 dark:border-gray-700/50">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
               {isSignUp ? 'Start your financial journey together' : 'Continue managing your shared finances'}
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={handleAuth}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg flex items-center">
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -138,7 +138,7 @@ export function LoginForm() {
             )}
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Email address
               </label>
               <div className="relative">
@@ -152,12 +152,12 @@ export function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setEmailFocused(true)}
                   onBlur={() => setEmailFocused(false)}
-                  className={`w-full px-4 py-3 border-2 rounded-lg transition-all duration-200 ${
+                  className={`w-full px-4 py-3 border-2 rounded-lg transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
                     emailFocused 
-                      ? 'border-purple-500 ring-4 ring-purple-100' 
-                      : 'border-gray-300'
+                      ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
+                      : 'border-gray-300 dark:border-gray-600'
                   } ${
-                    email && !validateEmail(email) ? 'border-red-500' : ''
+                    email && !validateEmail(email) ? 'border-red-500 dark:border-red-400' : ''
                   }`}
                   placeholder="Enter your email"
                 />
@@ -170,12 +170,12 @@ export function LoginForm() {
                 )}
               </div>
               {email && !validateEmail(email) && (
-                <p className="mt-1 text-sm text-red-600">Please enter a valid email address</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Please enter a valid email address</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -189,19 +189,19 @@ export function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
-                  className={`w-full px-4 py-3 pr-12 border-2 rounded-lg transition-all duration-200 ${
+                  className={`w-full px-4 py-3 pr-12 border-2 rounded-lg transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
                     passwordFocused 
-                      ? 'border-purple-500 ring-4 ring-purple-100' 
-                      : 'border-gray-300'
+                      ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
+                      : 'border-gray-300 dark:border-gray-600'
                   } ${
-                    password && !validatePassword(password) ? 'border-red-500' : ''
+                    password && !validatePassword(password) ? 'border-red-500 dark:border-red-400' : ''
                   }`}
                   placeholder={isSignUp ? 'Create a password' : 'Enter your password'}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {showPassword ? (
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,20 +216,20 @@ export function LoginForm() {
                 </button>
               </div>
               {isSignUp && password && !validatePassword(password) && (
-                <p className="mt-1 text-sm text-red-600">Password must be at least 8 characters long</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Password must be at least 8 characters long</p>
               )}
             </div>
 
             {/* Password strength indicator for sign up */}
             {isSignUp && password && (
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                   <span>Password strength:</span>
-                  <span className={password.length >= 8 ? 'text-green-600 font-medium' : 'text-red-600'}>
+                  <span className={password.length >= 8 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400'}>
                     {password.length >= 8 ? 'Strong' : 'Weak'}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-300 ${
                       password.length >= 8 ? 'bg-green-500' : 'bg-red-500'
@@ -243,7 +243,7 @@ export function LoginForm() {
             <button
               type="submit"
               disabled={loading || !isFormValid()}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+              className="btn btn-primary w-full py-3 px-4 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -257,14 +257,14 @@ export function LoginForm() {
 
             {/* Trust indicators */}
             <div className="text-center">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 🔒 Your data is encrypted and secure
               </p>
             </div>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 onClick={() => {
@@ -273,7 +273,7 @@ export function LoginForm() {
                   setEmail('')
                   setPassword('')
                 }}
-                className="font-medium text-purple-600 hover:text-purple-500 transition-colors duration-200"
+                className="font-medium text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors duration-200"
               >
                 {isSignUp ? 'Sign in' : 'Sign up'}
               </button>
@@ -282,9 +282,9 @@ export function LoginForm() {
 
           {/* Additional CRO elements */}
           {isSignUp && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h3 className="text-sm font-medium text-blue-900 mb-2">✨ What you'll get:</h3>
-              <ul className="text-xs text-blue-700 space-y-1">
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">✨ What you'll get:</h3>
+              <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
                 <li>• Free shared expense tracking</li>
                 <li>• Collaborative savings goals</li>
                 <li>• Real-time partner notifications</li>
@@ -297,11 +297,11 @@ export function LoginForm() {
 
       {/* Bottom CTA */}
       <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           By continuing, you agree to our{' '}
-          <a href="#" className="text-purple-600 hover:text-purple-500">Terms of Service</a>
+          <a href="#" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300">Terms of Service</a>
           {' '}and{' '}
-          <a href="#" className="text-purple-600 hover:text-purple-500">Privacy Policy</a>
+          <a href="#" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300">Privacy Policy</a>
         </p>
       </div>
     </div>

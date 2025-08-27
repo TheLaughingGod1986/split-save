@@ -12,6 +12,7 @@ export async function POST(
   }
 
   const approvalId = params.id
+  console.log('🔍 Approval API - Starting approval process for ID:', approvalId)
 
   try {
     // Get approval request details
@@ -22,8 +23,16 @@ export async function POST(
       .single()
 
     if (error || !approval) {
+      console.error('❌ Approval API - Approval request not found:', error)
       return NextResponse.json({ error: 'Approval request not found' }, { status: 404 })
     }
+
+    console.log('✅ Approval API - Found approval request:', {
+      id: approval.id,
+      request_type: approval.request_type,
+      status: approval.status,
+      partnership_id: approval.partnership_id
+    })
 
     // Check if user is part of the partnership
     const { data: partnership } = await supabaseAdmin
@@ -34,14 +43,24 @@ export async function POST(
       .single()
 
     if (!partnership) {
+      console.error('❌ Approval API - User not authorized for partnership:', {
+        user_id: user.id,
+        partnership_id: approval.partnership_id
+      })
       return NextResponse.json({ error: 'Not authorized to respond to this request' }, { status: 403 })
     }
 
+    console.log('✅ Approval API - User authorized for partnership')
+
     if (approval.status !== 'pending') {
+      console.error('❌ Approval API - Request already processed:', approval.status)
       return NextResponse.json({ error: 'Request already processed' }, { status: 400 })
     }
 
+    console.log('✅ Approval API - Request is pending, proceeding with approval')
+
     // Update approval status
+    console.log('🔍 Approval API - Updating approval status to approved')
     const { error: updateError } = await supabaseAdmin
       .from('approval_requests')
       .update({
@@ -52,11 +71,14 @@ export async function POST(
       .eq('id', approvalId)
 
     if (updateError) {
+      console.error('❌ Approval API - Failed to approve request:', updateError)
       return NextResponse.json({ error: 'Failed to approve request' }, { status: 400 })
     }
 
+    console.log('✅ Approval API - Approval request updated to approved')
+
     // If approved, create the actual item
-    if (approval.request_type === 'expense_add') {
+    if (approval.request_type === 'expense') {
       const expenseData = approval.request_data
       const { error: expenseError } = await supabaseAdmin
         .from('expenses')
@@ -70,9 +92,11 @@ export async function POST(
         })
 
       if (expenseError) {
-        console.error('Failed to create approved expense:', expenseError)
+        console.error('❌ Approval API - Failed to create approved expense:', expenseError)
+      } else {
+        console.log('✅ Approval API - Approved expense created successfully')
       }
-    } else if (approval.request_type === 'goal_add') {
+    } else if (approval.request_type === 'goal') {
       const goalData = approval.request_data
       const { error: goalError } = await supabaseAdmin
         .from('goals')
@@ -86,13 +110,16 @@ export async function POST(
         })
 
       if (goalError) {
-        console.error('Failed to create approved goal:', goalError)
+        console.error('❌ Approval API - Failed to create approved goal:', goalError)
+      } else {
+        console.log('✅ Approval API - Approved goal created successfully')
       }
     }
 
+    console.log('✅ Approval API - Approval process completed successfully')
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Approve request error:', error)
+    console.error('❌ Approval API - Approve request error:', error)
     return NextResponse.json({ error: 'Failed to approve request' }, { status: 500 })
   }
 }
