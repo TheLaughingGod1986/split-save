@@ -114,7 +114,6 @@ export async function POST(
           name: goalData.name,
           target_amount: goalData.targetAmount,
           description: goalData.description,
-          priority: goalData.priority || 1,
           added_by_user_id: approval.requested_by_user_id
         })
 

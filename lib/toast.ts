@@ -6,6 +6,9 @@ export interface ToastOptions {
 }
 
 export function showToast(message: string, type: ToastType = 'info', options: ToastOptions = {}) {
+  // Only run on client side
+  if (typeof window === 'undefined') return null
+  
   const {
     duration = 5000,
     position = 'top-right'
@@ -44,15 +47,17 @@ export const toast = {
   info: (message: string, options?: ToastOptions) => showToast(message, 'info', options)
 }
 
-// Auto-remove toasts when clicking on them
-document.addEventListener('click', (e) => {
-  const target = e.target as HTMLElement
-  if (target.classList.contains('toast')) {
-    target.classList.remove('show')
-    setTimeout(() => {
-      if (document.body.contains(target)) {
-        document.body.removeChild(target)
-      }
-    }, 300)
-  }
-})
+// Auto-remove toasts when clicking on them - only on client side
+if (typeof window !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    if (target.classList.contains('toast')) {
+      target.classList.remove('show')
+      setTimeout(() => {
+        if (document.body.contains(target)) {
+          document.body.removeChild(target)
+        }
+      }, 300)
+    }
+  })
+}

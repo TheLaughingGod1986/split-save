@@ -41,6 +41,11 @@ export async function POST(
       return NextResponse.json({ error: 'Request already processed' }, { status: 400 })
     }
 
+    // Prevent users from declining their own requests
+    if (approval.requested_by_user_id === user.id) {
+      return NextResponse.json({ error: 'You cannot decline your own request' }, { status: 403 })
+    }
+
     // Update approval status to declined
     const { error: updateError } = await supabaseAdmin
       .from('approval_requests')
