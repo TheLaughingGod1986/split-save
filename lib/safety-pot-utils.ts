@@ -136,13 +136,13 @@ export function generateReallocationSuggestions(
     })
   }
   
-  // Suggest reallocation to high-priority savings goals
+  // Suggest reallocation to savings goals
   if (availableFunds > 0) {
-    const highPriorityGoals = savingsGoals
-      .filter(goal => goal.priority <= 2 && goal.current_amount < goal.target_amount)
-      .sort((a, b) => a.priority - b.priority)
+    const incompleteGoals = savingsGoals
+      .filter(goal => goal.current_amount < goal.target_amount)
+      .sort((a, b) => (a.target_amount - a.current_amount) - (b.target_amount - b.current_amount)) // Sort by remaining amount
     
-    highPriorityGoals.forEach(goal => {
+    incompleteGoals.forEach(goal => {
       const remaining = goal.target_amount - goal.current_amount
       const suggestedAmount = Math.min(remaining, availableFunds * 0.4) // Suggest 40% of available funds
       
@@ -150,8 +150,8 @@ export function generateReallocationSuggestions(
         suggestions.push({
           type: 'savings-goals',
           amount: suggestedAmount,
-          priority: goal.priority === 1 ? 'high' : 'medium',
-          reason: `High-priority goal: ${goal.name}`,
+          priority: 'medium',
+          reason: `Savings goal: ${goal.name}`,
           impact: `Progress: ${((goal.current_amount + suggestedAmount) / goal.target_amount * 100).toFixed(1)}%`
         })
       }

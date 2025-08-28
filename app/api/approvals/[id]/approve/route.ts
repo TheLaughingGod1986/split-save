@@ -31,7 +31,8 @@ export async function POST(
       id: approval.id,
       request_type: approval.request_type,
       status: approval.status,
-      partnership_id: approval.partnership_id
+      partnership_id: approval.partnership_id,
+      request_data: approval.request_data
     })
 
     // Check if user is part of the partnership
@@ -73,9 +74,7 @@ export async function POST(
     const { error: updateError } = await supabaseAdmin
       .from('approval_requests')
       .update({
-        status: 'approved',
-        responded_by: user.id,
-        responded_at: new Date().toISOString()
+        status: 'approved'
       })
       .eq('id', approvalId)
 
@@ -107,15 +106,15 @@ export async function POST(
       }
     } else if (approval.request_type === 'goal') {
       const goalData = approval.request_data
+      console.log('🔍 Approval API - Processing goal approval with data:', goalData)
       const { error: goalError } = await supabaseAdmin
         .from('goals')
         .insert({
           partnership_id: approval.partnership_id,
           name: goalData.name,
-          target_amount: goalData.targetAmount,
-          target_date: goalData.targetDate || null,
+          target_amount: goalData.targetAmount || goalData.target_amount,
+          target_date: goalData.targetDate || goalData.target_date || null,
           description: goalData.description,
-          priority: goalData.priority || 1,
           added_by_user_id: approval.requested_by_user_id
         })
 
@@ -123,10 +122,32 @@ export async function POST(
         console.error('❌ Approval API - Failed to create approved goal:', goalError)
       } else {
         console.log('✅ Approval API - Approved goal created successfully')
+        console.log('🔍 Approval API - Goal data inserted:', {
+          partnership_id: approval.partnership_id,
+          name: goalData.name,
+          target_amount: goalData.targetAmount,
+          target_date: goalData.targetDate || null,
+          description: goalData.description,
+          added_by_user_id: approval.requested_by_user_id
+        })
       }
     }
 
     console.log('✅ Approval API - Approval process completed successfully')
+    
+    // Verify the approval request was updated
+    const { data: updatedApproval, error: verifyError } = await supabaseAdmin
+      .from('approval_requests')
+      .select('id, status')
+      .eq('id', approvalId)
+      .single()
+    
+    if (verifyError) {
+      console.error('❌ Approval API - Failed to verify approval update:', verifyError)
+    } else {
+      console.log('🔍 Approval API - Verification of approval update:', updatedApproval)
+    }
+    
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('❌ Approval API - Approve request error:', error)

@@ -2,16 +2,26 @@ import { supabase } from './supabase'
 
 class ApiClient {
   private async getAuthHeaders() {
-    const { data: { session } } = await supabase.auth.getSession()
+    console.log('🔐 API CLIENT: Getting auth headers...')
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    console.log('🔐 API CLIENT: Session data:', session ? 'Present' : 'Missing')
+    console.log('🔐 API CLIENT: Session error:', error)
     
     if (!session?.access_token) {
+      console.error('🔐 API CLIENT: No session or access token')
       throw new Error('Not authenticated')
     }
     
-    return {
+    console.log('🔐 API CLIENT: Access token length:', session.access_token.length)
+    
+    const headers = {
       'Authorization': `Bearer ${session.access_token}`,
       'Content-Type': 'application/json'
     }
+    
+    console.log('🔐 API CLIENT: Returning headers:', headers)
+    return headers
   }
   
   async get(endpoint: string) {
@@ -32,7 +42,9 @@ class ApiClient {
     console.log('3. Full URL:', `/api${endpoint}`)
     
     const headers = await this.getAuthHeaders()
-    console.log('4. Auth headers:', headers)
+    console.log('4. Auth headers received:', headers)
+    console.log('4a. Authorization header present:', !!headers.Authorization)
+    console.log('4b. Content-Type header present:', !!headers['Content-Type'])
     
     try {
       const response = await fetch(`/api${endpoint}`, {

@@ -55,6 +55,7 @@ import { ProfileManager } from './ProfileManager'
 import PWAInstallPrompt from './PWAInstallPrompt'
 import SafetyPotManager from './SafetyPotManager'
 import ContributionManager from './ContributionManager'
+import { PartnershipManager } from './PartnershipManager'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 
 export function SplitsaveApp() {
@@ -64,6 +65,8 @@ export function SplitsaveApp() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
+  const [partnerships, setPartnerships] = useState<any[]>([])
+  const [invitations, setInvitations] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [profileCompletionShown, setProfileCompletionShown] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -288,7 +291,7 @@ export function SplitsaveApp() {
       console.log('✅ Profile loaded:', profileData)
       
       // Load other data with shorter timeouts
-      console.log('🔄 Loading expenses, goals, and approvals...')
+      console.log('🔄 Loading expenses, goals, approvals, and partnerships...')
       const results = await Promise.allSettled([
         apiClient.get('/expenses').catch((err) => {
           console.log('📊 Expenses API response:', err)
@@ -311,20 +314,27 @@ export function SplitsaveApp() {
           }
           return []
         }),
-
+        apiClient.get('/invite').catch((err) => {
+          console.log('🤝 Partnerships API response:', err)
+          return { partnerships: [], invitations: [] }
+        }),
       ])
       
-      const [expensesResult, goalsResult, approvalsResult] = results
+      const [expensesResult, goalsResult, approvalsResult, partnershipsResult] = results
       
       // Handle results safely
-      setExpenses(expensesResult.status === 'fulfilled' ? expensesResult.value : [])
-      setGoals(goalsResult.status === 'fulfilled' ? goalsResult.value : [])
-      setApprovals(approvalsResult.status === 'fulfilled' ? approvalsResult.value : [])
-
-      console.log('📊 Data loaded successfully')
-      console.log('📊 Expenses count:', expensesResult.status === 'fulfilled' ? expensesResult.value?.length : 'failed')
-      console.log('🎯 Goals count:', goalsResult.status === 'fulfilled' ? goalsResult.value?.length : 'failed')
-      console.log('✅ Approvals count:', approvalsResult.status === 'fulfilled' ? approvalsResult.value?.length : 'failed')
+      const expensesData = expensesResult.status === 'fulfilled' ? expensesResult.value : []
+      const goalsData = goalsResult.status === 'fulfilled' ? goalsResult.value : []
+      const approvalsData = approvalsResult.status === 'fulfilled' ? approvalsResult.value : []
+      
+      setExpenses(expensesData)
+      setGoals(goalsData)
+      setApprovals(approvalsData)
+      
+      // Extract partnership data
+      const partnershipsData = partnershipsResult.status === 'fulfilled' ? partnershipsResult.value : { partnerships: [], invitations: [] }
+      setPartnerships(partnershipsData.partnerships || [])
+      setInvitations(partnershipsData.invitations || [])
     } catch (err) {
       setError('Failed to load data')
       toast.error('Failed to load data')
@@ -375,17 +385,13 @@ export function SplitsaveApp() {
         toast.success('Expense added successfully!')
         setError('') // Clear any previous errors
         
-        // Refresh expenses with delay to avoid race conditions
-        console.log('🔄 Refreshing expenses...')
-        setTimeout(async () => {
-          try {
-            const expensesData = await apiClient.get('/expenses')
-            console.log('✅ Expenses refreshed:', expensesData)
-            setExpenses(expensesData)
-          } catch (err) {
-            console.error('❌ Failed to refresh expenses:', err)
-          }
-        }, 100)
+        // Refresh expenses immediately
+        try {
+          const expensesData = await apiClient.get('/expenses')
+          setExpenses(expensesData || [])
+        } catch (err: any) {
+          console.error('❌ Failed to refresh expenses:', err)
+        }
       }
     } catch (err: any) {
       // Check if it's a partnership error
@@ -494,7 +500,7 @@ export function SplitsaveApp() {
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">SplitSave</h1>
             </div>
             
-            {/* Desktop User Menu */}
+              {/* Desktop User Menu */}
             <div className="hidden md:flex items-center space-x-4">
               {/* Dark Mode Toggle */}
               <button
@@ -629,6 +635,12 @@ export function SplitsaveApp() {
               Approvals ({approvals.length})
             </button>
             <button
+              onClick={() => setCurrentView('partnerships')}
+              className={`nav-tab ${currentView === 'partnerships' ? 'active' : ''}`}
+            >
+              Partnerships
+            </button>
+            <button
               onClick={() => setCurrentView('profile')}
               className={`nav-tab ${currentView === 'profile' ? 'active' : ''}`}
             >
@@ -649,6 +661,7 @@ export function SplitsaveApp() {
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'contributions', label: 'Contributions', icon: '💳' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
+              { id: 'partnerships', label: 'Partnerships', icon: '🤝' },
               { id: 'profile', label: 'Profile', icon: '👤' }
             ].map((item) => (
               <button
@@ -716,11 +729,13 @@ export function SplitsaveApp() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-        {currentView === 'dashboard' && (
-          <DashboardView
+                {currentView === 'dashboard' && (
+          <DashboardView 
             expenses={expenses}
             goals={goals}
+            partnerships={partnerships}
             onNavigateToProfile={() => setCurrentView('profile')}
+            onNavigateToPartnerships={() => setCurrentView('partnerships')}
             profile={profile}
             profileCompletionShown={profileCompletionShown}
             onProfileCompletionShown={() => setProfileCompletionShown(true)}
@@ -731,6 +746,7 @@ export function SplitsaveApp() {
         {currentView === 'expenses' && (
           <ExpensesView 
             expenses={expenses} 
+            partnerships={partnerships}
             onAddExpense={addExpense}
             currencySymbol={currencySymbol}
           />
@@ -738,6 +754,7 @@ export function SplitsaveApp() {
         {currentView === 'goals' && (
           <GoalsView 
             goals={goals} 
+            partnerships={partnerships}
             onAddGoal={addGoal}
             currencySymbol={currencySymbol}
             userCountry={profile?.country_code}
@@ -759,10 +776,15 @@ export function SplitsaveApp() {
         {currentView === 'approvals' && (
           <ApprovalsView 
             approvals={approvals} 
+            partnerships={partnerships}
+            currentUserId={user?.id}
             onApprove={approveRequest}
             onDecline={declineRequest}
             currencySymbol={currencySymbol}
           />
+        )}
+        {currentView === 'partnerships' && (
+          <PartnershipManager />
         )}
         {currentView === 'profile' && (
           <ProfileManager onProfileUpdate={(updatedProfile) => {
@@ -781,6 +803,7 @@ export function SplitsaveApp() {
             { id: 'goals', label: 'Goals', icon: '🎯' },
             { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
             { id: 'contributions', label: 'Contributions', icon: '💳' },
+            { id: 'partnerships', label: 'Partnerships', icon: '🤝' },
             { id: 'profile', label: 'Profile', icon: '👤' }
           ].map((item) => (
             <button
@@ -805,7 +828,9 @@ export function SplitsaveApp() {
 function DashboardView({ 
   expenses, 
   goals, 
+  partnerships,
   onNavigateToProfile, 
+  onNavigateToPartnerships,
   profile, 
   profileCompletionShown,
   onProfileCompletionShown,
@@ -814,7 +839,9 @@ function DashboardView({
 }: { 
   expenses: Expense[] | null, 
   goals: Goal[] | null, 
+  partnerships: any[],
   onNavigateToProfile: () => void,
+  onNavigateToPartnerships: () => void,
   profile: any,
   profileCompletionShown: boolean,
   onProfileCompletionShown: () => void,
@@ -850,7 +877,7 @@ function DashboardView({
 
   const profileCompletion = calculateProfileCompletion()
   const hasData = (expenses && expenses.length > 0) || (goals && goals.length > 0)
-  const hasPartnership = expenses !== null && goals !== null
+  const hasPartnership = partnerships.length > 0
 
   // Show completion message only once per session
   const shouldShowCompletionMessage = profileCompletion === 100 && !hasData && !profileCompletionShown
@@ -1028,19 +1055,27 @@ function DashboardView({
       {/* Partnership Status */}
       {!hasPartnership && (
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg className="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Partnership Required</h3>
+                <p className="text-blue-700 dark:text-blue-300 mt-1">
+                  To use SplitSave's full features, you need to connect with a partner. 
+                  This enables shared expenses, savings goals, and collaborative financial planning.
+                </p>
+              </div>
             </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Partnership Required</h3>
-              <p className="text-blue-700 dark:text-blue-300 mt-1">
-                To use SplitSave's full features, you need to connect with a partner. 
-                This enables shared expenses, savings goals, and collaborative financial planning.
-              </p>
-            </div>
+            <button
+              onClick={onNavigateToPartnerships}
+              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Set Up Partnership
+            </button>
           </div>
         </div>
       )}
@@ -1129,7 +1164,7 @@ function DashboardView({
 }
 
 // Expenses View Component
-function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Expense[] | null, onAddExpense: (data: any) => void, currencySymbol: string }) {
+function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: { expenses: Expense[] | null, partnerships: any[], onAddExpense: (data: any) => void, currencySymbol: string }) {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     description: '',
@@ -1138,8 +1173,8 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
     message: ''
   })
 
-  // Check if we have a partnership (expenses array will be null if no partnership)
-  const hasPartnership = expenses !== null
+  // Check if we have a partnership
+  const hasPartnership = partnerships.length > 0
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1211,7 +1246,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" action="javascript:void(0)">
             <div className="form-group">
               <label className="form-label">Description</label>
               <input
@@ -1219,7 +1254,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 className="form-input"
-                placeholder="e.g., Groceries, Rent, Utilities"
+                placeholder="e.g., Food Shopping, Rent, Bills"
                 required
               />
             </div>
@@ -1246,15 +1281,15 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
                 <option value="">Select a category</option>
                 <option value="Food & Dining">🍽️ Food & Dining</option>
                 <option value="Housing">🏠 Housing</option>
-                <option value="Transportation">🚗 Transportation</option>
-                <option value="Utilities">⚡ Utilities</option>
+                <option value="Transport">🚗 Transport</option>
+                <option value="Bills">⚡ Bills</option>
                 <option value="Entertainment">🎬 Entertainment</option>
                 <option value="Shopping">🛍️ Shopping</option>
                 <option value="Healthcare">🏥 Healthcare</option>
                 <option value="Education">📚 Education</option>
-                <option value="Travel">✈️ Travel</option>
+                <option value="Holiday">✈️ Holiday</option>
                 <option value="Insurance">🛡️ Insurance</option>
-                <option value="Taxes">💰 Taxes</option>
+                <option value="Tax">💰 Tax</option>
                 <option value="Gifts">🎁 Gifts</option>
                 <option value="Personal Care">💄 Personal Care</option>
                 <option value="Pets">🐾 Pets</option>
@@ -1283,6 +1318,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
               <button
                 type="submit"
                 className="btn btn-primary"
+
               >
                 Add Expense
               </button>
@@ -1305,7 +1341,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">{expense.description}</h4>
                   <div className="flex items-center space-x-2 mt-1">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
-                      {expense.category}
+                      {expense.category === 'Vacation' ? 'Holiday' : expense.category}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       Added by {expense.added_by_user?.name || 'Unknown'}
@@ -1335,7 +1371,7 @@ function ExpensesView({ expenses, onAddExpense, currencySymbol }: { expenses: Ex
 }
 
 // Goals View Component
-function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: Goal[], onAddGoal: (data: any) => void, currencySymbol: string, userCountry?: string }) {
+function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry }: { goals: Goal[], partnerships: any[], onAddGoal: (data: any) => void, currencySymbol: string, userCountry?: string }) {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -1343,7 +1379,6 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
     targetDate: '',
     description: '',
     category: '',
-    priority: '1',
     message: ''
   })
 
@@ -1370,7 +1405,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
       ...formData,
       targetAmount: parseFloat(formData.targetAmount)
     })
-    setFormData({ name: '', targetAmount: '', targetDate: '', description: '', category: '', priority: '1', message: '' })
+    setFormData({ name: '', targetAmount: '', targetDate: '', description: '', category: '', message: '' })
     setShowForm(false)
   }
 
@@ -1378,12 +1413,22 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Savings Goals</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="btn btn-primary px-4 py-2"
-        >
-          {showForm ? 'Cancel' : 'Add Goal'}
-        </button>
+        {partnerships && partnerships.length > 0 ? (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="btn btn-primary px-4 py-2"
+          >
+            {showForm ? 'Cancel' : 'Add Goal'}
+          </button>
+        ) : (
+          <button
+            disabled
+            className="btn btn-secondary px-4 py-2 opacity-50 cursor-not-allowed"
+            title="Partnership required to add goals"
+          >
+            Add Goal
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -1411,7 +1456,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className="form-input"
-                placeholder="e.g., Vacation Fund, New Car, Emergency Fund"
+                placeholder="e.g., Holiday Fund, New Car, Emergency Fund"
                 required
               />
             </div>
@@ -1469,7 +1514,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
                 required
               >
                 <option value="">Select a category</option>
-                <option value="Vacation">{userCountry === 'US' ? '🏖️ Vacation' : '🏖️ Holiday'}</option>
+                <option value="Holiday">🏖️ Holiday</option>
                 <option value="Vehicle">🚗 Vehicle</option>
                 <option value="Home">🏠 Home</option>
                 <option value="Emergency Fund">🆘 Emergency Fund</option>
@@ -1483,21 +1528,7 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
                 <option value="Other">📦 Other</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Priority</label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({...formData, priority: e.target.value})}
-                className="form-input"
-                required
-              >
-                <option value="1">1 - Highest Priority (Funds allocated first)</option>
-                <option value="2">2 - High Priority</option>
-                <option value="3">3 - Medium Priority</option>
-                <option value="4">4 - Low Priority</option>
-                <option value="5">5 - Lowest Priority (Funds allocated last)</option>
-              </select>
-            </div>
+
             <div className="form-group">
               <label className="form-label">Message (Optional)</label>
               <textarea
@@ -1527,50 +1558,71 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
         </div>
       )}
 
-      {goals && goals.length > 0 ? (
-        <div className="form-section">
-          <div className="form-section-header">
-            <h3 className="form-section-title">Your Savings Goals</h3>
-            <p className="form-section-subtitle">Track your progress towards financial goals</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {goals.map((goal) => (
-              <div key={goal.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{goal.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{goal.description}</p>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-300">Progress</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
-                    </span>
-                  </div>
+      {partnerships && partnerships.length > 0 ? (
+        goals && goals.length > 0 ? (
+          <div className="form-section">
+            <div className="form-section-header">
+              <h3 className="form-section-title">Your Savings Goals</h3>
+              <p className="form-section-subtitle">Track your progress towards financial goals</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {goals.map((goal) => (
+                <div key={goal.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{goal.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{goal.description}</p>
                   
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-purple-600 h-2 rounded-full" 
-                      style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Target Date: {goal.target_date ? new Date(goal.target_date).toLocaleDateString() : 'Not set'}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-300">Progress</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
+                      </span>
+                    </div>
+                    
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-purple-600 h-2 rounded-full" 
+                        style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Target Date: {goal.target_date ? new Date(goal.target_date).toLocaleDateString() : 'Not set'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="form-section">
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🎯</div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No savings goals yet</h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Create your first goal to start saving together
+              </p>
+            </div>
+          </div>
+        )
       ) : (
         <div className="form-section">
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No savings goals yet</h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Create your first goal to start saving together
+            <div className="text-6xl mb-4">🤝</div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Partnership Required</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              To add shared savings goals, you need to be connected with a partner. This allows you to split costs and track shared financial goals together.
             </p>
+            
+            <div className="text-left max-w-md mx-auto">
+              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 text-center">Next steps:</h4>
+              <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+                <li>• Partner with someone to start sharing expenses</li>
+                <li>• Set up shared financial goals</li>
+                <li>• Track spending together</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
@@ -1581,15 +1633,42 @@ function GoalsView({ goals, onAddGoal, currencySymbol, userCountry }: { goals: G
 // Approvals View Component
 function ApprovalsView({ 
   approvals, 
+  partnerships,
+  currentUserId,
   onApprove, 
   onDecline, 
   currencySymbol 
 }: { 
   approvals: ApprovalRequest[], 
+  partnerships: any[],
+  currentUserId: string | undefined,
   onApprove: (id: string) => void,
   onDecline: (id: string) => void,
   currencySymbol: string
 }) {
+  if (!partnerships || partnerships.length === 0) {
+    return (
+      <div className="form-section">
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🤝</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Partnership Required</h2>
+                      <p className="text-gray-500 dark:text-gray-400 mb-6">
+              To see approval requests, you need to be connected with a partner. This allows you to split costs and track shared financial goals together.
+            </p>
+          
+          <div className="text-left max-w-md mx-auto">
+            <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 text-center">Next steps:</h4>
+                          <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+                <li>• Partner with someone to start sharing expenses</li>
+                <li>• Set up shared financial goals</li>
+                <li>• Track spending together</li>
+              </ul>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (approvals.length === 0) {
     return (
       <div className="form-section">
@@ -1604,14 +1683,14 @@ function ApprovalsView({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pending Approvals</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Approval Requests</h2>
       
       {/* Partner Approval Notice */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <div className="flex items-center space-x-2">
           <div className="text-blue-600 dark:text-blue-400">ℹ️</div>
           <p className="text-blue-800 dark:text-blue-200 text-sm">
-            <strong>Partner Approval Required:</strong> Large expenses and new goals require your partner's approval before they can be added to your shared account.
+            <strong>Approval System:</strong> Large expenses (over {currencySymbol}100) and new goals require partner approval. You can see your own requests and approve your partner's requests.
           </p>
         </div>
       </div>
@@ -1630,7 +1709,7 @@ function ApprovalsView({
                     {approval.request_type === 'expense' ? '💰 Expense' : '🎯 Goal'}
                   </div>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Requested by {approval.requested_by_user?.name || 'Unknown'}
+                    Requested by {approval.requested_by_user?.id === currentUserId ? 'you' : (approval.requested_by_user?.name || 'Unknown')}
                   </span>
                 </div>
                 
@@ -1644,7 +1723,7 @@ function ApprovalsView({
                       <div className="space-y-2">
                         <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Description:</span> {approval.request_data.description || 'No description'}</p>
                         <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Amount:</span> <span className="font-semibold text-lg">{currencySymbol}{approval.request_data.amount?.toFixed(2)}</span></p>
-                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Category:</span> {approval.request_data.category || 'Uncategorized'}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Category:</span> {approval.request_data.category === 'Vacation' ? 'Holiday' : (approval.request_data.category || 'Uncategorized')}</p>
                       </div>
                     </>
                   )}
@@ -1654,7 +1733,7 @@ function ApprovalsView({
                       <div className="space-y-2">
                         <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Name:</span> {approval.request_data.name || 'No name'}</p>
                         <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Target Amount:</span> <span className="font-semibold text-lg">{currencySymbol}{approval.request_data.targetAmount?.toFixed(2)}</span></p>
-                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Category:</span> {approval.request_data.category || 'No category'}</p>
+                        <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Category:</span> {approval.request_data.category === 'Vacation' ? 'Holiday' : (approval.request_data.category || 'No category')}</p>
                         <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Description:</span> {approval.request_data.description || 'No description'}</p>
                         {approval.request_data.targetDate && (
                           <p className="text-sm"><span className="font-medium text-gray-700 dark:text-gray-300">Target Date:</span> {new Date(approval.request_data.targetDate).toLocaleDateString()}</p>
@@ -1673,29 +1752,62 @@ function ApprovalsView({
                 )}
                 
                 {/* Approval Status Info */}
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                  <p className="text-amber-800 dark:text-amber-200 text-sm">
-                    <strong>Action Required:</strong> Please review this request and either approve or decline it. 
-                    {approval.request_type === 'expense' && approval.request_data.amount > 100 && (
-                      <span> This expense requires approval because it's over {currencySymbol}100.</span>
-                    )}
-                  </p>
+                <div className={`rounded-lg p-3 ${
+                  approval.requested_by_user?.id === currentUserId 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
+                    : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
+                }`}>
+                  {approval.requested_by_user?.id === currentUserId ? (
+                    // User is the requester
+                    <p className="text-blue-800 dark:text-blue-200 text-sm">
+                      <strong>Request Sent:</strong> Your {approval.request_type} request has been sent to your partner for approval. 
+                      {approval.request_type === 'expense' && approval.request_data.amount > 100 && (
+                        <span> This expense requires approval because it's over {currencySymbol}100.</span>
+                      )}
+                    </p>
+                  ) : (
+                    // User is the approver
+                    <p className="text-amber-800 dark:text-amber-200 text-sm">
+                      <strong>Action Required:</strong> Please review this request and either approve or decline it. 
+                      {approval.request_type === 'expense' && approval.request_data.amount > 100 && (
+                        <span> This expense requires approval because it's over {currencySymbol}100.</span>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
               
               <div className="flex flex-col space-y-2 ml-4">
-                <button
-                  onClick={() => onApprove(approval.id)}
-                  className="btn btn-success px-4 py-2"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => onDecline(approval.id)}
-                  className="btn btn-danger px-4 py-2"
-                >
-                  Decline
-                </button>
+                {/* Check if current user is the requester or the approver */}
+                {approval.requested_by_user?.id === currentUserId ? (
+                  // User is the requester - show "Sent for Approval" status
+                  <div className="text-center">
+                    <div className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                      📤 Sent for Approval
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Waiting for partner
+                    </p>
+                  </div>
+                ) : (
+                  // User is the approver - show approve/decline buttons
+                  <>
+                    <button
+                      onClick={() => onApprove(approval.id)}
+                      className="btn btn-success px-4 py-2"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => onDecline(approval.id)}
+                      className="btn btn-danger px-4 py-2"
+                    >
+                      Decline
+                    </button>
+                  </>
+                )}
+                
+
               </div>
             </div>
           </div>

@@ -84,10 +84,9 @@ export function calculateMonthlyContribution(
   const monthlyGoals = goals.reduce((total, goal) => {
     if (goal.current_amount >= goal.target_amount) return total
     
-    // Calculate monthly contribution needed based on priority
+    // Calculate monthly contribution needed (equal distribution for all goals)
     const remaining = goal.target_amount - goal.current_amount
-    const priorityMultiplier = Math.max(0.1, 1 / goal.priority) // Higher priority = higher contribution
-    const monthlyContribution = (remaining * priorityMultiplier) / 12
+    const monthlyContribution = remaining / 12
     
     return total + monthlyContribution
   }, 0)

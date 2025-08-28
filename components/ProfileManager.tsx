@@ -674,7 +674,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                     <h5 className="text-sm font-medium">Healthy Balance</h5>
                     <p className="text-sm mt-1">
                       You have a good balance between personal spending and shared expenses. 
-                      This amount can be used for rent, bills, groceries, and other shared costs.
+                      This amount can be used for rent, bills, food shopping, and other shared costs.
                     </p>
                   </div>
                 </div>

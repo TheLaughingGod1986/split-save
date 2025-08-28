@@ -70,6 +70,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
     }
     
+    console.log('🔍 Expenses API - Partnership data:', partnership)
+    console.log('🔍 Expenses API - user1_id:', partnership.user1_id)
+    console.log('🔍 Expenses API - user2_id:', partnership.user2_id)
+    
     // Count active partners (users who are not null)
     const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
     console.log('🔍 Expenses API - Active partners in partnership:', activePartners)
