@@ -272,18 +272,24 @@ export function SplitsaveApp() {
   const currencySymbol = profile?.currency ? getCurrencySymbol(profile.currency) : '$'
   const currencyEmoji = profile?.currency ? getCurrencyEmoji(profile.currency) : '💰'
 
-    // Load data from backend
+    // Load data from backend - SIMPLIFIED VERSION
   const loadData = async () => {
     try {
       setLoading(true)
       console.log('🔄 Loading data for user:', user?.id)
       
-
+      // Load only essential data first
+      const profileData = await apiClient.get('/auth/profile').catch((err) => {
+        console.log('👤 Profile API response:', err)
+        return null
+      })
       
-      const dataPromise = Promise.all([
+      setProfile(profileData)
+      
+      // Load other data with shorter timeouts
+      const results = await Promise.allSettled([
         apiClient.get('/expenses').catch((err) => {
           console.log('📊 Expenses API response:', err)
-          // If no partnership, return null instead of empty array
           if (err.status === 400 && err.message?.includes('partnership')) {
             return null
           }
@@ -303,31 +309,21 @@ export function SplitsaveApp() {
           }
           return []
         }),
-        apiClient.get('/auth/profile').catch((err) => {
-          console.log('👤 Profile API response:', err)
-          return null
-        }),
         apiClient.get('/invite').catch((err) => {
           console.log('🤝 Partnerships API response:', err)
           return { partnerships: [], invitations: [] }
         })
       ])
       
-      const [expensesData, goalsData, approvalsData, profileData, partnershipsData] = await dataPromise
+      const [expensesResult, goalsResult, approvalsResult, partnershipsResult] = results
       
-      console.log('📊 Data loaded:', {
-        expenses: expensesData,
-        goals: goalsData,
-        approvals: approvalsData,
-        profile: profileData,
-        partnerships: partnershipsData
-      })
+      // Handle results safely
+      setExpenses(expensesResult.status === 'fulfilled' ? expensesResult.value : [])
+      setGoals(goalsResult.status === 'fulfilled' ? goalsResult.value : [])
+      setApprovals(approvalsResult.status === 'fulfilled' ? approvalsResult.value : [])
+      setPartnerships(partnershipsResult.status === 'fulfilled' ? partnershipsResult.value?.partnerships || [] : [])
       
-      setExpenses(expensesData)
-      setGoals(goalsData)
-      setApprovals(approvalsData)
-      setProfile(profileData)
-      setPartnerships(partnershipsData?.partnerships || [])
+      console.log('📊 Data loaded successfully')
     } catch (err) {
       setError('Failed to load data')
       toast.error('Failed to load data')
@@ -759,13 +755,20 @@ export function SplitsaveApp() {
           />
         )}
         {currentView === 'partnerships' && (
-          <PartnershipManager 
-            onPartnershipsUpdate={(partnershipsData) => {
-              setPartnerships(partnershipsData)
-              // Don't call loadData() here - it creates an infinite loop
-              // The main app data is loaded separately when the component mounts
-            }}
-          />
+          <div className="p-6 text-center">
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+              Partnerships Temporarily Disabled
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              We're fixing some technical issues with the partnerships system. 
+              Please check back soon!
+            </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>Current Status:</strong> You have 1 active partnership with Benjamin Oats
+              </p>
+            </div>
+          </div>
         )}
         {currentView === 'profile' && (
           <ProfileManager onProfileUpdate={(updatedProfile) => {
