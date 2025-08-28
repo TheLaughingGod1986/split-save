@@ -42,6 +42,8 @@ export default function PartnershipManager({
   
   // Track if we've already loaded data to prevent multiple loads
   const [hasLoaded, setHasLoaded] = useState(false)
+  const [loadCount, setLoadCount] = useState(0)
+  const MAX_LOADS = 3
 
   // Load data only once when component mounts
   useEffect(() => {
@@ -55,6 +57,12 @@ export default function PartnershipManager({
   const loadData = async () => {
     if (loading || !user) return
     
+    // Prevent infinite loops - max 3 loads
+    if (loadCount >= MAX_LOADS) {
+      console.log('🚫 PartnershipManager: Load blocked - max loads reached')
+      return
+    }
+    
     // Prevent multiple simultaneous calls
     const now = Date.now()
     if (now - (window as any).lastLoadTime < 1000) {
@@ -63,9 +71,10 @@ export default function PartnershipManager({
     }
     ;(window as any).lastLoadTime = now
     
-    console.log('📡 PartnershipManager: Loading data...')
+    console.log(`📡 PartnershipManager: Loading data... (${loadCount + 1}/${MAX_LOADS})`)
     setLoading(true)
     setError(null)
+    setLoadCount(prev => prev + 1)
     
     try {
       // Load partnerships and invitations
@@ -73,10 +82,11 @@ export default function PartnershipManager({
       setPartnerships(partnershipsResponse.partnerships)
       setInvitations(partnershipsResponse.invitations)
       
-      // Only update parent if partnerships actually changed
-      if (JSON.stringify(partnerships) !== JSON.stringify(partnershipsResponse.partnerships)) {
-        onPartnershipsUpdate(partnershipsResponse.partnerships)
-      }
+      // TEMPORARILY DISABLED: Parent callback to prevent infinite loop
+      // TODO: Re-enable once loop issue is resolved
+      // if (JSON.stringify(partnerships) !== JSON.stringify(partnershipsResponse.partnerships)) {
+      //   onPartnershipsUpdate(partnershipsResponse.partnerships)
+      // }
       
       console.log('✅ PartnershipManager: Data loaded successfully')
     } catch (err) {
