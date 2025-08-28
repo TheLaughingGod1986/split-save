@@ -336,11 +336,11 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         )}
       </div>
 
-      {/* Sent Invitations */}
+      {/* All Invitations You've Sent */}
       <div className="form-section">
         <div className="form-section-header">
-          <h3 className="form-section-title">Sent Invitations</h3>
-          <p className="form-section-subtitle">Invitations you've sent to potential partners</p>
+          <h3 className="form-section-title">All Invitations You've Sent</h3>
+          <p className="form-section-subtitle">Complete history of invitations you've sent</p>
           <button
             onClick={() => {
               setDataLoaded(false)
@@ -353,11 +353,75 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
           </button>
         </div>
         
+        {invitations.filter(inv => inv.from_user_id === user?.id).length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-gray-500 dark:text-gray-400">No invitations sent yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {invitations
+              .filter(inv => inv.from_user_id === user?.id)
+              .map((invitation) => (
+                <div key={invitation.id} className={`p-3 rounded-lg border text-sm ${
+                  invitation.status === 'pending' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' :
+                  invitation.status === 'accepted' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                  invitation.status === 'declined' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                  'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        To: {invitation.to_email}
+                      </span>
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                        invitation.status === 'pending' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' :
+                        invitation.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+                        invitation.status === 'declined' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200' :
+                        'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200'
+                      }`}>
+                        {invitation.status}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(invitation.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {invitation.status === 'accepted' && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      ✅ This invitation was accepted and is now an active partnership
+                    </p>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pending Sent Invitations */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Pending Sent Invitations</h3>
+          <p className="form-section-subtitle">Invitations you've sent that are still waiting for a response</p>
+        </div>
+        
         {(() => {
+          // Show invitations you sent that are still pending (not accepted yet)
           const sentInvitations = invitations.filter(inv => 
             inv.from_user_id === user?.id && 
             inv.status === 'pending'
           )
+          console.log('🔍 Sent Invitations Filter:', {
+            totalInvitations: invitations.length,
+            userID: user?.id,
+            sentInvitations: sentInvitations,
+            allInvitations: invitations.map(inv => ({
+              id: inv.id,
+              from_user_id: inv.from_user_id,
+              to_email: inv.to_email,
+              status: inv.status,
+              isFromUser: inv.from_user_id === user?.id
+            }))
+          })
           return sentInvitations.length === 0
         })() ? (
           <div className="text-center py-8">
