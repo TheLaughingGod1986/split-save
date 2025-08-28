@@ -340,17 +340,49 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
           </button>
         </div>
         
-        {invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending').length === 0 ? (
+        {(() => {
+          const sentInvitations = invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
+          console.log('🔍 DEBUG - Sent Invitations Filter:', {
+            totalInvitations: invitations.length,
+            userID: user?.id,
+            userEmail: user?.email,
+            allInvitations: invitations,
+            sentInvitations: sentInvitations,
+            filterResults: invitations.map(inv => ({
+              id: inv.id,
+              from_user_id: inv.from_user_id,
+              to_user_id: inv.to_user_id,
+              to_email: inv.to_email,
+              status: inv.status,
+              user_id: user?.id,
+              matchesFromUser: inv.from_user_id === user?.id,
+              isPending: inv.status === 'pending',
+              shouldShow: inv.from_user_id === user?.id && inv.status === 'pending'
+            }))
+          })
+          return sentInvitations.length === 0
+        })() ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-3">📤</div>
             <p className="text-gray-500 dark:text-gray-400">No pending invitations sent.</p>
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Send an invitation to start a partnership!</p>
+            
+            {/* Debug Info */}
+            <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Debug Info:</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Total Invitations: {invitations.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">User ID: {user?.id}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">User Email: {user?.email}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">All Invitations: {JSON.stringify(invitations, null, 2)}</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
-            {invitations
-              .filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
-              .map((invitation) => (
+            {(() => {
+              const sentInvitations = invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
+              console.log('🔍 DEBUG - Rendering Sent Invitations:', sentInvitations)
+              return sentInvitations
+            })().map((invitation) => (
                 <div key={invitation.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex-1">
