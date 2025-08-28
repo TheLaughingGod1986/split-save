@@ -13,7 +13,6 @@ export const goalSchema = z.object({
   targetDate: z.string().optional(),
   description: z.string().optional(),
   category: z.string().min(1).max(50).optional(),
-  priority: z.number().int().min(1).max(5),
   message: z.string().optional()
 })
 
