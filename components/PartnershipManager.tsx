@@ -49,11 +49,12 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [hasLoaded, setHasLoaded] = useState(false)
 
   const loadPartnershipData = useCallback(async () => {
-    // Prevent multiple simultaneous calls
-    if (loading) {
-      console.log('🔒 Already loading, skipping...')
+    // Prevent multiple simultaneous calls or repeated loads
+    if (loading || hasLoaded) {
+      console.log('🔒 Already loading or already loaded, skipping...')
       return
     }
     
@@ -68,18 +69,19 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       const partnershipsData = response.partnerships || []
       setPartnerships(partnershipsData)
       setInvitations(response.invitations || [])
+      setHasLoaded(true) // Mark as loaded
       
-      // Notify parent component of partnerships update
-      if (onPartnershipsUpdate) {
-        onPartnershipsUpdate(partnershipsData)
-      }
+      // Temporarily disable parent callback to prevent infinite loop
+      // if (onPartnershipsUpdate) {
+      //   onPartnershipsUpdate(partnershipsData)
+      // }
     } catch (error) {
       console.error('❌ Failed to load partnerships:', error)
       setError('Failed to load partnerships')
     } finally {
       setLoading(false)
     }
-  }, [onPartnershipsUpdate, loading])
+  }, [loading, hasLoaded]) // Add hasLoaded dependency
 
   useEffect(() => {
     // Only load data once on component mount
@@ -368,7 +370,10 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
           <h3 className="form-section-title">Sent Invitations</h3>
           <p className="form-section-subtitle">Invitations you've sent to potential partners</p>
           <button
-            onClick={loadPartnershipData}
+            onClick={() => {
+              setHasLoaded(false) // Reset loaded flag
+              loadPartnershipData()
+            }}
             disabled={loading}
             className="btn btn-secondary text-sm px-3 py-1"
           >
