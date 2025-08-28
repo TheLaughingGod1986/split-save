@@ -51,7 +51,15 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
   const [success, setSuccess] = useState('')
 
   const loadPartnershipData = useCallback(async () => {
+    // Prevent multiple simultaneous calls
+    if (loading) {
+      console.log('🔒 Already loading, skipping...')
+      return
+    }
+    
     try {
+      setLoading(true)
+      setError('')
       console.log('🔍 Loading partnership data...')
       const response = await apiClient.getPartnerships()
       console.log('📡 API Response:', response)
@@ -68,12 +76,15 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     } catch (error) {
       console.error('❌ Failed to load partnerships:', error)
       setError('Failed to load partnerships')
+    } finally {
+      setLoading(false)
     }
-  }, [onPartnershipsUpdate])
+  }, [onPartnershipsUpdate, loading])
 
   useEffect(() => {
+    // Only load data once on component mount
     loadPartnershipData()
-  }, [loadPartnershipData])
+  }, []) // Remove loadPartnershipData dependency to prevent infinite loop
 
   const sendInvitation = async () => {
     if (!toEmail.trim()) {
@@ -212,7 +223,7 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
   }
 
   // Add loading state to prevent flashing
-  if (loading && partnerships.length === 0) {
+  if (loading && partnerships.length === 0 && invitations.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
