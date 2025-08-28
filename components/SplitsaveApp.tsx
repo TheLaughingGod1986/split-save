@@ -61,7 +61,18 @@ import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
   const { isDark, toggleDarkMode } = useDarkMode()
-  const [currentView, setCurrentView] = useState('dashboard')
+  const [currentViewState, setCurrentViewState] = useState('dashboard')
+  
+  // Custom setter to prevent partnerships view
+  const setCurrentView = (view: string) => {
+    if (view === 'partnerships') {
+      console.log('🚫 Partnerships tab blocked - rebuilding from scratch')
+      return
+    }
+    setCurrentViewState(view)
+  }
+  
+  const currentView = currentViewState === 'partnerships' ? 'dashboard' : currentViewState
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
@@ -70,7 +81,8 @@ export function SplitsaveApp() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [partnerships, setPartnerships] = useState<any[]>([])
+  // Partnerships temporarily disabled - rebuilding from scratch
+  // const [partnerships, setPartnerships] = useState<any[]>([])
 
   // Currency utility functions
   const getCurrencySymbol = (currency: string) => {
@@ -309,19 +321,20 @@ export function SplitsaveApp() {
           }
           return []
         }),
-        apiClient.get('/invite').catch((err) => {
-          console.log('🤝 Partnerships API response:', err)
-          return { partnerships: [], invitations: [] }
-        })
+        // Partnerships temporarily disabled - rebuilding from scratch
+        // apiClient.get('/invite').catch((err) => {
+        //   console.log('🤝 Partnerships API response:', err)
+        //   return { partnerships: [], invitations: [] }
+        // })
       ])
       
-      const [expensesResult, goalsResult, approvalsResult, partnershipsResult] = results
+      const [expensesResult, goalsResult, approvalsResult] = results
       
       // Handle results safely
       setExpenses(expensesResult.status === 'fulfilled' ? expensesResult.value : [])
       setGoals(goalsResult.status === 'fulfilled' ? goalsResult.value : [])
       setApprovals(approvalsResult.status === 'fulfilled' ? approvalsResult.value : [])
-      setPartnerships(partnershipsResult.status === 'fulfilled' ? partnershipsResult.value?.partnerships || [] : [])
+      // Partnerships temporarily disabled - rebuilding from scratch
       
       console.log('📊 Data loaded successfully')
     } catch (err) {
@@ -611,12 +624,7 @@ export function SplitsaveApp() {
             >
               Approvals ({approvals.length})
             </button>
-            <button
-              onClick={() => setCurrentView('partnerships')}
-              className={`nav-tab ${currentView === 'partnerships' ? 'active' : ''}`}
-            >
-              Partnerships ({partnerships.length})
-            </button>
+            {/* Partnerships tab temporarily removed - rebuilding from scratch */}
             <button
               onClick={() => setCurrentView('profile')}
               className={`nav-tab ${currentView === 'profile' ? 'active' : ''}`}
@@ -754,22 +762,7 @@ export function SplitsaveApp() {
             currencySymbol={currencySymbol}
           />
         )}
-        {currentView === 'partnerships' && (
-          <div className="p-6 text-center">
-            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
-              Partnerships Temporarily Disabled
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              We're fixing some technical issues with the partnerships system. 
-              Please check back soon!
-            </p>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Current Status:</strong> You have 1 active partnership with Benjamin Oats
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Partnerships tab completely removed - rebuilding from scratch */}
         {currentView === 'profile' && (
           <ProfileManager onProfileUpdate={(updatedProfile) => {
             setProfile(updatedProfile)
