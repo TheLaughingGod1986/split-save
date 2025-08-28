@@ -71,7 +71,6 @@ export function SplitsaveApp() {
   const [error, setError] = useState('')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [partnerships, setPartnerships] = useState<any[]>([])
-  const [showPWAInstall, setShowPWAInstall] = useState(false)
 
   // Currency utility functions
   const getCurrencySymbol = (currency: string) => {
@@ -347,29 +346,7 @@ export function SplitsaveApp() {
     }
   }, [user?.id]) // Only depend on user ID, not the entire loadData function
 
-  // Check for PWA install capability
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Check if app is already installed
-      if (window.matchMedia('(display-mode: standalone)').matches || 
-          (window.navigator as any).standalone === true) {
-        return
-      }
 
-      // Listen for beforeinstallprompt event
-      const handleBeforeInstallPrompt = (e: Event) => {
-        e.preventDefault()
-        ;(window as any).deferredPrompt = e
-        setShowPWAInstall(true)
-      }
-
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-
-      return () => {
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      }
-    }
-  }, [])
 
   const addExpense = async (expenseData: any) => {
     try {
@@ -821,50 +798,8 @@ export function SplitsaveApp() {
         </div>
       </div>
       
-      {/* PWA Install Prompt */}
+      {/* Single PWA Install Prompt */}
       <PWAInstallPrompt />
-      
-      {/* Main App PWA Install Prompt */}
-      {showPWAInstall && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-lg shadow-lg border border-purple-300 max-w-sm">
-            <div className="flex items-start space-x-3">
-              <div className="text-2xl">📱</div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">Install SplitSave</h3>
-                <p className="text-purple-100 text-sm mb-3">
-                  Get the full app experience with offline access!
-                </p>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
-                      if ((window as any).deferredPrompt) {
-                        (window as any).deferredPrompt.prompt()
-                        setShowPWAInstall(false)
-                      }
-                    }}
-                    className="bg-white text-purple-600 px-4 py-2 rounded-md font-medium hover:bg-purple-50 transition-colors"
-                  >
-                    Install
-                  </button>
-                  <button
-                    onClick={() => setShowPWAInstall(false)}
-                    className="text-purple-200 hover:text-white transition-colors"
-                  >
-                    Later
-                  </button>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowPWAInstall(false)}
-                className="text-purple-200 hover:text-white text-xl"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
