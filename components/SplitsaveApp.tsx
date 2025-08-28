@@ -52,7 +52,6 @@ function useDarkMode() {
   return { isDark, toggleDarkMode }
 }
 import { ProfileManager } from './ProfileManager'
-import PartnershipManager from './PartnershipManager'
 import PWAInstallPrompt from './PWAInstallPrompt'
 import SafetyPotManager from './SafetyPotManager'
 import ContributionManager from './ContributionManager'
@@ -61,18 +60,7 @@ import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
   const { isDark, toggleDarkMode } = useDarkMode()
-  const [currentViewState, setCurrentViewState] = useState('dashboard')
-  
-  // Custom setter to prevent partnerships view
-  const setCurrentView = (view: string) => {
-    if (view === 'partnerships') {
-      console.log('🚫 Partnerships tab blocked - rebuilding from scratch')
-      return
-    }
-    setCurrentViewState(view)
-  }
-  
-  const currentView = currentViewState === 'partnerships' ? 'dashboard' : currentViewState
+  const [currentView, setCurrentView] = useState('dashboard')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
@@ -81,8 +69,7 @@ export function SplitsaveApp() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  // Partnerships temporarily disabled - rebuilding from scratch
-  // const [partnerships, setPartnerships] = useState<any[]>([])
+
 
   // Currency utility functions
   const getCurrencySymbol = (currency: string) => {
@@ -321,11 +308,7 @@ export function SplitsaveApp() {
           }
           return []
         }),
-        // Partnerships temporarily disabled - rebuilding from scratch
-        // apiClient.get('/invite').catch((err) => {
-        //   console.log('🤝 Partnerships API response:', err)
-        //   return { partnerships: [], invitations: [] }
-        // })
+
       ])
       
       const [expensesResult, goalsResult, approvalsResult] = results
@@ -334,7 +317,7 @@ export function SplitsaveApp() {
       setExpenses(expensesResult.status === 'fulfilled' ? expensesResult.value : [])
       setGoals(goalsResult.status === 'fulfilled' ? goalsResult.value : [])
       setApprovals(approvalsResult.status === 'fulfilled' ? approvalsResult.value : [])
-      // Partnerships temporarily disabled - rebuilding from scratch
+
       
       console.log('📊 Data loaded successfully')
     } catch (err) {
@@ -624,7 +607,6 @@ export function SplitsaveApp() {
             >
               Approvals ({approvals.length})
             </button>
-            {/* Partnerships tab temporarily removed - rebuilding from scratch */}
             <button
               onClick={() => setCurrentView('profile')}
               className={`nav-tab ${currentView === 'profile' ? 'active' : ''}`}
@@ -646,7 +628,6 @@ export function SplitsaveApp() {
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'contributions', label: 'Contributions', icon: '💳' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
-              { id: 'partnerships', label: 'Partners', icon: '🤝' },
               { id: 'profile', label: 'Profile', icon: '👤' }
             ].map((item) => (
               <button
@@ -762,7 +743,6 @@ export function SplitsaveApp() {
             currencySymbol={currencySymbol}
           />
         )}
-        {/* Partnerships tab completely removed - rebuilding from scratch */}
         {currentView === 'profile' && (
           <ProfileManager onProfileUpdate={(updatedProfile) => {
             setProfile(updatedProfile)
