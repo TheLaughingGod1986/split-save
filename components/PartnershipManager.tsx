@@ -331,6 +331,13 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         <div className="form-section-header">
           <h3 className="form-section-title">Sent Invitations</h3>
           <p className="form-section-subtitle">Invitations you've sent to potential partners</p>
+          <button
+            onClick={loadPartnershipData}
+            disabled={loading}
+            className="btn btn-secondary text-sm px-3 py-1"
+          >
+            {loading ? 'Refreshing...' : '🔄 Refresh'}
+          </button>
         </div>
         
         {invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending').length === 0 ? (
