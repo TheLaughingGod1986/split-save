@@ -274,8 +274,9 @@ export function SplitsaveApp() {
     // Load data from backend - SIMPLIFIED VERSION
   const loadData = async () => {
     try {
+      console.log('🔄 loadData called - starting data load...')
       setLoading(true)
-      console.log('🔄 Loading data for user:', user?.id)
+      setError('')
       
       // Load only essential data first
       const profileData = await apiClient.get('/auth/profile').catch((err) => {
@@ -284,8 +285,10 @@ export function SplitsaveApp() {
       })
       
       setProfile(profileData)
+      console.log('✅ Profile loaded:', profileData)
       
       // Load other data with shorter timeouts
+      console.log('🔄 Loading expenses, goals, and approvals...')
       const results = await Promise.allSettled([
         apiClient.get('/expenses').catch((err) => {
           console.log('📊 Expenses API response:', err)
@@ -318,8 +321,10 @@ export function SplitsaveApp() {
       setGoals(goalsResult.status === 'fulfilled' ? goalsResult.value : [])
       setApprovals(approvalsResult.status === 'fulfilled' ? approvalsResult.value : [])
 
-      
       console.log('📊 Data loaded successfully')
+      console.log('📊 Expenses count:', expensesResult.status === 'fulfilled' ? expensesResult.value?.length : 'failed')
+      console.log('🎯 Goals count:', goalsResult.status === 'fulfilled' ? goalsResult.value?.length : 'failed')
+      console.log('✅ Approvals count:', approvalsResult.status === 'fulfilled' ? approvalsResult.value?.length : 'failed')
     } catch (err) {
       setError('Failed to load data')
       toast.error('Failed to load data')
@@ -330,9 +335,12 @@ export function SplitsaveApp() {
   }
 
   useEffect(() => {
+    console.log('🔄 useEffect triggered - user?.id:', user?.id)
     if (user) {
+      console.log('🔄 User authenticated, calling loadData...')
       loadData()
     } else {
+      console.log('🔄 No user, resetting loading state...')
       // Reset loading state when user is not available
       setLoading(false)
     }
@@ -342,7 +350,9 @@ export function SplitsaveApp() {
 
   const addExpense = async (expenseData: any) => {
     try {
+      console.log('🔄 Adding expense:', expenseData)
       const result = await apiClient.post('/expenses', expenseData)
+      console.log('✅ Expense API result:', result)
       
       if (result.requiresApproval) {
         const amount = expenseData.amount
@@ -357,14 +367,25 @@ export function SplitsaveApp() {
         toast.success('Approval request sent to your partner! They will review and approve/decline your expense.', { duration: 6000 })
         
         // Refresh approvals
+        console.log('🔄 Refreshing approvals...')
         const approvalsData = await apiClient.get('/approvals')
         setApprovals(approvalsData)
+        console.log('✅ Approvals refreshed:', approvalsData)
       } else {
         toast.success('Expense added successfully!')
         setError('') // Clear any previous errors
-        // Refresh expenses
-        const expensesData = await apiClient.get('/expenses')
-        setExpenses(expensesData)
+        
+        // Refresh expenses with delay to avoid race conditions
+        console.log('🔄 Refreshing expenses...')
+        setTimeout(async () => {
+          try {
+            const expensesData = await apiClient.get('/expenses')
+            console.log('✅ Expenses refreshed:', expensesData)
+            setExpenses(expensesData)
+          } catch (err) {
+            console.error('❌ Failed to refresh expenses:', err)
+          }
+        }, 100)
       }
     } catch (err: any) {
       // Check if it's a partnership error

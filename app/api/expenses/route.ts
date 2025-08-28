@@ -58,11 +58,27 @@ export async function POST(req: NextRequest) {
     const expenseData = expenseSchema.parse(body)
     console.log('✅ Expenses API - Validated data:', expenseData)
     
-    // Check if requires approval (expenses over $100)
-    const requiresApproval = expenseData.amount > 100
-
+    // Check number of partners in this partnership
+    const { data: partnership, error: partnershipError } = await supabaseAdmin
+      .from('partnerships')
+      .select('id, user1_id, user2_id')
+      .eq('id', user.partnershipId)
+      .single()
+    
+    if (partnershipError) {
+      console.error('❌ Expenses API - Failed to fetch partnership:', partnershipError)
+      return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
+    }
+    
+    // Count active partners (users who are not null)
+    const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
+    console.log('🔍 Expenses API - Active partners in partnership:', activePartners)
+    
+    // Check if requires approval: only if amount > 100 AND there are 2+ partners
+    const requiresApproval = expenseData.amount > 100 && activePartners > 1
+    
     if (requiresApproval) {
-      console.log('🔍 Expenses API - Creating approval request for amount:', expenseData.amount)
+      console.log('🔍 Expenses API - Creating approval request for amount:', expenseData.amount, '(2+ partners)')
       // Create approval request
       const { data: approval, error } = await supabaseAdmin
         .from('approval_requests')
@@ -87,7 +103,8 @@ export async function POST(req: NextRequest) {
         approvalRequestId: approval.id
       }, { status: 201 })
     } else {
-      console.log('🔍 Expenses API - Creating expense directly for amount:', expenseData.amount)
+      const reason = expenseData.amount <= 100 ? 'amount under threshold' : 'single partner (no approval needed)'
+      console.log('🔍 Expenses API - Creating expense directly for amount:', expenseData.amount, `(${reason})`)
       // Create expense directly
       const { data: expense, error } = await supabaseAdmin
         .from('expenses')

@@ -49,28 +49,77 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const goalData = goalSchema.parse(body)
 
-    // Goals always require approval
-    const { data: approval, error } = await supabaseAdmin
-      .from('approval_requests')
-      .insert({
-        partnership_id: user.partnershipId,
-        requested_by_user_id: user.id,
-        request_type: 'goal',
-        request_data: goalData,
-        message: goalData.message || null
-      })
-      .select()
+    // Check number of partners in this partnership
+    const { data: partnership, error: partnershipError } = await supabaseAdmin
+      .from('partnerships')
+      .select('id, user1_id, user2_id')
+      .eq('id', user.partnershipId)
       .single()
-
-    if (error) {
-      console.error('Approval request creation error:', error)
-      return NextResponse.json({ error: 'Failed to create approval request' }, { status: 400 })
+    
+    if (partnershipError) {
+      console.error('❌ Goals API - Failed to fetch partnership:', partnershipError)
+      return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
     }
+    
+    // Count active partners (users who are not null)
+    const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
+    console.log('🔍 Goals API - Active partners in partnership:', activePartners)
+    
+    // Check if requires approval: only if there are 2+ partners
+    const requiresApproval = activePartners > 1
+    
+    if (requiresApproval) {
+      console.log('🔍 Goals API - Creating approval request (2+ partners)')
+      // Goals require approval when there are multiple partners
+      const { data: approval, error } = await supabaseAdmin
+        .from('approval_requests')
+        .insert({
+          partnership_id: user.partnershipId,
+          requested_by_user_id: user.id,
+          request_type: 'goal',
+          request_data: goalData,
+          message: goalData.message || null
+        })
+        .select()
+        .single()
 
-    return NextResponse.json({
-      requiresApproval: true,
-      approvalRequestId: approval.id
-    }, { status: 201 })
+      if (error) {
+        console.error('Approval request creation error:', error)
+        return NextResponse.json({ error: 'Failed to create approval request' }, { status: 400 })
+      }
+
+      return NextResponse.json({
+        requiresApproval: true,
+        approvalRequestId: approval.id
+      }, { status: 201 })
+    } else {
+      console.log('🔍 Goals API - Creating goal directly (single partner)')
+      // Create goal directly when there's only one partner
+      const { data: goal, error } = await supabaseAdmin
+        .from('goals')
+        .insert({
+          partnership_id: user.partnershipId,
+          name: goalData.name,
+          description: goalData.description,
+          target_amount: goalData.targetAmount,
+          current_amount: 0,
+          category: goalData.category,
+          target_date: goalData.targetDate || null,
+          added_by_user_id: user.id
+        })
+        .select(`
+          *,
+          added_by_user:users!goals_added_by_user_id_fkey(id, name)
+        `)
+        .single()
+
+      if (error) {
+        console.error('Direct goal creation error:', error)
+        return NextResponse.json({ error: 'Failed to create goal' }, { status: 400 })
+      }
+
+      return NextResponse.json(goal, { status: 201 })
+    }
   } catch (error) {
     console.error('Add goal error:', error)
     return NextResponse.json({ error: 'Invalid input data' }, { status: 400 })
