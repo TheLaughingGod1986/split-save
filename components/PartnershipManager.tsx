@@ -334,6 +334,23 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         )}
       </div>
 
+      {/* Debug Section - Always Show */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Debug Info</h3>
+          <p className="form-section-subtitle">Current state for troubleshooting</p>
+        </div>
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">Debug Information:</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">User ID: {user?.id || 'undefined'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">User Email: {user?.email || 'undefined'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Total Invitations: {invitations.length}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Total Partnerships: {partnerships.length}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Loading State: {loading ? 'true' : 'false'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Error State: {error || 'none'}</p>
+        </div>
+      </div>
+
       {/* Sent Invitations */}
       <div className="form-section">
         <div className="form-section-header">
@@ -349,30 +366,35 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         </div>
         
         {(() => {
-          // Only show pending invitations that you sent
-          const sentInvitations = invitations.filter(inv => 
-            inv.from_user_id === user?.id && 
-            inv.status === 'pending'
-          )
-          console.log('🔍 DEBUG - Sent Invitations Filter:', {
-            totalInvitations: invitations.length,
-            userID: user?.id,
-            userEmail: user?.email,
-            allInvitations: invitations,
-            sentInvitations: sentInvitations,
-            filterResults: invitations.map(inv => ({
-              id: inv.id,
-              from_user_id: inv.from_user_id,
-              to_user_id: inv.to_user_id,
-              to_email: inv.to_email,
-              status: inv.status,
-              user_id: user?.id,
-              matchesFromUser: inv.from_user_id === user?.id,
-              isPending: inv.status === 'pending',
-              shouldShow: inv.from_user_id === user?.id && inv.status === 'pending'
-            }))
-          })
-          return sentInvitations.length === 0
+          try {
+            // Only show pending invitations that you sent
+            const sentInvitations = invitations.filter(inv => 
+              inv.from_user_id === user?.id && 
+              inv.status === 'pending'
+            )
+            console.log('🔍 DEBUG - Sent Invitations Filter:', {
+              totalInvitations: invitations.length,
+              userID: user?.id,
+              userEmail: user?.email,
+              allInvitations: invitations,
+              sentInvitations: sentInvitations,
+              filterResults: invitations.map(inv => ({
+                id: inv.id,
+                from_user_id: inv.from_user_id,
+                to_user_id: inv.to_user_id,
+                to_email: inv.to_email,
+                status: inv.status,
+                user_id: user?.id,
+                matchesFromUser: inv.from_user_id === user?.id,
+                isPending: inv.status === 'pending',
+                shouldShow: inv.from_user_id === user?.id && inv.status === 'pending'
+              }))
+            })
+            return sentInvitations.length === 0
+          } catch (error) {
+            console.error('Error in sent invitations filter:', error)
+            return true // Show "no invitations" message if there's an error
+          }
         })() ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-3">📤</div>
@@ -403,13 +425,18 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         ) : (
           <div className="space-y-3">
             {(() => {
-              // Only show pending invitations that you sent
-              const sentInvitations = invitations.filter(inv => 
-                inv.from_user_id === user?.id && 
-                inv.status === 'pending'
-              )
-              console.log('🔍 DEBUG - Rendering Sent Invitations:', sentInvitations)
-              return sentInvitations
+              try {
+                // Only show pending invitations that you sent
+                const sentInvitations = invitations.filter(inv => 
+                  inv.from_user_id === user?.id && 
+                  inv.status === 'pending'
+                )
+                console.log('🔍 DEBUG - Rendering Sent Invitations:', sentInvitations)
+                return sentInvitations
+              } catch (error) {
+                console.error('Error in sent invitations rendering:', error)
+                return []
+              }
             })().map((invitation) => (
                 <div key={invitation.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-3">
