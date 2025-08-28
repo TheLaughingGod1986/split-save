@@ -371,9 +371,21 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
             <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Debug Info:</p>
               <p className="text-xs text-gray-500 dark:text-gray-500">Total Invitations: {invitations.length}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">User ID: {user?.id}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Frontend User ID: {user?.id}</p>
               <p className="text-xs text-gray-500 dark:text-gray-500">User Email: {user?.email}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Sent Invitations: {JSON.stringify(invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending'), null, 2)}</p>
               <p className="text-xs text-gray-500 dark:text-gray-500">All Invitations: {JSON.stringify(invitations, null, 2)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Filter Results: {JSON.stringify(invitations.map(inv => ({
+                id: inv.id,
+                from_user_id: inv.from_user_id,
+                to_user_id: inv.to_user_id,
+                to_email: inv.to_email,
+                status: inv.status,
+                user_id: user?.id,
+                matchesFromUser: inv.from_user_id === user?.id,
+                isPending: inv.status === 'pending',
+                shouldShow: inv.from_user_id === user?.id && inv.status === 'pending'
+              })), null, 2)}</p>
             </div>
           </div>
         ) : (
