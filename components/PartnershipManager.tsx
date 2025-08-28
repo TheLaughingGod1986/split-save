@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
@@ -32,11 +32,6 @@ interface PartnershipInvitation {
   expires_at: string
 }
 
-interface PartnershipsResponse {
-  partnerships: Partnership[]
-  invitations: PartnershipInvitation[]
-}
-
 interface PartnershipManagerProps {
   onPartnershipsUpdate?: (partnerships: Partnership[]) => void
 }
@@ -49,44 +44,44 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [hasLoaded, setHasLoaded] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
-  const loadPartnershipData = useCallback(async () => {
-    // Prevent multiple simultaneous calls or repeated loads
-    if (loading || hasLoaded) {
-      console.log('🔒 Already loading or already loaded, skipping...')
+  // Simple data loading function - no complex dependencies
+  const loadData = async () => {
+    if (loading || dataLoaded) {
+      console.log('🔒 Skipping load - already loading or loaded')
       return
     }
-    
+
     try {
       setLoading(true)
       setError('')
-      console.log('🔍 Loading partnership data...')
-      const response = await apiClient.getPartnerships()
-      console.log('📡 API Response:', response)
-      console.log('🤝 Partnerships:', response.partnerships || [])
-      console.log('📧 Invitations:', response.invitations || [])
-      const partnershipsData = response.partnerships || []
-      setPartnerships(partnershipsData)
-      setInvitations(response.invitations || [])
-      setHasLoaded(true) // Mark as loaded
+      console.log('🔍 Loading data...')
       
-      // Temporarily disable parent callback to prevent infinite loop
-      // if (onPartnershipsUpdate) {
-      //   onPartnershipsUpdate(partnershipsData)
-      // }
-    } catch (error) {
-      console.error('❌ Failed to load partnerships:', error)
-      setError('Failed to load partnerships')
+      const response = await apiClient.getPartnerships()
+      console.log('📡 Response received:', response)
+      
+      if (response && response.partnerships && response.invitations) {
+        setPartnerships(response.partnerships)
+        setInvitations(response.invitations)
+        setDataLoaded(true)
+        console.log('✅ Data loaded successfully')
+      } else {
+        throw new Error('Invalid response format')
+      }
+    } catch (error: any) {
+      console.error('❌ Load failed:', error)
+      setError(`Failed to load: ${error?.message || 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
-  }, [loading, hasLoaded]) // Add hasLoaded dependency
+  }
 
+  // Load data only once on mount
   useEffect(() => {
-    // Only load data once on component mount
-    loadPartnershipData()
-  }, []) // Remove loadPartnershipData dependency to prevent infinite loop
+    console.log('🚀 Component mounted, loading data...')
+    loadData()
+  }, []) // Empty dependency array - only run once
 
   const sendInvitation = async () => {
     if (!toEmail.trim()) {
@@ -103,7 +98,10 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       setSuccess(response.message || 'Invitation sent successfully!')
       toast.success('Partnership invitation sent successfully!')
       setToEmail('')
-      await loadPartnershipData() // Refresh the data
+      
+      // Reload data to show the new invitation
+      setDataLoaded(false)
+      await loadData()
     } catch (error: any) {
       setError(error.message || 'Failed to send invitation')
       toast.error('Failed to send invitation')
@@ -117,7 +115,10 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       await apiClient.respondToInvitation(invitationId, action)
       setSuccess(`Invitation ${action}ed successfully!`)
       toast.success(`Invitation ${action}ed successfully!`)
-      await loadPartnershipData() // Refresh the data
+      
+      // Reload data to reflect changes
+      setDataLoaded(false)
+      await loadData()
     } catch (error: any) {
       setError(error.message || `Failed to ${action} invitation`)
       toast.error(`Failed to ${action} invitation`)
@@ -129,7 +130,6 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       const currentUserId = user?.id
       if (!currentUserId) return 'Unknown Partner'
       
-      // Determine which user is the partner (not the current user)
       let partnerUser
       if (partnership.user1_id === currentUserId) {
         partnerUser = partnership.user2
@@ -137,22 +137,12 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         partnerUser = partnership.user1
       }
       
-      // Return partner's name if available, otherwise email, otherwise fallback
       if (partnerUser?.name && partnerUser.name !== 'User') {
         return partnerUser.name
       } else if (partnerUser?.email) {
         return partnerUser.email
       } else {
-        // Fallback to email if available, otherwise truncated ID
         const partnerId = partnership.user1_id === currentUserId ? partnership.user2_id : partnership.user1_id
-        // Try to find the partner's email from invitations or partnerships
-        const partnerInvitation = invitations.find(inv => 
-          inv.to_user_id === partnerId || 
-          (inv.from_user_id === partnerId && inv.status === 'accepted')
-        )
-        if (partnerInvitation?.to_email) {
-          return partnerInvitation.to_email
-        }
         return `Partner (${partnerId.slice(0, 8)}...)`
       }
     } catch (error) {
@@ -167,20 +157,13 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     
     try {
       setLoading(true)
-      // Call API to remove partnership
       await apiClient.removePartnership(partnershipId)
       setSuccess('Partnership removed successfully!')
       toast.success('Partnership removed successfully!')
-      await loadPartnershipData() // Refresh the data
       
-      // Notify parent component of partnerships update
-      if (onPartnershipsUpdate) {
-        const updatedPartnerships = partnerships.filter(p => p.id !== partnershipId)
-        onPartnershipsUpdate(updatedPartnerships)
-      }
-      
-      // Force a page refresh to update auth middleware
-      window.location.reload()
+      // Reload data
+      setDataLoaded(false)
+      await loadData()
     } catch (error: any) {
       setError(error.message || 'Failed to remove partnership')
       toast.error('Failed to remove partnership')
@@ -189,18 +172,10 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     }
   }
 
-  const getInvitationType = (invitation: PartnershipInvitation) => {
-    if (invitation.to_user_id) {
-      return 'existing-user'
-    }
-    return 'new-user'
-  }
-
   const getInvitationLink = (invitation: PartnershipInvitation) => {
     if (invitation.to_user_id) {
-      return null // Existing user, no special link needed
+      return null
     }
-    // For non-users, create a link to accept the invitation
     return `${window.location.origin}/api/invite/accept/${invitation.id}`
   }
 
@@ -224,8 +199,8 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     return new Date(dateString).toLocaleDateString()
   }
 
-  // Add loading state to prevent flashing
-  if (loading && partnerships.length === 0 && invitations.length === 0) {
+  // Loading state
+  if (loading && !dataLoaded) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -245,7 +220,6 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Partnerships</h2>
-        {/* Removed unnecessary refresh buttons - app is working properly now */}
       </div>
 
       {error && (
@@ -266,7 +240,23 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         </div>
       )}
 
-      {/* Removed unnecessary partnership status info message */}
+      {/* Debug Info - Always Show */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">Debug Info</h3>
+          <p className="form-section-subtitle">Current state for troubleshooting</p>
+        </div>
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">Debug Information:</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">User ID: {user?.id || 'undefined'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">User Email: {user?.email || 'undefined'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Total Invitations: {invitations.length}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Total Partnerships: {partnerships.length}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Loading State: {loading ? 'true' : 'false'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Data Loaded: {dataLoaded ? 'true' : 'false'}</p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">Error State: {error || 'none'}</p>
+        </div>
+      </div>
 
       {/* Send Partnership Invitation */}
       <div className="form-section">
@@ -336,8 +326,7 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
                 </div>
                 <button
                   onClick={() => handleRemovePartnership(partnership.id)}
-                  className="btn btn-danger px-3 py-1 text-sm"
-                  title="Remove partnership"
+                  className="btn btn-danger px-3 py-2 text-sm"
                 >
                   Remove
                 </button>
@@ -347,23 +336,6 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         )}
       </div>
 
-      {/* Debug Section - Always Show */}
-      <div className="form-section">
-        <div className="form-section-header">
-          <h3 className="form-section-title">Debug Info</h3>
-          <p className="form-section-subtitle">Current state for troubleshooting</p>
-        </div>
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">Debug Information:</p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">User ID: {user?.id || 'undefined'}</p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">User Email: {user?.email || 'undefined'}</p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">Total Invitations: {invitations.length}</p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">Total Partnerships: {partnerships.length}</p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">Loading State: {loading ? 'true' : 'false'}</p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">Error State: {error || 'none'}</p>
-        </div>
-      </div>
-
       {/* Sent Invitations */}
       <div className="form-section">
         <div className="form-section-header">
@@ -371,8 +343,8 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
           <p className="form-section-subtitle">Invitations you've sent to potential partners</p>
           <button
             onClick={() => {
-              setHasLoaded(false) // Reset loaded flag
-              loadPartnershipData()
+              setDataLoaded(false)
+              loadData()
             }}
             disabled={loading}
             className="btn btn-secondary text-sm px-3 py-1"
@@ -382,78 +354,22 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         </div>
         
         {(() => {
-          try {
-            // Only show pending invitations that you sent
-            const sentInvitations = invitations.filter(inv => 
-              inv.from_user_id === user?.id && 
-              inv.status === 'pending'
-            )
-            console.log('🔍 DEBUG - Sent Invitations Filter:', {
-              totalInvitations: invitations.length,
-              userID: user?.id,
-              userEmail: user?.email,
-              allInvitations: invitations,
-              sentInvitations: sentInvitations,
-              filterResults: invitations.map(inv => ({
-                id: inv.id,
-                from_user_id: inv.from_user_id,
-                to_user_id: inv.to_user_id,
-                to_email: inv.to_email,
-                status: inv.status,
-                user_id: user?.id,
-                matchesFromUser: inv.from_user_id === user?.id,
-                isPending: inv.status === 'pending',
-                shouldShow: inv.from_user_id === user?.id && inv.status === 'pending'
-              }))
-            })
-            return sentInvitations.length === 0
-          } catch (error) {
-            console.error('Error in sent invitations filter:', error)
-            return true // Show "no invitations" message if there's an error
-          }
+          const sentInvitations = invitations.filter(inv => 
+            inv.from_user_id === user?.id && 
+            inv.status === 'pending'
+          )
+          return sentInvitations.length === 0
         })() ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-3">📤</div>
             <p className="text-gray-500 dark:text-gray-400">No pending invitations sent.</p>
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Send an invitation to start a partnership!</p>
-            
-            {/* Debug Info */}
-            <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Debug Info:</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">Total Invitations: {invitations.length}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">Frontend User ID: {user?.id}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">User Email: {user?.email}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">Sent Invitations: {JSON.stringify(invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending'), null, 2)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">All Invitations: {JSON.stringify(invitations, null, 2)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">Filter Results: {JSON.stringify(invitations.map(inv => ({
-                id: inv.id,
-                from_user_id: inv.from_user_id,
-                to_user_id: inv.to_user_id,
-                to_email: inv.to_email,
-                status: inv.status,
-                user_id: user?.id,
-                matchesFromUser: inv.from_user_id === user?.id,
-                isPending: inv.status === 'pending',
-                shouldShow: inv.from_user_id === user?.id && inv.status === 'pending'
-              })), null, 2)}</p>
-            </div>
           </div>
         ) : (
           <div className="space-y-3">
-            {(() => {
-              try {
-                // Only show pending invitations that you sent
-                const sentInvitations = invitations.filter(inv => 
-                  inv.from_user_id === user?.id && 
-                  inv.status === 'pending'
-                )
-                console.log('🔍 DEBUG - Rendering Sent Invitations:', sentInvitations)
-                return sentInvitations
-              } catch (error) {
-                console.error('Error in sent invitations rendering:', error)
-                return []
-              }
-            })().map((invitation) => (
+            {invitations
+              .filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
+              .map((invitation) => (
                 <div key={invitation.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex-1">
@@ -503,7 +419,7 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
                   
                   {isInvitationExpired(invitation) && (
                     <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                      <p className="text-sm text-red-600 dark:text-red-400">This invitation has expired</p>
+                      <p className="text-xs text-red-600 dark:text-red-400">This invitation has expired</p>
                     </div>
                   )}
                 </div>
