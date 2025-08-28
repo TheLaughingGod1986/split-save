@@ -130,8 +130,16 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
       } else if (partnerUser?.email) {
         return partnerUser.email
       } else {
-        // Fallback to truncated ID if no user details available
+        // Fallback to email if available, otherwise truncated ID
         const partnerId = partnership.user1_id === currentUserId ? partnership.user2_id : partnership.user1_id
+        // Try to find the partner's email from invitations or partnerships
+        const partnerInvitation = invitations.find(inv => 
+          inv.to_user_id === partnerId || 
+          (inv.from_user_id === partnerId && inv.status === 'accepted')
+        )
+        if (partnerInvitation?.to_email) {
+          return partnerInvitation.to_email
+        }
         return `Partner (${partnerId.slice(0, 8)}...)`
       }
     } catch (error) {
@@ -341,7 +349,11 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         </div>
         
         {(() => {
-          const sentInvitations = invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
+          // Only show pending invitations that you sent
+          const sentInvitations = invitations.filter(inv => 
+            inv.from_user_id === user?.id && 
+            inv.status === 'pending'
+          )
           console.log('🔍 DEBUG - Sent Invitations Filter:', {
             totalInvitations: invitations.length,
             userID: user?.id,
@@ -391,7 +403,11 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         ) : (
           <div className="space-y-3">
             {(() => {
-              const sentInvitations = invitations.filter(inv => inv.from_user_id === user?.id && inv.status === 'pending')
+              // Only show pending invitations that you sent
+              const sentInvitations = invitations.filter(inv => 
+                inv.from_user_id === user?.id && 
+                inv.status === 'pending'
+              )
               console.log('🔍 DEBUG - Rendering Sent Invitations:', sentInvitations)
               return sentInvitations
             })().map((invitation) => (
@@ -453,11 +469,80 @@ export default function PartnershipManager({ onPartnershipsUpdate }: Partnership
         )}
       </div>
 
+      {/* All Invitations Status */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <h3 className="form-section-title">All Invitations Status</h3>
+          <p className="form-section-subtitle">Overview of all invitations you've sent and received</p>
+        </div>
+        
+        {invitations.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-gray-500 dark:text-gray-400">No invitations found.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {invitations.map((invitation) => {
+              const isFromYou = invitation.from_user_id === user?.id
+              const isToYou = invitation.to_user_id === user?.id || invitation.to_email === user?.email
+              const isPending = invitation.status === 'pending'
+              const isAccepted = invitation.status === 'accepted'
+              const isDeclined = invitation.status === 'declined'
+              const isExpired = invitation.status === 'expired'
+              
+              return (
+                <div key={invitation.id} className={`p-3 rounded-lg border text-sm ${
+                  isPending ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' :
+                  isAccepted ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                  isDeclined ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                  'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {isFromYou ? `To: ${invitation.to_email}` : `From: ${invitation.from_user_id === user?.id ? 'You' : 'Unknown'}`}
+                      </span>
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                        isPending ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' :
+                        isAccepted ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+                        isDeclined ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200' :
+                        'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200'
+                      }`}>
+                        {invitation.status}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(invitation.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {isPending && isToYou && (
+                    <div className="mt-2 flex space-x-2">
+                      <button
+                        onClick={() => respondToInvitation(invitation.id, 'accept')}
+                        className="btn btn-primary text-xs px-3 py-1"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => respondToInvitation(invitation.id, 'decline')}
+                        className="btn btn-secondary text-xs px-3 py-1"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Received Invitations */}
       <div className="form-section">
         <div className="form-section-header">
           <h3 className="form-section-title">Received Invitations</h3>
-          <p className="form-section-subtitle">Invitations from others to become partners</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Only pending invitations you can respond to</p>
         </div>
         
         {invitations.filter(inv => 
