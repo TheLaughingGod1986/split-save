@@ -56,7 +56,12 @@ import PWAInstallPrompt from './PWAInstallPrompt'
 import SafetyPotManager from './SafetyPotManager'
 import ContributionManager from './ContributionManager'
 import { PartnershipManager } from './PartnershipManager'
+import { MonthlyContributionSummary } from './MonthlyContributionSummary'
+import { DashboardContributionSummary } from './DashboardContributionSummary'
+import { ActivityFeed } from './ActivityFeed'
+import { MonthlySalaryTracker } from './MonthlySalaryTracker'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
+import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
@@ -601,65 +606,61 @@ export function SplitsaveApp() {
       )}
 
       {/* Navigation - Desktop */}
-      <div className="hidden md:block bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="hidden md:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="nav-tabs">
-            <button
-              onClick={() => setCurrentView('dashboard')}
-              className={`nav-tab ${currentView === 'dashboard' ? 'active' : ''}`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => setCurrentView('expenses')}
-              className={`nav-tab ${currentView === 'expenses' ? 'active' : ''}`}
-            >
-              Expenses
-            </button>
-            <button
-              onClick={() => setCurrentView('goals')}
-              className={`nav-tab ${currentView === 'goals' ? 'active' : ''}`}
-            >
-              Goals
-            </button>
-            <button
-              onClick={() => setCurrentView('safety-pot')}
-              className={`nav-tab ${currentView === 'safety-pot' ? 'active' : ''}`}
-            >
-              Safety Pot
-            </button>
-            <button
-              onClick={() => setCurrentView('approvals')}
-              className={`nav-tab ${currentView === 'approvals' ? 'active' : ''}`}
-            >
-              Approvals ({approvals.length})
-            </button>
-            <button
-              onClick={() => setCurrentView('partnerships')}
-              className={`nav-tab ${currentView === 'partnerships' ? 'active' : ''}`}
-            >
-              Partnerships
-            </button>
-            <button
-              onClick={() => setCurrentView('profile')}
-              className={`nav-tab ${currentView === 'profile' ? 'active' : ''}`}
-            >
-              Profile
-            </button>
+          <nav className="flex space-x-1 py-2">
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: '📊', description: 'Overview & Insights' },
+              { id: 'expenses', label: 'Expenses', icon: '💰', description: 'Shared Spending' },
+              { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets' },
+              { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
+              { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
+              { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
+              { id: 'partnerships', label: 'Partnerships', icon: '🤝', description: 'Manage Connections' },
+              { id: 'profile', label: 'Profile', icon: '👤', description: 'Settings & Preferences' }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id)}
+                className={`group relative px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  currentView === item.id
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg transform scale-105'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                  {item.badge && item.badge > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center font-bold">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  {item.description}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </button>
+            ))}
           </nav>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="overflow-x-auto">
-          <div className="flex space-x-1 px-4 py-2">
+          <div className="flex space-x-2 px-4 py-3">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: '📊' },
               { id: 'expenses', label: 'Expenses', icon: '💰' },
               { id: 'goals', label: 'Goals', icon: '🎯' },
+              { id: 'activity', label: 'Activity', icon: '📈' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
-              { id: 'contributions', label: 'Contributions', icon: '💳' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
               { id: 'partnerships', label: 'Partnerships', icon: '🤝' },
               { id: 'profile', label: 'Profile', icon: '👤' }
@@ -667,18 +668,20 @@ export function SplitsaveApp() {
               <button
                 key={item.id}
                 onClick={() => setCurrentView(item.id)}
-                className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex-shrink-0 px-4 py-3 rounded-xl text-xs font-medium transition-all duration-200 ${
                   currentView === item.id
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg transform scale-105'
                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-lg mb-1">{item.icon}</div>
+                  <div className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200">
+                    {item.icon}
+                  </div>
                   <div className="relative">
                     {item.label}
                     {item.badge && item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
                         {item.badge}
                       </span>
                     )}
@@ -741,6 +744,7 @@ export function SplitsaveApp() {
             onProfileCompletionShown={() => setProfileCompletionShown(true)}
             currencySymbol={currencySymbol}
             currencyEmoji={currencyEmoji}
+            user={user}
           />
         )}
         {currentView === 'expenses' && (
@@ -752,13 +756,41 @@ export function SplitsaveApp() {
           />
         )}
         {currentView === 'goals' && (
-          <GoalsView 
-            goals={goals} 
-            partnerships={partnerships}
-            onAddGoal={addGoal}
-            currencySymbol={currencySymbol}
-            userCountry={profile?.country_code}
-          />
+          <>
+            <MonthlyContributionSummary 
+              partnerships={partnerships}
+              profile={profile}
+              user={user}
+              currencySymbol={currencySymbol}
+            />
+            <GoalsView 
+              goals={goals} 
+              partnerships={partnerships}
+              onAddGoal={addGoal}
+              currencySymbol={currencySymbol}
+              userCountry={profile?.country_code}
+            />
+          </>
+        )}
+        {currentView === 'activity' && (
+          <>
+            <MonthlySalaryTracker 
+              partnerships={partnerships}
+              profile={profile}
+              user={user}
+              currencySymbol={currencySymbol}
+              onSalaryUpdate={(data) => {
+                console.log('Salary update:', data)
+                // In real app, this would trigger a refresh of the activity feed
+              }}
+            />
+            <ActivityFeed 
+              partnerships={partnerships}
+              profile={profile}
+              user={user}
+              currencySymbol={currencySymbol}
+            />
+          </>
         )}
         {currentView === 'safety-pot' && (
           <SafetyPotManager 
@@ -801,6 +833,7 @@ export function SplitsaveApp() {
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
             { id: 'expenses', label: 'Expenses', icon: '💰' },
             { id: 'goals', label: 'Goals', icon: '🎯' },
+            { id: 'activity', label: 'Activity', icon: '📈' },
             { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
             { id: 'contributions', label: 'Contributions', icon: '💳' },
             { id: 'partnerships', label: 'Partnerships', icon: '🤝' },
@@ -835,7 +868,8 @@ function DashboardView({
   profileCompletionShown,
   onProfileCompletionShown,
   currencySymbol,
-  currencyEmoji
+  currencyEmoji,
+  user
 }: { 
   expenses: Expense[] | null, 
   goals: Goal[] | null, 
@@ -846,7 +880,8 @@ function DashboardView({
   profileCompletionShown: boolean,
   onProfileCompletionShown: () => void,
   currencySymbol: string,
-  currencyEmoji: string
+  currencyEmoji: string,
+  user: any
 }) {
   const totalExpenses = expenses ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0
   const totalGoals = goals ? goals.reduce((sum, goal) => sum + goal.current_amount, 0) : 0
@@ -890,9 +925,17 @@ function DashboardView({
   }, [shouldShowCompletionMessage, onProfileCompletionShown])
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Your financial overview and partnership status
+          </p>
+        </div>
         
         {/* PWA Install Button */}
         <button
@@ -903,255 +946,449 @@ function DashboardView({
               alert('PWA install prompt not available. Try refreshing the page or check browser console for details.')
             }
           }}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 flex items-center space-x-2"
+          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:from-purple-700 hover:to-blue-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-3 font-medium"
           title="Install SplitSave App"
         >
-          <span>📱</span>
+          <span className="text-lg">📱</span>
           <span>Install App</span>
         </button>
       </div>
       
       {/* Welcome Message - Progressive Disclosure */}
       {profileCompletion < 100 && (
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
-          <h3 className="text-lg font-medium text-purple-900 dark:text-purple-100 mb-2">Welcome to SplitSave!</h3>
-          
-          {profileCompletion === 0 && (
-            <>
-              <p className="text-purple-700 dark:text-purple-300">
-                Get started by setting up your profile and creating your first shared expense or savings goal.
-              </p>
-              <div className="mt-4">
-                <button 
-                  onClick={onNavigateToProfile}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  Set Up Profile →
-                </button>
-                <p className="text-sm text-purple-600 dark:text-purple-400 mt-2">
-                  Configure your income and personal allowance to get started with shared expenses and savings goals.
-                </p>
+        <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20 p-8 rounded-2xl border border-purple-200/50 dark:border-purple-800/50 shadow-lg">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
               </div>
-            </>
-          )}
-          
-          {profileCompletion > 0 && profileCompletion < 90 && (
-            <>
-              <p className="text-purple-700 dark:text-purple-300">
-                You're making great progress! Complete your profile setup to unlock all features.
-              </p>
-              <div className="mt-4">
-                <button 
-                  onClick={onNavigateToProfile}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  Complete Profile →
-                </button>
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-sm text-purple-600 dark:text-purple-400 mb-1">
-                    <span>Profile Completion</span>
-                    <span>{profileCompletion}%</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-3">
+                Welcome to SplitSave! 🚀
+              </h3>
+              
+              {profileCompletion === 0 && (
+                <>
+                  <p className="text-purple-700 dark:text-purple-300 text-lg leading-relaxed mb-6">
+                    Let's get you set up for collaborative financial success! Start by configuring your profile to unlock shared expenses and savings goals.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button 
+                      onClick={onNavigateToProfile}
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      <span className="mr-2">⚡</span>
+                      Set Up Profile
+                      <span className="ml-2">→</span>
+                    </button>
+                    <div className="text-sm text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-4 py-3 rounded-lg">
+                      <strong>What you'll configure:</strong> Income, personal allowance, and financial preferences
+                    </div>
                   </div>
-                  <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
-                    <div 
-                      className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${profileCompletion}%` }}
-                    ></div>
+                </>
+              )}
+              
+              {profileCompletion > 0 && profileCompletion < 90 && (
+                <>
+                  <p className="text-purple-700 dark:text-purple-300 text-lg leading-relaxed mb-6">
+                    Great progress! You're {profileCompletion}% of the way there. Complete your profile to unlock all SplitSave features.
+                  </p>
+                  <div className="space-y-4">
+                    <button 
+                      onClick={onNavigateToProfile}
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      <span className="mr-2">🎯</span>
+                      Complete Profile
+                      <span className="ml-2">→</span>
+                    </button>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
+                      <div className="flex items-center justify-between text-sm text-purple-600 dark:text-purple-400 mb-3">
+                        <span className="font-medium">Profile Completion</span>
+                        <span className="font-bold text-lg">{profileCompletion}%</span>
+                      </div>
+                      <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out" 
+                          style={{ width: `${profileCompletion}%` }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </>
-          )}
-          
-          {profileCompletion >= 90 && profileCompletion < 100 && (
-            <>
-              <p className="text-purple-700 dark:text-purple-300">
-                Almost there! Just a few more details to complete your profile.
-              </p>
-              <div className="mt-4">
-                <button 
-                  onClick={onNavigateToProfile}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  Finish Profile →
-                </button>
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-sm text-purple-600 dark:text-purple-400 mb-1">
-                    <span>Profile Completion</span>
-                    <span>{profileCompletion}%</span>
+                </>
+              )}
+              
+              {profileCompletion >= 90 && profileCompletion < 100 && (
+                <>
+                  <p className="text-purple-700 dark:text-purple-300 text-lg leading-relaxed mb-6">
+                    Almost there! Just a few more details to complete your profile and unlock everything.
+                  </p>
+                  <div className="space-y-4">
+                    <button 
+                      onClick={onNavigateToProfile}
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      <span className="mr-2">✨</span>
+                      Finish Profile
+                      <span className="ml-2">→</span>
+                    </button>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
+                      <div className="flex items-center justify-between text-sm text-purple-600 dark:text-purple-400 mb-3">
+                        <span className="font-medium">Profile Completion</span>
+                        <span className="font-bold text-lg">{profileCompletion}%</span>
+                      </div>
+                      <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out" 
+                          style={{ width: `${profileCompletion}%` }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
-                    <div 
-                      className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${profileCompletion}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Profile Complete Success Message */}
       {shouldShowCompletionMessage && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
-          <div className="flex items-center">
+        <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 p-8 rounded-2xl border border-green-200/50 dark:border-green-800/50 shadow-lg">
+          <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
-              <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎉</span>
+              </div>
             </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-green-900 dark:text-green-100">Profile Complete! 🎉</h3>
-              <p className="text-green-700 dark:text-green-300 mt-1">
-                Your profile is fully set up. Ready to create your first shared expense or savings goal?
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-2">
+                Profile Complete! 🚀
+              </h3>
+              <p className="text-green-700 dark:text-green-300 text-lg leading-relaxed">
+                Fantastic! Your profile is fully configured and ready for action. You can now create shared expenses, set savings goals, and start your collaborative financial journey.
               </p>
+              <div className="mt-4 flex items-center space-x-2 text-sm text-green-600 dark:text-green-400">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span>All features unlocked</span>
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span>Ready to collaborate</span>
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span>Start saving together</span>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Payday Information Section */}
+      {/* Dual Payday Information Section */}
       {profile?.payday && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 p-8 rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-lg">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
               <span className="text-2xl">📅</span>
-              <div>
-                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Next Payday</h3>
-                <p className="text-blue-700 dark:text-blue-300">
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100">Next Paydays</h3>
+              <p className="text-blue-700 dark:text-blue-300">Plan your contributions together</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Your Payday */}
+            <div className="bg-white/60 dark:bg-gray-800/60 p-6 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Your Payday</h4>
+                {isTodayPayday(profile.payday) && (
+                  <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-xs font-semibold shadow-lg animate-pulse">
+                    🎉 Today!
+                  </div>
+                )}
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
                   {getNextPaydayDescription(profile.payday)}
-                </p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {calculateNextPayday(profile.payday).toLocaleDateString('en-US', {
+                </div>
+                <div className="text-blue-700 dark:text-blue-300 text-base">
+                  {calculateNextPayday(profile.payday).toLocaleDateString('en-GB', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                   })}
-                </p>
+                </div>
               </div>
             </div>
             
-            {isTodayPayday(profile.payday) && (
-              <div className="text-right">
-                <div className="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
-                  🎉 Today!
+            {/* Partner's Payday */}
+            <div className="bg-white/60 dark:bg-gray-800/60 p-6 rounded-xl border border-green-200/50 dark:border-green-700/50">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-green-900 dark:text-green-100">Partner's Payday</h4>
+                <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-xs font-semibold shadow-lg">
+                  🤝
                 </div>
               </div>
-            )}
+              <div className="text-center">
+                {partnerships.length > 0 ? (
+                  <>
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                      {/* In real app, this would calculate from partner's profile.payday */}
+                      In 17 days
+                    </div>
+                    <div className="text-green-700 dark:text-green-300 text-base">
+                      Tuesday 30 September 2025
+                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400 mt-2">
+                      Partner's payday info will appear here
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-gray-400 dark:text-gray-500 mb-2">
+                      --
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 text-base">
+                      No partner connected
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Connect with a partner to see their payday
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
           
-          {/* Payday Reminder */}
-          <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>💡 Reminder:</strong> Don't forget to contribute to your shared expenses and savings goals on payday!
-            </p>
+          {/* Coordination Reminder */}
+          <div className="mt-6 p-4 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
+            <div className="flex items-center space-x-3">
+              <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
+              <div>
+                <p className="text-blue-800 dark:text-blue-200 font-medium">
+                  <strong>Coordination Reminder:</strong> Plan your contributions together! When both partners get paid, complete your monthly tracking to stay accountable.
+                </p>
+                <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
+                  Use our monthly tracking feature to coordinate contributions and maintain transparency.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Partnership Status */}
       {!hasPartnership && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+        <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 p-8 rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-lg">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🤝</span>
               </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">Partnership Required</h3>
-                <p className="text-blue-700 dark:text-blue-300 mt-1">
-                  To use SplitSave's full features, you need to connect with a partner. 
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-3">Partnership Required</h3>
+                <p className="text-blue-700 dark:text-blue-300 text-lg leading-relaxed mb-4">
+                  To unlock SplitSave's full potential, you need to connect with a partner. 
                   This enables shared expenses, savings goals, and collaborative financial planning.
                 </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-blue-600 dark:text-blue-400">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                    <span>Split shared expenses</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                    <span>Collaborate on savings</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                    <span>Track progress together</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                    <span>Hold each other accountable</span>
+                  </div>
+                </div>
               </div>
             </div>
             <button
               onClick={onNavigateToPartnerships}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold text-lg flex items-center space-x-2"
             >
-              Set Up Partnership
+              <span>🚀</span>
+              <span>Set Up Partnership</span>
             </button>
           </div>
         </div>
       )}
       
+      {/* Monthly Contribution Summary */}
+      {hasPartnership && profile && (
+        <DashboardContributionSummary 
+          partnerships={partnerships}
+          profile={profile}
+          user={null}
+          currencySymbol={currencySymbol}
+          expenses={expenses || []}
+        />
+      )}
+
+      {/* Monthly Salary Tracker */}
+      {hasPartnership && profile && (
+        <MonthlySalaryTracker 
+          partnerships={partnerships}
+          profile={profile}
+          user={user}
+          currencySymbol={currencySymbol}
+          onSalaryUpdate={(data: any) => {
+            console.log('Salary update from dashboard:', data)
+            // In real app, this would trigger a refresh of the dashboard
+          }}
+        />
+      )}
+      
+      {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Monthly Expenses</h3>
-          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{currencySymbol}{totalExpenses.toFixed(2)}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg dark:shadow-xl border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 group">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <span className="text-2xl">💸</span>
+            </div>
+            <div className="text-right">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Monthly Expenses</h3>
+          <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            {currencySymbol}{totalExpenses.toFixed(2)}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {expenses?.length === 0 ? 'No expenses yet' : `${expenses?.length} shared expense${expenses?.length === 1 ? '' : 's'}`}
           </p>
         </div>
         
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Total Saved</h3>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{currencySymbol}{totalGoals.toFixed(2)}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg dark:shadow-xl border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 group">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <span className="text-2xl">💰</span>
+            </div>
+            <div className="text-right">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Saved</h3>
+          <p className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+            {currencySymbol}{totalGoals.toFixed(2)}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {goals?.length === 0 ? 'No goals yet' : `${goals?.length} active goal${goals?.length === 1 ? '' : 's'}`}
           </p>
         </div>
         
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Goals Progress</h3>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg dark:shadow-xl border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 group">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <span className="text-2xl">🎯</span>
+            </div>
+            <div className="text-right">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Goals Progress</h3>
+          <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
             {totalTarget > 0 ? Math.round((totalGoals / totalTarget) * 100) : 0}%
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {totalTarget > 0 ? 'Target: ' + currencySymbol + totalTarget.toFixed(2) : 'Set your first goal'}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Expenses</h3>
+      {/* Detailed Overview Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Expenses */}
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg dark:shadow-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Expenses</h3>
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <span className="text-lg">💸</span>
+            </div>
+          </div>
+          
           {expenses?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <div className="text-4xl mb-2">{currencyEmoji}</div>
-              <p className="text-sm">No shared expenses yet</p>
-              <p className="text-xs mt-1">Add your first expense to get started</p>
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="text-6xl mb-4 opacity-50">{currencyEmoji}</div>
+              <p className="text-lg font-medium mb-2">No shared expenses yet</p>
+              <p className="text-sm">Add your first expense to get started with collaborative spending</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {expenses?.slice(0, 5).map((expense) => (
-                <div key={expense.id} className="flex justify-between items-center">
-                  <span className="text-gray-700 dark:text-gray-300">{expense.description}</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{currencySymbol}{expense.amount.toFixed(2)}</span>
+            <div className="space-y-4">
+              {expenses?.slice(0, 5).map((expense, index) => (
+                <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                      {index + 1}
+                    </div>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">{expense.description}</span>
+                  </div>
+                  <span className="font-bold text-gray-900 dark:text-white text-lg">
+                    {currencySymbol}{expense.amount.toFixed(2)}
+                  </span>
                 </div>
               ))}
+              
+              {/* Total Line */}
+              <div className="border-t-2 border-gray-200 dark:border-gray-600 pt-4 mt-4">
+                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
+                  <span className="font-bold text-lg text-gray-900 dark:text-white">Total</span>
+                  <span className="font-bold text-2xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {currencySymbol}{expenses?.reduce((sum, exp) => sum + exp.amount, 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Active Goals</h3>
+        {/* Active Goals */}
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg dark:shadow-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Active Goals</h3>
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+              <span className="text-lg">🎯</span>
+            </div>
+          </div>
+          
           {goals?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <div className="text-4xl mb-2">🎯</div>
-              <p className="text-sm">No savings goals yet</p>
-              <p className="text-xs mt-1">Create your first goal to start saving</p>
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="text-6xl mb-4 opacity-50">🎯</div>
+              <p className="text-lg font-medium mb-2">No savings goals yet</p>
+              <p className="text-sm">Create your first goal to start building wealth together</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {goals?.slice(0, 5).map((goal) => (
-                <div key={goal.id} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700 dark:text-gray-300">{goal.name}</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
+            <div className="space-y-4">
+              {goals?.slice(0, 5).map((goal, index) => (
+                <div key={goal.id} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                        {index + 1}
+                      </div>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{goal.name}</span>
+                    </div>
+                    <span className="font-bold text-gray-900 dark:text-white text-lg">
                       {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                     <div 
-                      className="bg-purple-600 h-2 rounded-full" 
+                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-500 ease-out" 
                       style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
                     ></div>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Progress</span>
+                    <span className="font-medium">{Math.round((goal.current_amount / goal.target_amount) * 100)}%</span>
                   </div>
                 </div>
               ))}
@@ -1217,65 +1454,99 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Shared Expenses</h2>
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+            Shared Expenses
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Track and manage your shared spending with your partner
+          </p>
+        </div>
+        
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn btn-primary px-4 py-2"
+          className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:-translate-y-0.5 ${
+            showForm 
+              ? 'bg-gray-600 hover:bg-gray-700 text-white shadow-lg hover:shadow-xl'
+              : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl'
+          }`}
         >
-          {showForm ? 'Cancel' : 'Add Expense'}
+          <span className="flex items-center space-x-2">
+            <span>{showForm ? '✕' : '➕'}</span>
+            <span>{showForm ? 'Cancel' : 'Add Expense'}</span>
+          </span>
         </button>
       </div>
 
       {showForm && (
-        <div className="form-section">
-          <div className="form-section-header">
-            <h3 className="form-section-title">Add New Expense</h3>
-            <p className="form-section-subtitle">Create a new shared expense with your partner</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">💰</span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Add New Expense</h3>
+            <p className="text-gray-600 dark:text-gray-400">Create a new shared expense with your partner</p>
           </div>
           
           {/* Approval Threshold Notice */}
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
-            <div className="flex items-center space-x-2">
-              <div className="text-amber-600 dark:text-amber-400">ℹ️</div>
-              <p className="text-amber-800 dark:text-amber-200 text-sm">
-                <strong>Partner Approval:</strong> Expenses over {currencySymbol}100 require your partner's approval before they're added to your shared account. 
-                Smaller expenses are added immediately.
-              </p>
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-800/50 rounded-xl p-6 mb-6">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white text-lg">ℹ️</div>
+              <div>
+                <p className="text-amber-800 dark:text-amber-200 font-medium mb-1">
+                  <strong>Partner Approval Required</strong>
+                </p>
+                <p className="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
+                  Expenses over {currencySymbol}100 require your partner's approval before they're added to your shared account. 
+                  Smaller expenses are added immediately for convenience.
+                </p>
+              </div>
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4" action="javascript:void(0)">
-            <div className="form-group">
-              <label className="form-label">Description</label>
-              <input
-                type="text"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="form-input"
-                placeholder="e.g., Food Shopping, Rent, Bills"
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-6" action="javascript:void(0)">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                  placeholder="e.g., Food Shopping, Rent, Bills"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                className="form-input"
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Category</label>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Category
+              </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 required
               >
                 <option value="">Select a category</option>
@@ -1297,28 +1568,31 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
                 <option value="Other">📦 Other</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Message (Optional)</label>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Message (Optional)
+              </label>
               <textarea
                 value={formData.message}
                 onChange={(e) => setFormData({...formData, message: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 rows={3}
                 placeholder="Add any additional notes about this expense..."
               ></textarea>
             </div>
-            <div className="flex justify-end space-x-3">
+            
+            <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="btn btn-secondary"
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
-
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
               >
                 Add Expense
               </button>
@@ -1328,42 +1602,58 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
       )}
 
       {expenses && expenses.length > 0 ? (
-        <div className="form-section">
-          <div className="form-section-header">
-            <h3 className="form-section-title">Recent Expenses</h3>
-            <p className="form-section-subtitle">Your shared expenses with your partner</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Recent Expenses</h3>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">Your shared expenses with your partner</p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">📊</span>
+            </div>
           </div>
           
           <div className="space-y-4">
-            {expenses.map((expense) => (
-              <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">{expense.description}</h4>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
-                      {expense.category === 'Vacation' ? 'Holiday' : expense.category}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Added by {expense.added_by_user?.name || 'Unknown'}
-                    </span>
+            {expenses.map((expense, index) => (
+              <div key={expense.id} className="flex items-center justify-between p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{expense.description}</h4>
+                    <div className="flex items-center space-x-3">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+                        {expense.category === 'Vacation' ? 'Holiday' : expense.category}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Added by {expense.added_by_user?.name || 'Unknown'}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{currencySymbol}{expense.amount.toFixed(2)}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    {currencySymbol}{expense.amount.toFixed(2)}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="form-section">
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">💰</div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No expenses yet</h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Start by adding your first shared expense with your partner
-            </p>
-          </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-12 text-center">
+          <div className="text-8xl mb-6 opacity-50">💰</div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No expenses yet</h3>
+          <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
+            Start by adding your first shared expense with your partner
+          </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold text-lg transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+          >
+            Add Your First Expense
+          </button>
         </div>
       )}
     </div>
@@ -1410,75 +1700,113 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Savings Goals</h2>
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+            Savings Goals
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Set and track financial goals together with your partner
+          </p>
+        </div>
+        
         {partnerships && partnerships.length > 0 ? (
           <button
             onClick={() => setShowForm(!showForm)}
-            className="btn btn-primary px-4 py-2"
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:-translate-y-0.5 ${
+              showForm 
+                ? 'bg-gray-600 hover:bg-gray-700 text-white shadow-lg hover:shadow-xl'
+                : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl'
+            }`}
           >
-            {showForm ? 'Cancel' : 'Add Goal'}
+            <span className="flex items-center space-x-2">
+              <span>{showForm ? '✕' : '🎯'}</span>
+              <span>{showForm ? 'Cancel' : 'Add Goal'}</span>
+            </span>
           </button>
         ) : (
           <button
             disabled
-            className="btn btn-secondary px-4 py-2 opacity-50 cursor-not-allowed"
+            className="px-6 py-3 bg-gray-400 text-white rounded-xl font-semibold opacity-50 cursor-not-allowed shadow-lg"
             title="Partnership required to add goals"
           >
-            Add Goal
+            <span className="flex items-center space-x-2">
+              <span>🔒</span>
+              <span>Add Goal</span>
+            </span>
           </button>
         )}
       </div>
 
       {showForm && (
-        <div className="form-section">
-          <div className="form-section-header">
-            <h3 className="form-section-title">Create New Savings Goal</h3>
-            <p className="form-section-subtitle">Set a financial goal to save towards with your partner</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🎯</span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create New Savings Goal</h3>
+            <p className="text-gray-600 dark:text-gray-400">Set a financial goal to save towards with your partner</p>
           </div>
           
           {/* Approval Notice */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-            <div className="flex items-center space-x-2">
-              <div className="text-blue-600 dark:text-blue-400">ℹ️</div>
-              <p className="text-blue-800 dark:text-blue-200 text-sm">
-                <strong>Partner Approval:</strong> All new savings goals require your partner's approval before they're added to your shared account.
-              </p>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-6 mb-6">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-lg">ℹ️</div>
+              <div>
+                <p className="text-blue-800 dark:text-blue-200 font-medium mb-1">
+                  <strong>Partner Approval Required</strong>
+                </p>
+                <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
+                  All new savings goals require your partner's approval before they're added to your shared account. 
+                  This ensures both partners are aligned on financial priorities.
+                </p>
+              </div>
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="form-group">
-              <label className="form-label">Goal Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="form-input"
-                placeholder="e.g., Holiday Fund, New Car, Emergency Fund"
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Goal Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                  placeholder="e.g., Holiday Fund, New Car, Emergency Fund"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Target Amount
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.targetAmount}
+                  onChange={(e) => setFormData({...formData, targetAmount: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Target Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.targetAmount}
-                onChange={(e) => setFormData({...formData, targetAmount: e.target.value})}
-                className="form-input"
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Target Date</label>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Target Date
+              </label>
               <input
                 type="date"
                 value={formData.targetDate}
                 onChange={(e) => setFormData({...formData, targetDate: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 min={new Date().toISOString().split('T')[0]}
                 required
               />
@@ -1486,31 +1814,44 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
             
             {/* Monthly Savings Calculation */}
             {formData.targetAmount && formData.targetDate && (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
-                  <div className="text-green-600 dark:text-green-400">💡</div>
-                  <div className="text-green-800 dark:text-green-400 text-sm">
-                    <strong>Monthly Savings Needed:</strong> {calculateMonthlySavings()}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/50 dark:border-green-800/50 rounded-xl p-6">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white text-lg">💡</div>
+                  <div>
+                    <p className="text-green-800 dark:text-green-200 font-medium mb-1">
+                      <strong>Monthly Savings Target</strong>
+                    </p>
+                    <p className="text-green-700 dark:text-green-300 text-lg font-semibold">
+                      {calculateMonthlySavings()}
+                    </p>
+                    <p className="text-green-600 dark:text-green-400 text-sm mt-1">
+                      This is how much you'll need to save together each month to reach your goal on time.
+                    </p>
                   </div>
                 </div>
               </div>
             )}
-            <div className="form-group">
-              <label className="form-label">Description</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Description
+              </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 rows={3}
                 placeholder="Describe what you're saving for..."
               ></textarea>
             </div>
-            <div className="form-group">
-              <label className="form-label">Category</label>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Category
+              </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 required
               >
                 <option value="">Select a category</option>
@@ -1529,27 +1870,30 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
               </select>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Message (Optional)</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Message (Optional)
+              </label>
               <textarea
                 value={formData.message}
                 onChange={(e) => setFormData({...formData, message: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 rows={3}
                 placeholder="Add any additional notes about this goal..."
               ></textarea>
             </div>
-            <div className="flex justify-end space-x-3">
+            
+            <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="btn btn-secondary"
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
               >
                 Add Goal
               </button>
@@ -1560,69 +1904,280 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
 
       {partnerships && partnerships.length > 0 ? (
         goals && goals.length > 0 ? (
-          <div className="form-section">
-            <div className="form-section-header">
-              <h3 className="form-section-title">Your Savings Goals</h3>
-              <p className="form-section-subtitle">Track your progress towards financial goals</p>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Your Savings Goals</h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Track your progress towards financial goals</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
+              </div>
             </div>
             
+            {/* Goals Summary Dashboard */}
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+              {(() => {
+                const totalGoals = goals.length
+                const completedGoals = goals.filter(goal => {
+                  const progress = calculateGoalProgress(goal)
+                  return progress.isCompleted
+                }).length
+                const overdueGoals = goals.filter(goal => {
+                  const progress = calculateGoalProgress(goal)
+                  return progress.isOverdue
+                }).length
+                const activeGoals = totalGoals - completedGoals
+                
+                const totalTarget = goals.reduce((sum, goal) => sum + goal.target_amount, 0)
+                const totalCurrent = goals.reduce((sum, goal) => sum + goal.current_amount, 0)
+                const overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0
+                
+                return (
+                  <>
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalGoals}</div>
+                        <div className="text-sm text-blue-700 dark:text-blue-300">Total Goals</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-xl border border-green-200/50 dark:border-green-800/50">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">{completedGoals}</div>
+                        <div className="text-sm text-green-700 dark:text-green-300">Completed</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-xl border border-purple-200/50 dark:border-purple-800/50">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{activeGoals}</div>
+                        <div className="text-sm text-purple-700 dark:text-purple-300">Active</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 rounded-xl border border-amber-200/50 dark:border-amber-800/50">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{overallProgress.toFixed(1)}%</div>
+                        <div className="text-sm text-amber-700 dark:text-amber-300">Overall Progress</div>
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+            
+            {/* Overdue Goals Warning */}
+            {(() => {
+              const overdueGoals = goals.filter(goal => {
+                const progress = calculateGoalProgress(goal)
+                return progress.isOverdue
+              })
+              
+              if (overdueGoals.length > 0) {
+                return (
+                  <div className="mb-6 p-6 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 border border-red-200/50 dark:border-red-800/50 rounded-xl">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center text-white text-lg">⚠️</div>
+                      <div>
+                        <h4 className="text-red-800 dark:text-red-200 font-medium mb-2">
+                          <strong>Overdue Goals Alert</strong>
+                        </h4>
+                        <p className="text-red-700 dark:text-red-300 text-sm mb-3">
+                          You have {overdueGoals.length} goal{overdueGoals.length > 1 ? 's' : ''} that {overdueGoals.length > 1 ? 'are' : 'is'} past their target date.
+                        </p>
+                        <div className="space-y-1">
+                          {overdueGoals.map((goal) => (
+                            <div key={goal.id} className="text-sm text-red-600 dark:text-red-400">
+                              • {goal.name} - {formatTimeRemaining(
+                                calculateGoalProgress(goal).daysRemaining,
+                                calculateGoalProgress(goal).monthsRemaining,
+                                true
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            })()}
+            
+            {/* Smart Redistribution Notice */}
+            {(() => {
+              const redistributionPlans = calculateSmartRedistribution(goals)
+              if (redistributionPlans.length > 0) {
+                return (
+                  <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/50 dark:border-green-800/50 rounded-xl">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white text-lg">🎯</div>
+                      <div>
+                        <h4 className="text-green-800 dark:text-green-200 font-medium mb-2">
+                          <strong>Smart Redistribution Available!</strong>
+                        </h4>
+                        <p className="text-green-700 dark:text-green-300 text-sm mb-3">
+                          Some goals are completed with excess funds. We can redistribute these to accelerate your other goals.
+                        </p>
+                        <div className="space-y-2">
+                          {redistributionPlans.map((plan) => (
+                            <div key={plan.goalId} className="text-sm text-green-600 dark:text-green-400">
+                              • <strong>{currencySymbol}{plan.redistributionAmount.toFixed(2)}</strong> can be redistributed to this goal
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            })()}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {goals.map((goal) => (
-                <div key={goal.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{goal.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{goal.description}</p>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-300">Progress</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
+              {goals.map((goal, index) => {
+                const progress = calculateGoalProgress(goal)
+                const timeRemaining = formatTimeRemaining(progress.daysRemaining, progress.monthsRemaining, progress.isOverdue)
+                const contributionRecommendation = getContributionRecommendation(progress.weeklyContribution, progress.monthlyContribution)
+                
+                return (
+                  <div key={goal.id} className={`p-6 rounded-xl border transition-all duration-200 group ${
+                    progress.isCompleted 
+                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200/50 dark:border-green-800/50' 
+                      : progress.isOverdue 
+                        ? 'bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-800/20 border-red-200/50 dark:border-red-800/50'
+                        : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
+                        progress.isCompleted 
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                          : progress.isOverdue
+                            ? 'bg-gradient-to-r from-red-500 to-pink-500'
+                            : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                      }`}>
+                        {progress.isCompleted ? '✓' : index + 1}
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        progress.isCompleted 
+                          ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
+                          : progress.isOverdue
+                            ? 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200'
+                            : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {progress.isCompleted ? 'Completed' : goal.category}
                       </span>
                     </div>
                     
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-purple-600 h-2 rounded-full" 
-                        style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
-                      ></div>
-                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{goal.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{goal.description}</p>
                     
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Target Date: {goal.target_date ? new Date(goal.target_date).toLocaleDateString() : 'Not set'}
+                    <div className="space-y-4">
+                      {/* Progress Section */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">
+                          {currencySymbol}{goal.current_amount.toFixed(2)} / {currencySymbol}{goal.target_amount.toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className={`h-3 rounded-full transition-all duration-500 ease-out ${
+                            progress.isCompleted 
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                              : progress.isOverdue
+                                ? 'bg-gradient-to-r from-red-500 to-pink-500'
+                                : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                          }`}
+                          style={{ width: `${progress.progressPercentage}%` }}
+                        ></div>
+                      </div>
+                      
+                      {/* Progress Percentage */}
+                      <div className="text-center">
+                        <span className={`text-sm font-semibold ${
+                          progress.isCompleted 
+                            ? 'text-green-600 dark:text-green-400'
+                            : progress.isOverdue
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {progress.progressPercentage.toFixed(1)}% Complete
+                        </span>
+                      </div>
+                      
+                      {/* Time Remaining */}
+                      {goal.target_date && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">Time Remaining</span>
+                          <span className={`font-medium ${
+                            progress.isCompleted 
+                              ? 'text-green-600 dark:text-green-400'
+                              : progress.isOverdue
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-gray-700 dark:text-gray-300'
+                          }`}>
+                            {timeRemaining}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Contribution Recommendation */}
+                      {!progress.isCompleted && (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                          <div className="text-center">
+                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Recommended Contribution</span>
+                            <div className="text-sm text-blue-800 dark:text-blue-200 font-semibold mt-1">
+                              {contributionRecommendation}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Completion Celebration */}
+                      {progress.isCompleted && (
+                        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
+                          <span className="text-sm text-green-600 dark:text-green-400 font-medium">🎉 Goal Achieved!</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         ) : (
-          <div className="form-section">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🎯</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No savings goals yet</h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Create your first goal to start saving together
-              </p>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-12 text-center">
+            <div className="text-8xl mb-6 opacity-50">🎯</div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No savings goals yet</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
+              Create your first goal to start saving together
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold text-lg transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+            >
+              Create Your First Goal
+            </button>
           </div>
         )
       ) : (
-        <div className="form-section">
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🤝</div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Partnership Required</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              To add shared savings goals, you need to be connected with a partner. This allows you to split costs and track shared financial goals together.
-            </p>
-            
-            <div className="text-left max-w-md mx-auto">
-              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 text-center">Next steps:</h4>
-              <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
-                <li>• Partner with someone to start sharing expenses</li>
-                <li>• Set up shared financial goals</li>
-                <li>• Track spending together</li>
-              </ul>
-            </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-12 text-center">
+          <div className="text-8xl mb-6 opacity-50">🤝</div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Partnership Required</h3>
+          <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
+            To add shared savings goals, you need to be connected with a partner. This allows you to split costs and track shared financial goals together.
+          </p>
+          
+          <div className="text-left max-w-md mx-auto">
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3 text-center">Next steps:</h4>
+            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+              <li>• Partner with someone to start sharing expenses</li>
+              <li>• Set up shared financial goals</li>
+              <li>• Track spending together</li>
+            </ul>
           </div>
         </div>
       )}
@@ -1648,22 +2203,20 @@ function ApprovalsView({
 }) {
   if (!partnerships || partnerships.length === 0) {
     return (
-      <div className="form-section">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🤝</div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Partnership Required</h2>
-                      <p className="text-gray-500 dark:text-gray-400 mb-6">
-              To see approval requests, you need to be connected with a partner. This allows you to split costs and track shared financial goals together.
-            </p>
-          
-          <div className="text-left max-w-md mx-auto">
-            <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 text-center">Next steps:</h4>
-                          <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
-                <li>• Partner with someone to start sharing expenses</li>
-                <li>• Set up shared financial goals</li>
-                <li>• Track spending together</li>
-              </ul>
-          </div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-12 text-center">
+        <div className="text-8xl mb-6 opacity-50">🤝</div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Partnership Required</h2>
+        <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
+          To see approval requests, you need to be connected with a partner. This allows you to split costs and track shared financial goals together.
+        </p>
+        
+        <div className="text-left max-w-md mx-auto">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3 text-center">Next steps:</h4>
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+            <li>• Partner with someone to start sharing expenses</li>
+            <li>• Set up shared financial goals</li>
+            <li>• Track spending together</li>
+          </ul>
         </div>
       </div>
     )
@@ -1671,12 +2224,10 @@ function ApprovalsView({
 
   if (approvals.length === 0) {
     return (
-      <div className="form-section">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No Pending Approvals</h2>
-          <p className="text-gray-500 dark:text-gray-400">You're all caught up!</p>
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-12 text-center">
+        <div className="text-8xl mb-6 opacity-50">✅</div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No Pending Approvals</h2>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">You're all caught up!</p>
       </div>
     )
   }
@@ -1697,7 +2248,7 @@ function ApprovalsView({
       
       <div className="space-y-4">
         {approvals.map((approval) => (
-          <div key={approval.id} className="form-section">
+          <div key={approval.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6">
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-3">

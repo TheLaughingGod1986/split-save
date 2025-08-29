@@ -121,8 +121,8 @@ export function LoginForm() {
               </div>
             )}
             
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Email address
               </label>
               <div className="relative">
@@ -136,7 +136,7 @@ export function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setEmailFocused(true)}
                   onBlur={() => setEmailFocused(false)}
-                  className={`form-input ${
+                  className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200 ${
                     emailFocused 
                       ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
                       : ''
@@ -158,8 +158,8 @@ export function LoginForm() {
               )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -173,7 +173,7 @@ export function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
-                  className={`form-input pr-12 ${
+                  className={`w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200 ${
                     passwordFocused 
                       ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
                       : ''
@@ -206,7 +206,7 @@ export function LoginForm() {
 
             {/* Password strength indicator for sign up */}
             {isSignUp && password && (
-              <div className="form-group">
+              <div>
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
                   <span>Password strength:</span>
                   <span className={password.length >= 8 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400'}>

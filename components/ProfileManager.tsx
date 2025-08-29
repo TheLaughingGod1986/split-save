@@ -406,27 +406,30 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information Section */}
-        <div className="form-section">
-          <div className="form-section-header">
-            <h2 className="form-section-title">Personal Information</h2>
-            <p className="form-section-subtitle">Basic details about yourself</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">👤</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Personal Information</h2>
+            <p className="text-gray-600 dark:text-gray-400">Basic details about yourself</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="form-group">
-              <label className="form-label">Full Name</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 placeholder="Enter your full name"
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Country</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Country</label>
               <select
                 value={formData.countryCode}
                 onChange={(e) => {
@@ -437,7 +440,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                     currency: selectedCountry?.currency || 'USD'
                   })
                 }}
-                className="form-select"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
               >
                 <option value="">Select country</option>
                 {countryCodes.map(country => (
@@ -449,30 +452,33 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Currency</label>
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Currency</label>
+            <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl">
               <span className="text-2xl">{getCurrencyEmoji(formData.currency)}</span>
-              <span className="text-lg font-medium text-gray-900 dark:text-white">
+              <span className="text-lg font-medium text-blue-900 dark:text-blue-100">
                 {getCurrencySymbol(formData.currency)} {formData.currency}
               </span>
             </div>
-            <p className="form-help-text">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
               Automatically set based on your country selection
             </p>
           </div>
         </div>
 
         {/* Financial Information Section */}
-        <div className="form-section">
-          <div className="form-section-header">
-            <h2 className="form-section-title">Financial Information</h2>
-            <p className="form-section-subtitle">Details about your income and financial preferences</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">💰</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Financial Information</h2>
+            <p className="text-gray-600 dark:text-gray-400">Details about your income and financial preferences</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="form-group">
-              <label className="form-label">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Monthly Income ({getCurrencySymbol(formData.currency)})
               </label>
               <div className="relative">
@@ -485,21 +491,21 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                   min="0"
                   value={formData.income}
                   onChange={(e) => setFormData({...formData, income: e.target.value})}
-                  className="form-input pl-8"
+                  className="w-full px-4 py-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                   placeholder="0.00"
                 />
               </div>
-              <p className="form-help-text">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                 This helps calculate fair expense splits with your partner
               </p>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Payday</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payday</label>
               <select
                 value={formData.payday}
                 onChange={(e) => handlePaydayChange(e.target.value)}
-                className="form-select"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
               >
                 <option value="">Select payday</option>
                 {paydayOptions.map(option => (
@@ -542,13 +548,13 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
           </div>
 
           {showCustomPayday && (
-            <div className="form-group">
-              <label className="form-label">Custom Payday Date</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Custom Payday Date</label>
               <input
                 type="date"
                 value={formData.payday}
                 onChange={(e) => setFormData({...formData, payday: e.target.value})}
-                className="form-input"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
               />
               
               {/* Custom Payday Preview */}
@@ -575,8 +581,8 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Monthly Personal Allowance ({getCurrencySymbol(formData.currency)})
             </label>
             <div className="relative">
@@ -589,11 +595,11 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                 min="0"
                 value={formData.personalAllowance}
                 onChange={(e) => setFormData({...formData, personalAllowance: e.target.value})}
-                className="form-input pl-8"
+                className="w-full px-4 py-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 placeholder="0.00"
               />
             </div>
-            <p className="form-help-text">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
               Money you keep for personal expenses (optional)
             </p>
           </div>
@@ -601,10 +607,13 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
 
         {/* Income Summary Section */}
         {formData.income && (
-          <div className="form-section">
-            <div className="form-section-header">
-              <h2 className="form-section-title">Income Summary</h2>
-              <p className="form-section-subtitle">Overview of your financial breakdown</p>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📊</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Income Summary</h2>
+              <p className="text-gray-600 dark:text-gray-400">Overview of your financial breakdown</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

@@ -18,7 +18,18 @@ export async function GET(req: NextRequest) {
       .from('goals')
       .select(`
         *,
-        added_by_user:users!goals_added_by_user_id_fkey(id, name)
+        added_by_user:users!goals_added_by_user_id_fkey(id, name),
+        contributions:goal_contributions(
+          id,
+          amount,
+          message,
+          month,
+          year,
+          expected_amount,
+          over_under_amount,
+          created_at,
+          user:users!goal_contributions_user_id_fkey(id, name)
+        )
       `)
       .eq('partnership_id', user.partnershipId)
       .order('created_at', { ascending: false })

@@ -166,6 +166,8 @@ export interface Goal {
   current_amount: number
   target_date?: string
   description?: string
+  category?: string
+  priority?: number
   added_by_user_id: string
   partnership_id: string
   created_at: string
@@ -173,6 +175,20 @@ export interface Goal {
     id: string
     name: string
   }
+  contributions?: Array<{
+    id: string
+    amount: number
+    message?: string
+    month?: number
+    year?: number
+    expected_amount?: number
+    over_under_amount?: number
+    created_at: string
+    user?: {
+      id: string
+      name: string
+    }
+  }>
 }
 
 export interface ApprovalRequest {
