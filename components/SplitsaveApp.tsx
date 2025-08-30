@@ -63,6 +63,7 @@ import { MonthlyProgress } from './MonthlyProgress'
 import { AnalyticsView } from './AnalyticsView'
 import { NotificationManager } from './NotificationManager'
 import { AchievementsView } from './AchievementsView'
+import { PartnerCollaborationView } from './PartnerCollaborationView'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -661,6 +662,7 @@ export function SplitsaveApp() {
               { id: 'monthly-progress', label: 'Monthly Progress', icon: '📅', description: 'Track Monthly Achievements' },
               { id: 'analytics', label: 'Analytics', icon: '📊', description: 'Financial Insights & Trends' },
               { id: 'achievements', label: 'Achievements', icon: '🏆', description: 'Unlock Badges & Progress' },
+        { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝', description: 'Enhanced Partner Features & Planning' },
               { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
               { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
@@ -710,6 +712,7 @@ export function SplitsaveApp() {
               { id: 'monthly-progress', label: 'Progress', icon: '📅' },
               { id: 'analytics', label: 'Analytics', icon: '📊' },
               { id: 'achievements', label: 'Achievements', icon: '🏆' },
+        { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝' },
               { id: 'activity', label: 'Activity', icon: '📈' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
@@ -845,14 +848,25 @@ export function SplitsaveApp() {
             currencySymbol={currencySymbol}
           />
         )}
-        {currentView === 'achievements' && (
-          <AchievementsView 
-            partnerships={partnerships}
-            profile={profile}
-            goals={goals}
-            currencySymbol={currencySymbol}
-          />
-        )}
+                    {currentView === 'achievements' && (
+              <AchievementsView 
+                partnerships={partnerships}
+                profile={profile}
+                goals={goals}
+                currencySymbol={currencySymbol}
+              />
+            )}
+
+            {currentView === 'partner-collaboration' && (
+              <PartnerCollaborationView 
+                partnerships={partnerships}
+                profile={profile}
+                partnerProfile={partnerProfile}
+                goals={goals}
+                user={user}
+                currencySymbol={currencySymbol}
+              />
+            )}
         {currentView === 'activity' && (
           <ActivityFeed 
             partnerships={partnerships}
