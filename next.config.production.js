@@ -5,12 +5,21 @@ const nextConfig = {
   
   // Performance optimizations
   experimental: {
+    optimizeCss: true, // Optimize CSS
     optimizePackageImports: [
       'framer-motion', 
       '@heroicons/react',
       'react-hot-toast',
       'socket.io-client'
     ], // Tree shake specific packages
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
 
   // Image optimization
@@ -73,12 +82,8 @@ const nextConfig = {
       },
       // API routes security
       {
-        source: '/api/:path*',
+        source: '/api/(.*)',
         headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization' },
           {
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -204,6 +209,40 @@ const nextConfig = {
     return config
   },
 
+  // Environment variables
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+
+  // Redirects
+  async redirects() {
+    return [
+      {
+        source: '/old-page',
+        destination: '/new-page',
+        permanent: true,
+      },
+      // Add more redirects as needed
+    ]
+  },
+
+  // Rewrites
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: '/api/:path*',
+      },
+      // Add more rewrites as needed
+    ]
+  },
+
+  // Trailing slash
+  trailingSlash: false,
+
+  // Powered by header
+  poweredByHeader: false,
+
   // React strict mode
   reactStrictMode: true,
 
@@ -213,13 +252,48 @@ const nextConfig = {
   // Output configuration
   output: 'standalone', // For containerized deployments
 
+  // PWA configuration
+  pwa: {
+    dest: 'public',
+    register: true,
+    skipWaiting: true,
+    disable: process.env.NODE_ENV === 'development',
+  },
 
+  // Sentry configuration (if using)
+  ...(process.env.SENTRY_DSN && {
+    sentry: {
+      hideSourceMaps: true,
+      widenClientFileUpload: true,
+    },
+  }),
 
-  // Trailing slash
-  trailingSlash: false,
+  // Internationalization
+  i18n: {
+    locales: ['en', 'es', 'fr'],
+    defaultLocale: 'en',
+    localeDetection: true,
+  },
 
-  // Powered by header
-  poweredByHeader: false,
+  // Base path (if deploying to subdirectory)
+  // basePath: '/split-save',
+
+  // Asset prefix (if using CDN)
+  // assetPrefix: process.env.ASSET_PREFIX || '',
+
+  // Custom server configuration
+  serverRuntimeConfig: {
+    // Will only be available on the server side
+    mySecret: process.env.MY_SECRET,
+  },
+
+  publicRuntimeConfig: {
+    // Will be available on both server and client
+    staticFolder: '/static',
+    apiUrl: process.env.API_URL || 'http://localhost:3000',
+  },
 }
 
 module.exports = nextConfig
+
+

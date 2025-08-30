@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/api-client'
+import { SafetyPotFundManager } from './SafetyPotFundManager'
 import {
   calculateSafetyPotStatus,
   generateReallocationSuggestions,
@@ -607,6 +608,16 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
           </div>
         </div>
       )}
+
+      {/* Fund Management Section */}
+      <SafetyPotFundManager
+        currencySymbol={currencySymbol}
+        monthlyExpenses={monthlyExpenses}
+        onUpdate={() => {
+          // Refresh safety pot data
+          loadSafetyPotData()
+        }}
+      />
 
       {/* Success/Error Messages */}
       {success && (

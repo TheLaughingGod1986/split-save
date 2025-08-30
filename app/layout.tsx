@@ -1,27 +1,23 @@
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/components/AuthProvider'
-import type { Metadata } from 'next'
+import SEO from '../components/SEO'
+import { usePerformance } from '../lib/usePerformance'
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'arial'],
+})
 
 export const metadata: Metadata = {
-  title: {
-    default: 'SplitSave - Collaborative Finance App for Couples & Partners',
-    template: '%s | SplitSave'
-  },
-  description: 'SplitSave helps couples and partners manage shared expenses, track savings goals, and build financial harmony together. Free collaborative finance app with real-time expense tracking.',
-  keywords: [
-    'shared expenses',
-    'couple finance',
-    'partner finance',
-    'split bills',
-    'shared savings',
-    'financial planning',
-    'expense tracker',
-    'budget app',
-    'relationship money',
-    'joint finances'
-  ],
+  title: 'SplitSave - Smart Financial Management & Savings Goals',
+  description: 'SplitSave helps you manage shared expenses, track savings goals, and build financial security with AI-powered insights and gamified progress tracking.',
+  keywords: 'financial management, savings goals, expense tracking, budget planning, AI insights, financial security, money management app',
   authors: [{ name: 'SplitSave Team' }],
-  creator: 'SplitSave',
+  creator: 'SplitSave Team',
   publisher: 'SplitSave',
   formatDetection: {
     email: false,
@@ -33,26 +29,27 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
+    title: 'SplitSave - Smart Financial Management & Savings Goals',
+    description: 'SplitSave helps you manage shared expenses, track savings goals, and build financial security with AI-powered insights and gamified progress tracking.',
     url: 'https://splitsave.app',
-    title: 'SplitSave - Collaborative Finance App for Couples & Partners',
-    description: 'SplitSave helps couples and partners manage shared expenses, track savings goals, and build financial harmony together.',
     siteName: 'SplitSave',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'SplitSave - Collaborative Finance App',
+        alt: 'SplitSave - Financial Management App',
       },
     ],
+    locale: 'en_US',
+    type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SplitSave - Collaborative Finance App for Couples & Partners',
-    description: 'SplitSave helps couples and partners manage shared expenses, track savings goals, and build financial harmony together.',
+    title: 'SplitSave - Smart Financial Management & Savings Goals',
+    description: 'SplitSave helps you manage shared expenses, track savings goals, and build financial security with AI-powered insights and gamified progress tracking.',
     images: ['/og-image.png'],
+    creator: '@splitsave',
   },
   robots: {
     index: true,
@@ -78,87 +75,93 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className={inter.className}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <meta name="theme-color" content="#7c3aed" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="SplitSave" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
+        {/* Preload critical resources */}
+        <link rel="preload" href="/api/health" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         
-        {/* Structured Data for Rich Snippets */}
+        {/* DNS prefetch for external domains */}
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        <link rel="dns-prefetch" href="//api.splitsave.app" />
+        
+        {/* Resource hints */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://api.splitsave.app" />
+        
+        {/* Critical CSS inline */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Critical CSS for above-the-fold content */
+            body { margin: 0; font-family: ${inter.style.fontFamily}, system-ui, sans-serif; }
+            .loading { display: flex; justify-content: center; align-items: center; min-height: 200px; }
+          `
+        }} />
+      </head>
+      <body className="antialiased">
+        {/* Performance monitoring script */}
         <script
-          type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              "name": "SplitSave",
-              "description": "Collaborative finance app for couples and partners to manage shared expenses and savings goals",
-              "url": "https://splitsave.app",
-              "applicationCategory": "FinanceApplication",
-              "operatingSystem": "Web Browser",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
-              },
-              "author": {
-                "@type": "Organization",
-                "name": "SplitSave"
-              },
-              "featureList": [
-                "Shared expense tracking",
-                "Collaborative savings goals",
-                "Real-time expense sharing",
-                "Partner approval system",
-                "Financial planning tools"
-              ]
-            })
+            __html: `
+              // Performance monitoring
+              if ('PerformanceObserver' in window) {
+                try {
+                  // Core Web Vitals
+                  new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                      if (entry.entryType === 'largest-contentful-paint') {
+                        console.log('LCP:', entry.startTime);
+                      }
+                    }
+                  }).observe({ entryTypes: ['largest-contentful-paint'] });
+                  
+                  // First Input Delay
+                  new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                      if (entry.entryType === 'first-input') {
+                        console.log('FID:', entry.processingStart - entry.startTime);
+                      }
+                    }
+                  }).observe({ entryTypes: ['first-input'] });
+                  
+                  // Cumulative Layout Shift
+                  let cls = 0;
+                  new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                      if (!entry.hadRecentInput) {
+                        cls += entry.value;
+                        console.log('CLS:', cls);
+                      }
+                    }
+                  }).observe({ entryTypes: ['layout-shift'] });
+                } catch (e) {
+                  console.warn('Performance monitoring failed:', e);
+                }
+              }
+            `
           }}
         />
-      </head>
-      <body className="antialiased text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900">
+        
         <AuthProvider>
           {children}
         </AuthProvider>
         
-        {/* Service Worker Registration */}
+        {/* Service Worker registration */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js')
-                      .then(function(registration) {
-                        console.log('SW registered: ', registration);
-                        
-                        // Check for updates
-                        registration.addEventListener('updatefound', () => {
-                          const newWorker = registration.installing;
-                          newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                              // New content is available, refresh the page
-                              if (confirm('New version available! Reload to update?')) {
-                                window.location.reload();
-                              }
-                            }
-                          });
-                        });
-                      })
-                      .catch(function(registrationError) {
-                        console.log('SW registration failed: ', registrationError);
-                      });
-                  });
-                }
-              } catch (error) {
-                console.log('Service worker registration error:', error);
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
               }
             `
           }}

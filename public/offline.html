@@ -16,25 +16,25 @@
     }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
       padding: 1rem;
     }
     
     .offline-container {
-      text-align: center;
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       border-radius: 20px;
       padding: 3rem 2rem;
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
     
     .offline-icon {
@@ -49,45 +49,39 @@
     }
     
     h1 {
+      color: #1f2937;
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 1rem;
-      background: linear-gradient(45deg, #fff, #f0f0f0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
     
     .subtitle {
+      color: #6b7280;
       font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-      opacity: 0.9;
       line-height: 1.6;
+      margin-bottom: 2rem;
     }
     
     .features {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      padding: 1.5rem;
-      margin: 2rem 0;
-      text-align: left;
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
     
     .feature {
       display: flex;
       align-items: center;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-    }
-    
-    .feature:last-child {
-      margin-bottom: 0;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f3f4f6;
+      border-radius: 12px;
+      color: #374151;
+      font-size: 0.9rem;
     }
     
     .feature-icon {
       font-size: 1.2rem;
-      margin-right: 0.75rem;
-      opacity: 0.8;
     }
     
     .actions {
@@ -98,49 +92,55 @@
     }
     
     .btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 0.875rem 1.75rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
       border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
       font-weight: 600;
-      font-size: 0.95rem;
-      backdrop-filter: blur(10px);
-    }
-    
-    .btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
     }
     
     .btn.primary {
-      background: rgba(255, 255, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.4);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
     }
     
     .btn.primary:hover {
-      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn.secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .btn.secondary:hover {
+      background: #e5e7eb;
     }
     
     .status {
       margin-top: 2rem;
       padding: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
+      background: #f9fafb;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      color: #6b7280;
       font-size: 0.9rem;
-      opacity: 0.8;
     }
     
     .connection-indicator {
-      display: inline-block;
       width: 8px;
       height: 8px;
-      background: #ef4444;
       border-radius: 50%;
-      margin-right: 0.5rem;
+      background: #ef4444;
       animation: blink 1.5s infinite;
     }
     
@@ -149,13 +149,18 @@
       51%, 100% { opacity: 0.3; }
     }
     
+    .connection-indicator.online {
+      background: #10b981;
+      animation: none;
+    }
+    
     @media (max-width: 480px) {
       .offline-container {
         padding: 2rem 1.5rem;
       }
       
       h1 {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
       }
       
       .actions {
@@ -171,9 +176,7 @@
 <body>
   <div class="offline-container">
     <div class="offline-icon">📱</div>
-    
     <h1>You're Offline</h1>
-    
     <p class="subtitle">
       SplitSave is currently offline, but don't worry! Your data is safely stored and will sync automatically when your connection is restored.
     </p>
@@ -197,7 +200,7 @@
       <button class="btn primary" onclick="window.location.reload()">
         🔄 Try Again
       </button>
-      <button class="btn" onclick="checkConnection()">
+      <button class="btn secondary" onclick="checkConnection()">
         📡 Check Connection
       </button>
     </div>
@@ -211,42 +214,49 @@
   <script>
     // Check connection status
     function checkConnection() {
-      const statusEl = document.querySelector('.status');
-      const indicator = document.querySelector('.connection-indicator');
+      const indicator = document.querySelector('.connection-indicator')
+      const statusText = document.querySelector('.status span:last-child')
       
       if (navigator.onLine) {
-        statusEl.innerHTML = '<span class="connection-indicator" style="background: #10b981;"></span><span>Connection restored! Reloading...</span>';
-        setTimeout(() => window.location.reload(), 1500);
+        indicator.classList.add('online')
+        statusText.textContent = 'Connection restored! Refreshing...'
+        setTimeout(() => window.location.reload(), 1500)
       } else {
-        statusEl.innerHTML = '<span class="connection-indicator"></span><span>Still offline. Please check your internet connection.</span>';
+        indicator.classList.remove('online')
+        statusText.textContent = 'Still offline. Please check your connection.'
       }
     }
     
-    // Listen for online/offline events
+    // Listen for connection changes
     window.addEventListener('online', () => {
-      checkConnection();
-    });
+      const indicator = document.querySelector('.connection-indicator')
+      const statusText = document.querySelector('.status span:last-child')
+      
+      indicator.classList.add('online')
+      statusText.textContent = 'Connection restored! Refreshing...'
+      setTimeout(() => window.location.reload(), 1500)
+    })
     
     window.addEventListener('offline', () => {
-      const statusEl = document.querySelector('.status');
-      statusEl.innerHTML = '<span class="connection-indicator"></span><span>Connection lost. You are now offline.</span>';
-    });
-    
-    // Check connection every 5 seconds
-    setInterval(checkConnection, 5000);
+      const indicator = document.querySelector('.connection-indicator')
+      const statusText = document.querySelector('.status span:last-child')
+      
+      indicator.classList.remove('online')
+      statusText.textContent = 'Connection lost. You are now offline.'
+    })
     
     // Initial connection check
-    checkConnection();
+    setTimeout(checkConnection, 1000)
     
-    // Service Worker registration
+    // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered:', registration);
+        .then(registration => {
+          console.log('Service Worker registered:', registration)
         })
-        .catch((error) => {
-          console.log('Service Worker registration failed:', error);
-        });
+        .catch(error => {
+          console.log('Service Worker registration failed:', error)
+        })
     }
   </script>
 </body>

@@ -4,6 +4,33 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
+import dynamic from 'next/dynamic'
+
+// Lazy load heavy components for better performance
+const AIInsightsEngine = dynamic(() => import('./AIInsightsEngine').then(mod => ({ default: mod.AIInsightsEngine })), {
+  loading: () => <div className="p-4 text-center text-gray-500">Loading AI Insights...</div>,
+  ssr: false
+});
+
+const AdvancedAnalyticsDashboard = dynamic(() => import('./AdvancedAnalyticsDashboard').then(mod => ({ default: mod.AdvancedAnalyticsDashboard })), {
+  loading: () => <div className="p-4 text-center text-gray-500">Loading Analytics...</div>,
+  ssr: false
+});
+
+const PerformanceOptimizer = dynamic(() => import('./PerformanceOptimizer').then(mod => ({ default: mod.PerformanceOptimizer })), {
+  loading: () => <div className="p-4 text-center text-gray-500">Loading Optimizer...</div>,
+  ssr: false
+});
+
+const GamificationDashboard = dynamic(() => import('./GamificationDashboard').then(mod => ({ default: mod.GamificationDashboard })), {
+  loading: () => <div className="p-4 text-center text-gray-500">Loading Gamification...</div>,
+  ssr: false
+});
+
+const EnhancedDashboard = dynamic(() => import('./EnhancedDashboard').then(mod => ({ default: mod.EnhancedDashboard })), {
+  loading: () => <div className="p-4 text-center text-gray-500">Loading Dashboard...</div>,
+  ssr: false
+});
 
 // Dark mode hook
 function useDarkMode() {
@@ -57,6 +84,7 @@ import SafetyPotManager from './SafetyPotManager'
 import ContributionManager from './ContributionManager'
 import { PartnershipManager } from './PartnershipManager'
 import { MonthlyContributionSummary } from './MonthlyContributionSummary'
+import { GoalContributionForm } from './GoalContributionForm'
 
 import { ActivityFeed } from './ActivityFeed'
 import { MonthlyProgress } from './MonthlyProgress'
@@ -66,7 +94,8 @@ import { AchievementsView } from './AchievementsView'
 import { PartnerCollaborationView } from './PartnerCollaborationView'
 import { DataExportView } from './DataExportView'
 import { MobileNavigation, MobileCard, MobileButton, MobileInput, MobileSelect } from './MobileNavigation'
-import { AIInsightsEngine } from './AIInsightsEngine'
+
+import { SecurityDashboard } from './SecurityDashboard'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -692,10 +721,12 @@ export function SplitsaveApp() {
               { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets' },
               { id: 'monthly-progress', label: 'Monthly Progress', icon: '📅', description: 'Track Monthly Achievements' },
               { id: 'analytics', label: 'Analytics', icon: '📊', description: 'Financial Insights & Trends' },
-              { id: 'ai-insights', label: 'AI Insights', icon: '🤖', description: 'AI-Powered Financial Recommendations' },
-              { id: 'achievements', label: 'Achievements', icon: '🏆', description: 'Unlock Badges & Progress' },
-        { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝', description: 'Enhanced Partner Features & Planning' },
-        { id: 'data-export', label: 'Data Export', icon: '📊', description: 'Advanced Reports & Export Tools' },
+                            { id: 'ai-insights', label: 'AI Insights', icon: '🤖', description: 'AI-Powered Financial Recommendations' },
+              { id: 'gamification', label: 'Gamification', icon: '🎮', description: 'Achievements, Streaks & Rewards' },
+              { id: 'advanced-analytics', label: 'Advanced Analytics', icon: '📊', description: 'Financial Insights, Reports & Visualizations' },
+              { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝', description: 'Enhanced Partner Features & Planning' },
+              { id: 'data-export', label: 'Data Export', icon: '📊', description: 'Advanced Reports & Export Tools' },
+              { id: 'security', label: 'Security & Privacy', icon: '🔒', description: 'Account Security & Privacy Settings' },
               { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
               { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
@@ -859,6 +890,8 @@ export function SplitsaveApp() {
               onAddGoal={addGoal}
               currencySymbol={currencySymbol}
               userCountry={profile?.country_code}
+              profile={profile}
+              partnerProfile={partnerProfile}
             />
           </>
         )}
@@ -882,16 +915,32 @@ export function SplitsaveApp() {
             currencySymbol={currencySymbol}
           />
         )}
-        {currentView === 'ai-insights' && (
-          <AIInsightsEngine 
-            expenses={expenses}
-            goals={goals}
-            profile={profile}
-            partnerProfile={partnerProfile}
-            currencySymbol={currencySymbol}
-            partnerships={partnerships}
-          />
-        )}
+                  {currentView === 'ai-insights' && (
+            <AIInsightsEngine
+              userId={user?.id || ''}
+              goals={goals}
+              contributions={[]}
+              expenses={expenses}
+              partnerships={partnerships}
+              achievements={[]}
+            />
+          )}
+          {currentView === 'security' && (
+            <SecurityDashboard />
+          )}
+          {currentView === 'gamification' && (
+            <GamificationDashboard />
+          )}
+          {currentView === 'advanced-analytics' && (
+            <AdvancedAnalyticsDashboard
+              userId={user?.id || ''}
+              goals={goals}
+              contributions={[]}
+              expenses={expenses}
+              partnerships={partnerships}
+              achievements={[]}
+            />
+          )}
                     {currentView === 'achievements' && (
               <AchievementsView 
                 partnerships={partnerships}
@@ -2485,7 +2534,7 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
 }
 
 // Goals View Component
-function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry }: { goals: Goal[], partnerships: any[], onAddGoal: (data: any) => void, currencySymbol: string, userCountry?: string }) {
+function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry, profile, partnerProfile }: { goals: Goal[], partnerships: any[], onAddGoal: (data: any) => void, currencySymbol: string, userCountry?: string, profile?: any, partnerProfile?: any }) {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -3160,6 +3209,21 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                         <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
                           <span className="text-sm text-green-600 dark:text-green-400 font-medium">🎉 Goal Achieved!</span>
                         </div>
+                      )}
+                      
+                      {/* Goal Contribution Form */}
+                      {!progress.isCompleted && (
+                        <GoalContributionForm
+                          goal={goal}
+                          partnerships={partnerships}
+                          profile={profile}
+                          partnerProfile={partnerProfile}
+                          currencySymbol={currencySymbol}
+                          onContributionAdded={() => {
+                            // Refresh goals data
+                            window.location.reload()
+                          }}
+                        />
                       )}
                     </div>
                   </div>

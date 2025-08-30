@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
 
 interface MonthlyProgressProps {
   partnerships: any[]
@@ -990,6 +991,19 @@ export function MonthlyProgress({
           </form>
         </div>
       )}
+
+      {/* Monthly Contribution Recorder */}
+      <MonthlyContributionRecorder
+        partnerships={partnerships}
+        profile={profile}
+        partnerProfile={null} // This would need to be passed from parent
+        currencySymbol={currencySymbol}
+        onContributionRecorded={() => {
+          // Refresh data when contribution is recorded
+          loadMonthlyProgress()
+          if (onProgressUpdate) onProgressUpdate({})
+        }}
+      />
 
       {/* Progress History */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">

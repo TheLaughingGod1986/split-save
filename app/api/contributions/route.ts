@@ -63,10 +63,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { month } = body
+    const { month, userContribution, partnerContribution, notes } = body
 
     if (!month) {
       return NextResponse.json({ error: 'Month is required' }, { status: 400 })
+    }
+
+    if (!userContribution || !partnerContribution) {
+      return NextResponse.json({ error: 'Both user and partner contributions are required' }, { status: 400 })
     }
 
     // Check if contribution for this month already exists
@@ -78,57 +82,38 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existingContribution) {
-      return NextResponse.json({ error: 'Contribution for this month already exists' }, { status: 409 })
+      // Update existing contribution
+      const { data: updatedContribution, error: updateError } = await supabaseAdmin
+        .from('contributions')
+        .update({
+          user1_amount: userContribution,
+          user2_amount: partnerContribution,
+          total_required: userContribution + partnerContribution,
+          notes: notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingContribution.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Error updating contribution:', updateError)
+        return NextResponse.json({ error: 'Failed to update contribution' }, { status: 500 })
+      }
+
+      return NextResponse.json(updatedContribution)
     }
-
-    // Get current expenses and goals to calculate contribution amounts
-    const { data: expenses } = await supabaseAdmin
-      .from('expenses')
-      .select('amount, frequency')
-      .eq('partnership_id', partnership.id)
-      .eq('status', 'active')
-
-    const { data: goals } = await supabaseAdmin
-      .from('goals')
-      .select('target_amount, current_amount, priority')
-      .eq('partnership_id', partnership.id)
-      .eq('status', 'active')
-
-    // Get user profiles for income information
-    const { data: user1Profile } = await supabaseAdmin
-      .from('users')
-      .select('income')
-      .eq('id', partnership.user1_id)
-      .single()
-
-    const { data: user2Profile } = await supabaseAdmin
-      .from('users')
-      .select('income')
-      .eq('id', partnership.user2_id)
-      .single()
-
-    const user1Income = user1Profile?.income || 0
-    const user2Income = user2Profile?.income || 0
-
-    // Calculate monthly contribution breakdown
-    const breakdown = calculateMonthlyContribution(
-      expenses || [],
-      goals || [],
-      0, // Safety pot target (will be calculated based on expenses)
-      user1Income,
-      user2Income,
-      month
-    )
 
     // Create new contribution record
     const newContribution = {
       partnership_id: partnership.id,
       month,
-      user1_amount: breakdown.user1Share,
-      user2_amount: breakdown.user2Share,
+      user1_amount: userContribution,
+      user2_amount: partnerContribution,
       user1_paid: false,
       user2_paid: false,
-      total_required: breakdown.total
+      total_required: userContribution + partnerContribution,
+      notes: notes || null
     }
 
     const { data: contribution, error: insertError } = await supabaseAdmin

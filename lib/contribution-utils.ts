@@ -322,3 +322,4 @@ export function getPreviousMonth(currentMonth: string): string {
   date.setMonth(date.getMonth() - 1)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
+

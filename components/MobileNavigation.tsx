@@ -16,12 +16,12 @@ interface NavigationItem {
   badge?: number
 }
 
-export function MobileNavigation({ 
-  currentView, 
-  onNavigate, 
-  isOnline, 
-  hasNotifications, 
-  notificationCount 
+export function MobileNavigation({
+  currentView,
+  onNavigate,
+  isOnline,
+  hasNotifications,
+  notificationCount
 }: MobileNavigationProps) {
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -59,6 +59,24 @@ export function MobileNavigation({
       description: 'Smart Recommendations'
     },
     {
+      id: 'gamification',
+      label: 'Gamification',
+      icon: '🎮',
+      description: 'Achievements & Rewards'
+    },
+    {
+      id: 'advanced-analytics',
+      label: 'Analytics',
+      icon: '📊',
+      description: 'Reports & Insights'
+    },
+    {
+      id: 'security',
+      label: 'Security',
+      icon: '🔒',
+      description: 'Security & Privacy'
+    },
+    {
       id: 'partner-collaboration',
       label: 'Partner',
       icon: '🤝',
@@ -72,17 +90,17 @@ export function MobileNavigation({
       const currentScrollY = window.scrollY
       const scrollingDown = currentScrollY > lastScrollY
       const scrollingUp = currentScrollY < lastScrollY
-      
+
       // Hide navigation when scrolling down, show when scrolling up
       if (scrollingDown && currentScrollY > 100) {
         setIsVisible(false)
       } else if (scrollingUp || currentScrollY < 100) {
         setIsVisible(true)
       }
-      
+
       setLastScrollY(currentScrollY)
       setIsScrolling(true)
-      
+
       // Reset scrolling state after a delay
       setTimeout(() => setIsScrolling(false), 150)
     }
@@ -95,12 +113,12 @@ export function MobileNavigation({
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0]
     const startY = touch.clientY
-    
+
     const handleTouchMove = (e: TouchEvent) => {
       const touch = e.touches[0]
       const currentY = touch.clientY
       const deltaY = startY - currentY
-      
+
       // Swipe up to show navigation, swipe down to hide
       if (Math.abs(deltaY) > 50) {
         if (deltaY > 0) {
@@ -110,12 +128,12 @@ export function MobileNavigation({
         }
       }
     }
-    
+
     const handleTouchEnd = () => {
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
     }
-    
+
     document.addEventListener('touchmove', handleTouchMove, { passive: true })
     document.addEventListener('touchend', handleTouchEnd)
   }
@@ -123,7 +141,7 @@ export function MobileNavigation({
   return (
     <>
       {/* Mobile Navigation Bar */}
-      <div 
+      <div
         className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
@@ -140,20 +158,20 @@ export function MobileNavigation({
               <span>{isOnline ? 'Online' : 'Offline'}</span>
             </span>
           </div>
-          
+
           {/* Navigation Tabs */}
           <div className="flex items-center justify-around px-2 py-3">
             {navigationItems.map((item) => {
               const isActive = currentView === item.id
               const hasBadge = item.id === 'partner-collaboration' && hasNotifications
-              
+
               return (
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
                   className={`flex flex-col items-center justify-center flex-1 min-w-0 py-2 px-1 transition-all duration-200 ${
-                    isActive 
-                      ? 'text-blue-600 dark:text-blue-400' 
+                    isActive
+                      ? 'text-blue-600 dark:text-blue-400'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                   }`}
                 >
@@ -166,14 +184,14 @@ export function MobileNavigation({
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Label */}
                   <span className={`text-xs font-medium truncate w-full text-center ${
                     isActive ? 'text-blue-600 dark:text-blue-400' : ''
                   }`}>
                     {item.label}
                   </span>
-                  
+
                   {/* Active Indicator */}
                   {isActive && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-blue-600 dark:bg-blue-400 rounded-t-full"></div>
@@ -182,7 +200,7 @@ export function MobileNavigation({
               )
             })}
           </div>
-          
+
           {/* Home Indicator (for devices with home indicator) */}
           <div className="h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-4 mb-2 opacity-50"></div>
         </div>
@@ -224,14 +242,14 @@ export function MobileCard({ children, className = '' }: { children: React.React
   )
 }
 
-export function MobileButton({ 
-  children, 
-  onClick, 
-  variant = 'primary', 
+export function MobileButton({
+  children,
+  onClick,
+  variant = 'primary',
   size = 'medium',
   className = '',
-  disabled = false 
-}: { 
+  disabled = false
+}: {
   children: React.ReactNode
   onClick: () => void
   variant?: 'primary' | 'secondary' | 'outline' | 'danger'
@@ -240,20 +258,20 @@ export function MobileButton({
   disabled?: boolean
 }) {
   const baseClasses = 'w-full font-medium rounded-lg transition-all duration-200 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
-  
+
   const variantClasses = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl',
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white shadow-lg hover:shadow-xl',
     outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20',
     danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl'
   }
-  
+
   const sizeClasses = {
     small: 'px-3 py-2 text-sm',
     medium: 'px-4 py-3 text-base',
     large: 'px-6 py-4 text-lg'
   }
-  
+
   return (
     <button
       onClick={onClick}
@@ -265,15 +283,15 @@ export function MobileButton({
   )
 }
 
-export function MobileInput({ 
-  label, 
-  value, 
-  onChange, 
-  placeholder, 
+export function MobileInput({
+  label,
+  value,
+  onChange,
+  placeholder,
   type = 'text',
   required = false,
-  className = '' 
-}: { 
+  className = ''
+}: {
   label: string
   value: string
   onChange: (value: string) => void
@@ -299,14 +317,14 @@ export function MobileInput({
   )
 }
 
-export function MobileSelect({ 
-  label, 
-  value, 
-  onChange, 
-  options, 
+export function MobileSelect({
+  label,
+  value,
+  onChange,
+  options,
   required = false,
-  className = '' 
-}: { 
+  className = ''
+}: {
   label: string
   value: string
   onChange: (value: string) => void

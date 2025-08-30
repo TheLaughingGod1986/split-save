@@ -76,10 +76,10 @@ export function PWAInstallPrompt() {
     try {
       // Show the install prompt
       await deferredPrompt.prompt()
-      
+
       // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice
-      
+
       if (outcome === 'accepted') {
         console.log('User accepted the install prompt')
         toast.success('🎉 SplitSave installed successfully!')
@@ -87,7 +87,7 @@ export function PWAInstallPrompt() {
         console.log('User dismissed the install prompt')
         toast.success('Installation cancelled')
       }
-      
+
       // Clear the deferredPrompt
       setDeferredPrompt(null)
       setIsVisible(false)
@@ -132,7 +132,7 @@ export function PWAInstallPrompt() {
               </p>
             </div>
           </div>
-          
+
           <button
             onClick={handleDismiss}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -170,7 +170,7 @@ export function PWAInstallPrompt() {
           >
             {isInstalling ? '🔄 Installing...' : '📱 Install App'}
           </button>
-          
+
           <button
             onClick={handleManualInstall}
             className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -192,31 +192,3 @@ export function PWAInstallPrompt() {
     </div>
   )
 }
-
-// CSS Animation - moved to useEffect to avoid SSR issues
-useEffect(() => {
-  const style = document.createElement('style')
-  style.textContent = `
-    @keyframes fade-in-up {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .animate-fade-in-up {
-      animation: fade-in-up 0.3s ease-out;
-    }
-  `
-  document.head.appendChild(style)
-  
-  return () => {
-    if (style.parentNode) {
-      style.parentNode.removeChild(style)
-    }
-  }
-}, [])
