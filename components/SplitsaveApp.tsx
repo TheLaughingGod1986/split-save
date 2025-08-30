@@ -66,6 +66,7 @@ import { AchievementsView } from './AchievementsView'
 import { PartnerCollaborationView } from './PartnerCollaborationView'
 import { DataExportView } from './DataExportView'
 import { MobileNavigation, MobileCard, MobileButton, MobileInput, MobileSelect } from './MobileNavigation'
+import { AIInsightsEngine } from './AIInsightsEngine'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -691,6 +692,7 @@ export function SplitsaveApp() {
               { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets' },
               { id: 'monthly-progress', label: 'Monthly Progress', icon: '📅', description: 'Track Monthly Achievements' },
               { id: 'analytics', label: 'Analytics', icon: '📊', description: 'Financial Insights & Trends' },
+              { id: 'ai-insights', label: 'AI Insights', icon: '🤖', description: 'AI-Powered Financial Recommendations' },
               { id: 'achievements', label: 'Achievements', icon: '🏆', description: 'Unlock Badges & Progress' },
         { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝', description: 'Enhanced Partner Features & Planning' },
         { id: 'data-export', label: 'Data Export', icon: '📊', description: 'Advanced Reports & Export Tools' },
@@ -878,6 +880,16 @@ export function SplitsaveApp() {
             profile={profile}
             user={user}
             currencySymbol={currencySymbol}
+          />
+        )}
+        {currentView === 'ai-insights' && (
+          <AIInsightsEngine 
+            expenses={expenses}
+            goals={goals}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            currencySymbol={currencySymbol}
+            partnerships={partnerships}
           />
         )}
                     {currentView === 'achievements' && (

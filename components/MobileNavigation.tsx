@@ -53,6 +53,12 @@ export function MobileNavigation({
       description: 'Monthly Tracking'
     },
     {
+      id: 'ai-insights',
+      label: 'AI Insights',
+      icon: '🤖',
+      description: 'Smart Recommendations'
+    },
+    {
       id: 'partner-collaboration',
       label: 'Partner',
       icon: '🤝',
