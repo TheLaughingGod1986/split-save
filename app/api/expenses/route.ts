@@ -117,8 +117,13 @@ export async function POST(req: NextRequest) {
           description: expenseData.description,
           amount: expenseData.amount,
           category: expenseData.category,
-          date: new Date().toISOString().split('T')[0], // Use current date
-          added_by_user_id: user.id // Use correct column name
+          date: expenseData.date || new Date().toISOString().split('T')[0], // Use provided date or current date
+          added_by_user_id: user.id, // Use correct column name
+          is_recurring: expenseData.is_recurring || false,
+          recurring_frequency: expenseData.is_recurring ? expenseData.recurring_frequency : null,
+          recurring_end_date: expenseData.recurring_end_date || null,
+          notes: expenseData.notes || null,
+          status: 'active'
         })
         .select(`
           *,

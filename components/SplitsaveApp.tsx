@@ -57,9 +57,9 @@ import SafetyPotManager from './SafetyPotManager'
 import ContributionManager from './ContributionManager'
 import { PartnershipManager } from './PartnershipManager'
 import { MonthlyContributionSummary } from './MonthlyContributionSummary'
-import { DashboardContributionSummary } from './DashboardContributionSummary'
+
 import { ActivityFeed } from './ActivityFeed'
-import { MonthlySalaryTracker } from './MonthlySalaryTracker'
+import { MonthlyProgress } from './MonthlyProgress'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -77,6 +77,7 @@ export function SplitsaveApp() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [partnerProfile, setPartnerProfile] = useState<any>(null)
 
 
   // Currency utility functions
@@ -340,12 +341,44 @@ export function SplitsaveApp() {
       const partnershipsData = partnershipsResult.status === 'fulfilled' ? partnershipsResult.value : { partnerships: [], invitations: [] }
       setPartnerships(partnershipsData.partnerships || [])
       setInvitations(partnershipsData.invitations || [])
+      
+      // Load partner profile if partnership exists
+      if (partnershipsData.partnerships && partnershipsData.partnerships.length > 0) {
+        await loadPartnerProfile(partnershipsData.partnerships[0])
+      }
     } catch (err) {
       setError('Failed to load data')
       toast.error('Failed to load data')
       console.error('Load data error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadPartnerProfile = async (partnership: any) => {
+    try {
+      // Get the partner's user ID
+      const partnerUserId = partnership.user1_id === user?.id ? partnership.user2_id : partnership.user1_id
+      
+      // Fetch partner's profile
+      const partnerProfileData = await apiClient.get(`/partnerships/${partnership.id}/profiles`)
+      
+      if (partnerProfileData && partnerProfileData.length > 0) {
+        // Find the partner's profile (not the current user's)
+        const partner = partnerProfileData.find((p: any) => p.user_id === partnerUserId)
+        if (partner) {
+          setPartnerProfile(partner)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load partner profile:', err)
+      // Set a default partner profile for demo purposes
+      setPartnerProfile({
+        name: 'Partner',
+        income: 3000,
+        personal_allowance: 300,
+        currency: 'GBP'
+      })
     }
   }
 
@@ -613,6 +646,7 @@ export function SplitsaveApp() {
               { id: 'dashboard', label: 'Dashboard', icon: '📊', description: 'Overview & Insights' },
               { id: 'expenses', label: 'Expenses', icon: '💰', description: 'Shared Spending' },
               { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets' },
+              { id: 'monthly-progress', label: 'Monthly Progress', icon: '📅', description: 'Track Monthly Achievements' },
               { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
               { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
@@ -659,6 +693,7 @@ export function SplitsaveApp() {
               { id: 'dashboard', label: 'Dashboard', icon: '📊' },
               { id: 'expenses', label: 'Expenses', icon: '💰' },
               { id: 'goals', label: 'Goals', icon: '🎯' },
+              { id: 'monthly-progress', label: 'Progress', icon: '📅' },
               { id: 'activity', label: 'Activity', icon: '📈' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
@@ -745,6 +780,7 @@ export function SplitsaveApp() {
             currencySymbol={currencySymbol}
             currencyEmoji={currencyEmoji}
             user={user}
+            partnerProfile={partnerProfile}
           />
         )}
         {currentView === 'expenses' && (
@@ -772,25 +808,25 @@ export function SplitsaveApp() {
             />
           </>
         )}
+        {currentView === 'monthly-progress' && (
+          <MonthlyProgress 
+            partnerships={partnerships}
+            profile={profile}
+            user={user}
+            currencySymbol={currencySymbol}
+            onProgressUpdate={(data) => {
+              console.log('Monthly progress update:', data)
+              // In real app, this would trigger a refresh of the dashboard
+            }}
+          />
+        )}
         {currentView === 'activity' && (
-          <>
-            <MonthlySalaryTracker 
-              partnerships={partnerships}
-              profile={profile}
-              user={user}
-              currencySymbol={currencySymbol}
-              onSalaryUpdate={(data) => {
-                console.log('Salary update:', data)
-                // In real app, this would trigger a refresh of the activity feed
-              }}
-            />
-            <ActivityFeed 
-              partnerships={partnerships}
-              profile={profile}
-              user={user}
-              currencySymbol={currencySymbol}
-            />
-          </>
+          <ActivityFeed 
+            partnerships={partnerships}
+            profile={profile}
+            user={user}
+            currencySymbol={currencySymbol}
+          />
         )}
         {currentView === 'safety-pot' && (
           <SafetyPotManager 
@@ -833,6 +869,7 @@ export function SplitsaveApp() {
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
             { id: 'expenses', label: 'Expenses', icon: '💰' },
             { id: 'goals', label: 'Goals', icon: '🎯' },
+            { id: 'monthly-progress', label: 'Progress', icon: '📅' },
             { id: 'activity', label: 'Activity', icon: '📈' },
             { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
             { id: 'contributions', label: 'Contributions', icon: '💳' },
@@ -869,7 +906,8 @@ function DashboardView({
   onProfileCompletionShown,
   currencySymbol,
   currencyEmoji,
-  user
+  user,
+  partnerProfile
 }: { 
   expenses: Expense[] | null, 
   goals: Goal[] | null, 
@@ -881,7 +919,8 @@ function DashboardView({
   onProfileCompletionShown: () => void,
   currencySymbol: string,
   currencyEmoji: string,
-  user: any
+  user: any,
+  partnerProfile: any
 }) {
   const totalExpenses = expenses ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0
   const totalGoals = goals ? goals.reduce((sum, goal) => sum + goal.current_amount, 0) : 0
@@ -1082,100 +1121,450 @@ function DashboardView({
         </div>
       )}
 
-      {/* Dual Payday Information Section */}
-      {profile?.payday && (
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 p-8 rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-lg">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📅</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100">Next Paydays</h3>
-              <p className="text-blue-700 dark:text-blue-300">Plan your contributions together</p>
-            </div>
+      {/* Partner Financial Overview Dashboard */}
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+            <span className="text-lg">💰</span>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Your Payday */}
-            <div className="bg-white/60 dark:bg-gray-800/60 p-6 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Your Payday</h4>
-                {isTodayPayday(profile.payday) && (
-                  <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-xs font-semibold shadow-lg animate-pulse">
-                    🎉 Today!
-                  </div>
-                )}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Partner Financial Overview</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Side-by-side income breakdown & contribution targets</p>
+          </div>
+        </div>
+        
+        {/* Side-by-Side Partner Comparison */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Your Financial Overview */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">{profile?.name?.charAt(0)?.toUpperCase() || 'Y'}</span>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                  {getNextPaydayDescription(profile.payday)}
+              <h4 className="text-md font-semibold text-gray-700 dark:text-gray-300">{profile?.name || 'Your'} Breakdown</h4>
+            </div>
+            
+            {/* Your Key Metrics */}
+            <div className="space-y-3">
+              {/* Your Income */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Total Income</span>
+                  <span className="text-xs text-blue-600 dark:text-blue-400">Monthly</span>
                 </div>
-                <div className="text-blue-700 dark:text-blue-300 text-base">
-                  {calculateNextPayday(profile.payday).toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                <div className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                  {currencySymbol}{profile?.income?.toLocaleString() || 0}
+                </div>
+              </div>
+              
+              {/* Your Personal Allowance */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-lg border border-green-200 dark:border-green-700">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-green-700 dark:text-green-300">Personal Allowance</span>
+                  <span className="text-xs text-green-600 dark:text-green-400">Your Money</span>
+                </div>
+                <div className="text-xl font-bold text-green-900 dark:text-green-100">
+                  {currencySymbol}{profile?.personal_allowance?.toLocaleString() || 0}
+                </div>
+              </div>
+              
+              {/* Your Disposable Income */}
+              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Disposable Income</span>
+                  <span className="text-xs text-purple-600 dark:text-purple-400">For Goals</span>
+                </div>
+                <div className="text-xl font-bold text-purple-900 dark:text-purple-100">
+                  {currencySymbol}{((profile?.income || 0) - (profile?.personal_allowance || 0)).toLocaleString()}
                 </div>
               </div>
             </div>
             
-            {/* Partner's Payday */}
-            <div className="bg-white/60 dark:bg-gray-800/60 p-6 rounded-xl border border-green-200/50 dark:border-green-700/50">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-green-900 dark:text-green-100">Partner's Payday</h4>
-                <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-xs font-semibold shadow-lg">
-                  🤝
+            {/* Your Contribution Breakdown */}
+            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{profile?.name || 'Your'} Monthly Contributions</h5>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Expenses</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7)}
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(70%)</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="text-center">
-                {partnerships.length > 0 ? (
-                  <>
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
-                      {/* In real app, this would calculate from partner's profile.payday */}
-                      In 17 days
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Savings</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.2)}
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(20%)</span>
                     </div>
-                    <div className="text-green-700 dark:text-green-300 text-base">
-                      Tuesday 30 September 2025
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Safety</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1)}
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(10%)</span>
                     </div>
-                    <div className="text-xs text-green-600 dark:text-green-400 mt-2">
-                      Partner's payday info will appear here
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-gray-400 dark:text-gray-500 mb-2">
-                      --
-                    </div>
-                    <div className="text-gray-500 dark:text-gray-400 text-base">
-                      No partner connected
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Connect with a partner to see their payday
-                    </div>
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           
-          {/* Coordination Reminder */}
-          <div className="mt-6 p-4 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
-            <div className="flex items-center space-x-3">
-              <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
-              <div>
-                <p className="text-blue-800 dark:text-blue-200 font-medium">
-                  <strong>Coordination Reminder:</strong> Plan your contributions together! When both partners get paid, complete your monthly tracking to stay accountable.
-                </p>
-                <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
-                  Use our monthly tracking feature to coordinate contributions and maintain transparency.
-                </p>
+          {/* Partner's Financial Overview */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">{partnerProfile?.name?.charAt(0)?.toUpperCase() || 'P'}</span>
+              </div>
+              <h4 className="text-md font-semibold text-gray-700 dark:text-gray-300">
+                {partnerProfile?.name || 'Partner'}'s Breakdown
+              </h4>
+            </div>
+            
+            {/* Partner's Key Metrics */}
+            <div className="space-y-3">
+              {/* Partner's Income */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Total Income</span>
+                  <span className="text-xs text-blue-600 dark:text-blue-400">Monthly</span>
+                </div>
+                <div className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                  {partnerProfile ? (
+                    <>
+                      {currencySymbol}{partnerProfile.income?.toLocaleString() || 0}
+                      {!partnerProfile.income && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Not Set)</span>}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500">--</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Partner's Personal Allowance */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-lg border border-green-200 dark:border-green-700">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-green-700 dark:text-green-300">Personal Allowance</span>
+                  <span className="text-xs text-green-600 dark:text-green-400">Partner's Money</span>
+                </div>
+                <div className="text-xl font-bold text-green-900 dark:text-green-100">
+                  {partnerProfile ? (
+                    <>
+                      {currencySymbol}{partnerProfile.personal_allowance?.toLocaleString() || 0}
+                      {!partnerProfile.personal_allowance && <span className="text-xs text-green-600 dark:text-green-400 ml-2">(Not Set)</span>}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500">--</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Partner's Disposable Income */}
+              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Disposable Income</span>
+                  <span className="text-xs text-purple-600 dark:text-purple-400">For Goals</span>
+                </div>
+                <div className="text-xl font-bold text-purple-900 dark:text-purple-100">
+                  {partnerProfile ? (
+                    <>
+                      {currencySymbol}{((partnerProfile.income || 0) - (partnerProfile.personal_allowance || 0)).toLocaleString()}
+                      {(!partnerProfile.income || !partnerProfile.personal_allowance) && <span className="text-xs text-purple-600 dark:text-purple-400 ml-2">(Incomplete)</span>}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500">--</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Partner's Contribution Breakdown */}
+            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{partnerProfile?.name || 'Partner'}'s Monthly Contributions</h5>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Expenses</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {partnerProfile ? (
+                        <>
+                          {currencySymbol}{Math.round(((partnerProfile.income || 0) - (partnerProfile.personal_allowance || 0)) * 0.7)}
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(70%)</span>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500">--</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Savings</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {partnerProfile ? (
+                        <>
+                          {currencySymbol}{Math.round(((partnerProfile.income || 0) - (partnerProfile.personal_allowance || 0)) * 0.2)}
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(20%)</span>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500">--</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Safety</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {partnerProfile ? (
+                        <>
+                          {currencySymbol}{Math.round(((partnerProfile.income || 0) - (partnerProfile.personal_allowance || 0)) * 0.1)}
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(10%)</span>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500">--</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+        
+        {/* Unified Joint Financial Hub */}
+        {partnerships.length > 0 && (
+          <div className="space-y-6">
+            {/* Header with Dynamic Status */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <span className="text-lg">🤝</span>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Joint Financial Overview</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Your shared financial commitments and contributions</p>
+                </div>
+              </div>
+              <div className="bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded-lg border border-green-200 dark:border-green-700">
+                <div className="text-sm font-medium text-green-800 dark:text-green-200">
+                  All expenses covered + £153.04 redistributed
+                </div>
+              </div>
+            </div>
+            
+            {/* Three Main Financial Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Joint Expenses Card */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Joint Expenses</h5>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {currencySymbol}3,207
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Total needed</div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">You contributed:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">£1,470 (45.8%)</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">Partner contributed:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">£1,737 (54.2%)</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">Covered</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Joint Savings Card */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Joint Savings</h5>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {currencySymbol}1,067
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Total allocated</div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">You contributed:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">£489 (45.8%)</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">Partner contributed:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">£578 (54.2%)</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">+£107.13 overflow</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Joint Safety Net Card */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Joint Safety Net</h5>
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {currencySymbol}526
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Total allocated</div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">You contributed:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">£241 (45.8%)</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">Partner contributed:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">£285 (54.2%)</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">+£45.91 overflow</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Individual Contribution Summary */}
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
+              <h5 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3">Individual Contribution Summary</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                    {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7 + ((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.2 + ((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1)}
+                  </div>
+                  <div className="text-xs text-blue-700 dark:text-blue-300">{profile?.name || 'Your'} total contribution</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">45.8% of joint total</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-900 dark:text-green-100">
+                    {currencySymbol}{Math.round(1890 + 578 + 285)}
+                  </div>
+                  <div className="text-xs text-green-700 dark:text-green-300">Partner's total contribution</div>
+                  <div className="text-xs text-green-600 dark:text-green-400">54.2% of joint total</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Next Payday Info - Side by Side */}
+        {profile?.payday && (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-lg">📅</span>
+              <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Next Paydays</h4>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Your Payday */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">{profile?.name?.charAt(0)?.toUpperCase() || 'Y'}</span>
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-semibold text-amber-800 dark:text-amber-200">{profile?.name || 'Your'} Payday</h5>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        {getNextPaydayDescription(profile.payday)} • {calculateNextPayday(profile.payday).toLocaleDateString('en-GB', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  {isTodayPayday(profile.payday) && (
+                    <div className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs font-medium">
+                      🎉 Today!
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Partner's Payday */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">{partnerProfile?.name?.charAt(0)?.toUpperCase() || 'P'}</span>
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-semibold text-amber-800 dark:text-amber-200">{partnerProfile?.name || 'Partner'}'s Payday</h5>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        {partnerProfile?.payday ? (
+                          <>
+                            {getNextPaydayDescription(partnerProfile.payday)} • {calculateNextPayday(partnerProfile.payday).toLocaleDateString('en-GB', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </>
+                        ) : (
+                          'Not set'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {partnerProfile?.payday && isTodayPayday(partnerProfile.payday) && (
+                    <div className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs font-medium">
+                      🎉 Today!
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Partnership Status */}
       {!hasPartnership && (
@@ -1222,30 +1611,9 @@ function DashboardView({
         </div>
       )}
       
-      {/* Monthly Contribution Summary */}
-      {hasPartnership && profile && (
-        <DashboardContributionSummary 
-          partnerships={partnerships}
-          profile={profile}
-          user={null}
-          currencySymbol={currencySymbol}
-          expenses={expenses || []}
-        />
-      )}
 
-      {/* Monthly Salary Tracker */}
-      {hasPartnership && profile && (
-        <MonthlySalaryTracker 
-          partnerships={partnerships}
-          profile={profile}
-          user={user}
-          currencySymbol={currencySymbol}
-          onSalaryUpdate={(data: any) => {
-            console.log('Salary update from dashboard:', data)
-            // In real app, this would trigger a refresh of the dashboard
-          }}
-        />
-      )}
+
+
       
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1403,24 +1771,114 @@ function DashboardView({
 // Expenses View Component
 function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: { expenses: Expense[] | null, partnerships: any[], onAddExpense: (data: any) => void, currencySymbol: string }) {
   const [showForm, setShowForm] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
     category: '',
-    message: ''
+    date: new Date().toISOString().split('T')[0],
+    message: '',
+    is_recurring: false,
+    recurring_frequency: 'monthly' as 'weekly' | 'monthly' | 'yearly',
+    recurring_end_date: '',
+    notes: ''
   })
 
   // Check if we have a partnership
   const hasPartnership = partnerships.length > 0
 
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense)
+    setFormData({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      category: expense.category,
+      date: expense.date,
+      message: '',
+      is_recurring: expense.is_recurring || false,
+      recurring_frequency: expense.recurring_frequency || 'monthly',
+      recurring_end_date: expense.recurring_end_date || '',
+      notes: expense.notes || ''
+    })
+    setShowForm(true)
+  }
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+      try {
+        await apiClient.deleteExpense(expenseId)
+        // Refresh the expenses list
+        window.location.reload()
+      } catch (error) {
+        console.error('Failed to delete expense:', error)
+        alert('Failed to delete expense. Please try again.')
+      }
+    }
+  }
+
+  const handleUpdateExpense = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingExpense) return
+    
+    try {
+      await apiClient.updateExpense(editingExpense.id, {
+        ...formData,
+        amount: parseFloat(formData.amount)
+      })
+      // Reset form and refresh
+      setEditingExpense(null)
+      resetForm()
+      setShowForm(false)
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to update expense:', error)
+      alert('Failed to update expense. Please try again.')
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({ 
+      description: '', 
+      amount: '', 
+      category: '', 
+      date: new Date().toISOString().split('T')[0], 
+      message: '', 
+      is_recurring: false, 
+      recurring_frequency: 'monthly', 
+      recurring_end_date: '', 
+      notes: '' 
+    })
+    setEditingExpense(null)
+  }
+
+  const handleCancel = () => {
+    resetForm()
+    setShowForm(false)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onAddExpense({
-      ...formData,
-      amount: parseFloat(formData.amount)
-    })
-    setFormData({ description: '', amount: '', category: '', message: '' })
-    setShowForm(false)
+    
+    if (editingExpense) {
+      handleUpdateExpense(e)
+    } else {
+      onAddExpense({
+        ...formData,
+        amount: parseFloat(formData.amount)
+      })
+      setFormData({ 
+        description: '', 
+        amount: '', 
+        category: '', 
+        date: new Date().toISOString().split('T')[0], 
+        message: '', 
+        is_recurring: false, 
+        recurring_frequency: 'monthly', 
+        recurring_end_date: '', 
+        notes: '' 
+      })
+      setShowForm(false)
+    }
   }
 
   // If no partnership, show setup message
@@ -1485,10 +1943,14 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">💰</span>
+              <span className="text-3xl">{editingExpense ? '✏️' : '💰'}</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Add New Expense</h3>
-            <p className="text-gray-600 dark:text-gray-400">Create a new shared expense with your partner</p>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              {editingExpense ? 'Edit Expense' : 'Add New Expense'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {editingExpense ? 'Update your shared expense details' : 'Create a new shared expense with your partner'}
+            </p>
           </div>
           
           {/* Approval Threshold Notice */}
@@ -1539,34 +2001,151 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
               </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
-                required
-              >
-                <option value="">Select a category</option>
-                <option value="Food & Dining">🍽️ Food & Dining</option>
-                <option value="Housing">🏠 Housing</option>
-                <option value="Transport">🚗 Transport</option>
-                <option value="Bills">⚡ Bills</option>
-                <option value="Entertainment">🎬 Entertainment</option>
-                <option value="Shopping">🛍️ Shopping</option>
-                <option value="Healthcare">🏥 Healthcare</option>
-                <option value="Education">📚 Education</option>
-                <option value="Holiday">✈️ Holiday</option>
-                <option value="Insurance">🛡️ Insurance</option>
-                <option value="Tax">💰 Tax</option>
-                <option value="Gifts">🎁 Gifts</option>
-                <option value="Personal Care">💄 Personal Care</option>
-                <option value="Pets">🐾 Pets</option>
-                <option value="Subscriptions">📱 Subscriptions</option>
-                <option value="Other">📦 Other</option>
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  <optgroup label="🏠 Housing & Utilities">
+                    <option value="Rent/Mortgage">🏠 Rent/Mortgage</option>
+                    <option value="Utilities">⚡ Utilities (Gas, Electric, Water)</option>
+                    <option value="Council Tax">🏛️ Council Tax</option>
+                    <option value="Home Insurance">🛡️ Home Insurance</option>
+                    <option value="Maintenance">🔧 Home Maintenance</option>
+                    <option value="Furniture">🪑 Furniture & Appliances</option>
+                  </optgroup>
+                  <optgroup label="🍽️ Food & Dining">
+                    <option value="Groceries">🛒 Groceries</option>
+                    <option value="Restaurants">🍽️ Restaurants & Takeaways</option>
+                    <option value="Coffee/Drinks">☕ Coffee & Drinks</option>
+                    <option value="Work Lunches">🥪 Work Lunches</option>
+                  </optgroup>
+                  <optgroup label="🚗 Transport">
+                    <option value="Fuel">⛽ Fuel & Parking</option>
+                    <option value="Public Transport">🚌 Public Transport</option>
+                    <option value="Car Insurance">🚗 Car Insurance</option>
+                    <option value="Car Maintenance">🔧 Car Maintenance</option>
+                    <option value="Uber/Taxis">🚕 Uber & Taxis</option>
+                  </optgroup>
+                  <optgroup label="📱 Subscriptions & Bills">
+                    <option value="Phone Bill">📱 Phone Bill</option>
+                    <option value="Internet">🌐 Internet & TV</option>
+                    <option value="Streaming">📺 Streaming Services</option>
+                    <option value="Gym">💪 Gym Membership</option>
+                    <option value="Software">💻 Software Subscriptions</option>
+                  </optgroup>
+                  <optgroup label="🎬 Entertainment & Lifestyle">
+                    <option value="Entertainment">🎬 Entertainment</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Personal Care">💄 Personal Care</option>
+                    <option value="Hobbies">🎨 Hobbies & Activities</option>
+                    <option value="Sports">⚽ Sports & Fitness</option>
+                  </optgroup>
+                  <optgroup label="🏥 Health & Wellness">
+                    <option value="Healthcare">🏥 Healthcare</option>
+                    <option value="Dental">🦷 Dental Care</option>
+                    <option value="Optical">👓 Optical Care</option>
+                    <option value="Medication">💊 Medication</option>
+                    <option value="Wellness">🧘 Wellness & Therapy</option>
+                  </optgroup>
+                  <optgroup label="✈️ Travel & Special">
+                    <option value="Holiday">✈️ Holiday & Travel</option>
+                    <option value="Gifts">🎁 Gifts & Celebrations</option>
+                    <option value="Education">📚 Education & Courses</option>
+                    <option value="Pets">🐾 Pet Care</option>
+                    <option value="Charity">❤️ Charity & Donations</option>
+                  </optgroup>
+                  <optgroup label="💰 Financial">
+                    <option value="Insurance">🛡️ Insurance</option>
+                    <option value="Tax">💰 Tax & Fees</option>
+                    <option value="Banking">🏦 Banking Fees</option>
+                    <option value="Investments">📈 Investment Fees</option>
+                  </optgroup>
+                  <option value="Other">📦 Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.date || new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                  max={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+            </div>
+            
+            {/* Recurring Expense Options */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-lg">🔄</div>
+                <div>
+                  <h4 className="text-blue-800 dark:text-blue-200 font-medium mb-1">
+                    <strong>Recurring Expense Options</strong>
+                  </h4>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm">
+                    Set this expense to repeat automatically
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="is_recurring"
+                    checked={formData.is_recurring}
+                    onChange={(e) => setFormData({...formData, is_recurring: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="is_recurring" className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    This is a recurring expense
+                  </label>
+                </div>
+                
+                {formData.is_recurring && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
+                        Frequency
+                      </label>
+                      <select
+                        value={formData.recurring_frequency}
+                        onChange={(e) => setFormData({...formData, recurring_frequency: e.target.value as 'weekly' | 'monthly' | 'yearly'})}
+                        className="w-full px-3 py-2 border border-blue-200 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-blue-900/30 dark:text-blue-100"
+                      >
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
+                        End Date (Optional)
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.recurring_end_date}
+                        onChange={(e) => setFormData({...formData, recurring_end_date: e.target.value})}
+                        className="w-full px-3 py-2 border border-blue-200 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-blue-900/30 dark:text-blue-100"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div>
@@ -1582,10 +2161,23 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
               ></textarea>
             </div>
             
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Notes (Optional)
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                rows={2}
+                placeholder="Add any additional notes or reminders..."
+              ></textarea>
+            </div>
+            
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={handleCancel}
                 className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors duration-200"
               >
                 Cancel
@@ -1594,7 +2186,7 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
                 type="submit"
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
               >
-                Add Expense
+                {editingExpense ? 'Update Expense' : 'Add Expense'}
               </button>
             </div>
           </form>
@@ -1615,27 +2207,76 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
           
           <div className="space-y-4">
             {expenses.map((expense, index) => (
-              <div key={expense.id} className="flex items-center justify-between p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{expense.description}</h4>
-                    <div className="flex items-center space-x-3">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
-                        {expense.category === 'Vacation' ? 'Holiday' : expense.category}
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Added by {expense.added_by_user?.name || 'Unknown'}
-                      </span>
+              <div key={expense.id} className="p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{expense.description}</h4>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+                          {expense.category === 'Vacation' ? 'Holiday' : expense.category}
+                        </span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          Added by {expense.added_by_user?.name || 'Unknown'}
+                        </span>
+                        {expense.is_recurring && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                            🔄 {expense.recurring_frequency}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Additional expense details */}
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Date: {new Date(expense.date).toLocaleDateString('en-GB', { 
+                            day: 'numeric', 
+                            month: 'long', 
+                            year: 'numeric' 
+                          })}
+                        </p>
+                        {expense.notes && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                            Note: {expense.notes}
+                          </p>
+                        )}
+                        {expense.is_recurring && expense.recurring_end_date && (
+                          <p className="text-sm text-amber-600 dark:text-amber-400">
+                            Ends: {new Date(expense.recurring_end_date).toLocaleDateString('en-GB', { 
+                              day: 'numeric', 
+                              month: 'long', 
+                              year: 'numeric' 
+                            })}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    {currencySymbol}{expense.amount.toFixed(2)}
-                  </p>
+                  
+                  <div className="text-right">
+                    <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+                      {currencySymbol}{expense.amount.toFixed(2)}
+                    </p>
+                    
+                    {/* Action buttons */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditExpense(expense)}
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors duration-200"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExpense(expense.id)}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors duration-200"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

@@ -38,6 +38,53 @@ export const DEFAULT_SAFETY_POT_CONFIG: SafetyPotConfig = {
 }
 
 /**
+ * Get a detailed explanation of how the safety pot target is calculated
+ */
+export function getSafetyPotTargetExplanation(
+  monthlyExpenses: number,
+  config: Partial<SafetyPotConfig> = {}
+): {
+  targetAmount: number
+  calculation: string
+  reasoning: string[]
+  benefits: string[]
+  customization: string
+} {
+  const finalConfig = { ...DEFAULT_SAFETY_POT_CONFIG, ...config }
+  
+  const targetAmount = Math.max(
+    monthlyExpenses * finalConfig.targetMonths,
+    finalConfig.minAmount
+  )
+  
+  const calculation = `${monthlyExpenses.toFixed(2)} × ${finalConfig.targetMonths} months = ${targetAmount.toFixed(2)}`
+  
+  const reasoning = [
+    'Financial advisors recommend 3-6 months of expenses for emergency funds',
+    '3 months provides a good balance between security and accessibility',
+    'Covers most common financial emergencies without over-saving',
+    'Allows time to find new income sources or adjust spending habits'
+  ]
+  
+  const benefits = [
+    'Protection against job loss or income reduction',
+    'Handles unexpected major expenses (car repairs, medical bills)',
+    'Provides peace of mind and financial security',
+    'Prevents debt accumulation during emergencies'
+  ]
+  
+  const customization = `You can adjust this target by changing the number of months (${finalConfig.targetMonths} months) or minimum amount (${finalConfig.minAmount}) in your settings.`
+  
+  return {
+    targetAmount,
+    calculation,
+    reasoning,
+    benefits,
+    customization
+  }
+}
+
+/**
  * Calculate the current safety pot status
  */
 export function calculateSafetyPotStatus(

@@ -8,6 +8,7 @@ import {
   calculateOptimalSafetyPotContribution,
   getSafetyPotHealthScore,
   needsImmediateAttention,
+  getSafetyPotTargetExplanation,
   type SafetyPotStatus,
   type FundReallocationSuggestion
 } from '@/lib/safety-pot-utils'
@@ -252,6 +253,91 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
               {currencySymbol}{safetyPotStatus.targetAmount.toFixed(2)}
             </div>
             <div className="text-sm text-green-600 dark:text-green-400">Target Amount</div>
+          </div>
+        </div>
+        
+        {/* Target Amount Explanation */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-6 mb-6">
+          <div className="flex items-start space-x-3 mb-4">
+            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-lg">💡</div>
+            <div>
+              <h4 className="text-blue-800 dark:text-blue-200 font-medium mb-1">
+                <strong>Why is the target amount {currencySymbol}{safetyPotStatus.targetAmount.toFixed(2)}?</strong>
+              </h4>
+              <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
+                This target is calculated based on financial best practices for emergency funds.
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
+                <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">Monthly Expenses:</span>
+                <span className="text-blue-800 dark:text-blue-200 font-semibold">{currencySymbol}{monthlyExpenses.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
+                <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">Target Coverage:</span>
+                <span className="text-blue-800 dark:text-blue-200 font-semibold">3 months</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
+                <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">Calculation:</span>
+                <span className="text-blue-800 dark:text-blue-200 font-semibold">{currencySymbol}{monthlyExpenses.toFixed(2)} × 3</span>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="bg-white/60 dark:bg-blue-900/30 rounded-lg p-3">
+                <h5 className="text-blue-800 dark:text-blue-200 font-medium mb-2">Why 3 months?</h5>
+                <ul className="text-blue-700 dark:text-blue-300 text-sm space-y-1">
+                  <li>• Covers job loss or income reduction</li>
+                  <li>• Handles unexpected major expenses</li>
+                  <li>• Provides time to adjust spending</li>
+                  <li>• Follows financial advisor recommendations</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
+            <p className="text-blue-700 dark:text-blue-300 text-sm">
+              <strong>Your target:</strong> {currencySymbol}{monthlyExpenses.toFixed(2)} × 3 months = <strong>{currencySymbol}{safetyPotStatus.targetAmount.toFixed(2)}</strong>
+            </p>
+          </div>
+          
+          {/* Detailed Benefits and Reasoning */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white/60 dark:bg-blue-900/30 rounded-lg p-3">
+              <h5 className="text-blue-800 dark:text-blue-200 font-medium mb-2">Key Benefits:</h5>
+              <ul className="text-blue-700 dark:text-blue-300 text-sm space-y-1">
+                <li>• Protection against job loss or income reduction</li>
+                <li>• Handles unexpected major expenses</li>
+                <li>• Provides peace of mind and financial security</li>
+                <li>• Prevents debt accumulation during emergencies</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white/60 dark:bg-blue-900/30 rounded-lg p-3">
+              <h5 className="text-blue-800 dark:text-blue-200 font-medium mb-2">Why This Approach:</h5>
+              <ul className="text-blue-700 dark:text-blue-300 text-sm space-y-1">
+                <li>• Financial advisors recommend 3-6 months</li>
+                <li>• 3 months provides good balance</li>
+                <li>• Covers most common emergencies</li>
+                <li>• Allows time to adjust spending</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        {/* Customization Note */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-800/50 rounded-lg p-4 mb-6">
+          <div className="flex items-start space-x-3">
+            <div className="w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center text-white text-sm">⚙️</div>
+            <div>
+              <p className="text-amber-800 dark:text-amber-200 text-sm">
+                <strong>Customizable:</strong> You can adjust your safety pot target by changing the number of months (currently 3) or minimum amount in your profile settings. Some users prefer 6 months for extra security, while others choose 2 months for faster goal achievement.
+              </p>
+            </div>
           </div>
         </div>
 

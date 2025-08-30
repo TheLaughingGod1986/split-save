@@ -104,6 +104,14 @@ class ApiClient {
     return response.json()
   }
 
+  async updateExpense(id: string, data: any): Promise<any> {
+    return this.put(`/expenses/${id}`, data)
+  }
+
+  async deleteExpense(id: string): Promise<any> {
+    return this.delete(`/expenses/${id}`)
+  }
+
   // Partnership methods
   async getPartnerships(): Promise<PartnershipsResponse> {
     const response = await this.get('/invite')
@@ -153,6 +161,12 @@ export interface Expense {
   added_by_user_id: string
   partnership_id: string
   created_at: string
+  updated_at?: string
+  is_recurring?: boolean
+  recurring_frequency?: 'weekly' | 'monthly' | 'yearly' | null
+  recurring_end_date?: string | null
+  notes?: string
+  status: 'active' | 'archived' | 'deleted'
   added_by_user?: {
     id: string
     name: string
