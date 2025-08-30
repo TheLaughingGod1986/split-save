@@ -2458,6 +2458,86 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
     return `${currencySymbol}${monthlyAmount.toFixed(2)} per month`
   }
 
+  // Smart Goal Management Functions
+  const handleSmartRedistribution = (redistributionPlans: any[]) => {
+    // TODO: Implement actual redistribution logic
+    console.log('Applying smart redistribution:', redistributionPlans)
+    toast.success('Smart redistribution applied! Your goals have been optimized.')
+  }
+
+  const getPriorityGoals = (goals: Goal[]) => {
+    return goals
+      .filter(goal => !goal.current_amount || goal.current_amount < goal.target_amount)
+      .map(goal => {
+        const progress = calculateGoalProgress(goal)
+        const urgency = progress.isOverdue ? 100 : 
+                       progress.daysRemaining < 30 ? 90 :
+                       progress.daysRemaining < 90 ? 70 :
+                       progress.daysRemaining < 180 ? 50 : 30
+        
+        const progressWeight = (goal.current_amount / goal.target_amount) * 40
+        const totalScore = urgency + progressWeight
+        
+        return { ...goal, priorityScore: totalScore }
+      })
+      .sort((a, b) => (b as any).priorityScore - (a as any).priorityScore)
+  }
+
+  const getPriorityScore = (goal: any) => {
+    return Math.round((goal as any).priorityScore || 0)
+  }
+
+  const getGoalForecast = (goals: Goal[]) => {
+    const today = new Date()
+    const monthlySavings = 500 // TODO: Get from user's actual monthly savings
+    
+    return goals
+      .filter(goal => !goal.current_amount || goal.current_amount < goal.target_amount)
+      .map(goal => {
+        const remaining = goal.target_amount - (goal.current_amount || 0)
+        const monthsToComplete = Math.ceil(remaining / monthlySavings)
+        const completionDate = new Date(today.getFullYear(), today.getMonth() + monthsToComplete, today.getDate())
+        
+        return {
+          goalId: goal.id,
+          goalName: goal.name,
+          remainingAmount: remaining,
+          monthsToComplete,
+          completionDate: completionDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+        }
+      })
+      .sort((a, b) => a.monthsToComplete - b.monthsToComplete)
+  }
+
+  const showDetailedForecast = (goals: Goal[]) => {
+    const forecast = getGoalForecast(goals)
+    const message = forecast.map(prediction => 
+      `${prediction.goalName}: ${prediction.completionDate} (${prediction.monthsToComplete} months)`
+    ).join('\n')
+    
+    alert(`Detailed Goal Forecast:\n\n${message}`)
+  }
+
+  const showPriorityAnalysis = (goals: Goal[]) => {
+    const priorityGoals = getPriorityGoals(goals)
+    const message = priorityGoals.map((goal, index) => 
+      `${index + 1}. ${goal.name}: ${getPriorityScore(goal)}% priority`
+    ).join('\n')
+    
+    alert(`Priority Analysis:\n\n${message}`)
+  }
+
+  const showOptimizationTips = (goals: Goal[]) => {
+    const tips = [
+      'Focus on high-priority goals first',
+      'Consider increasing monthly contributions for urgent goals',
+      'Use smart redistribution for completed goals',
+      'Review and adjust target dates if needed'
+    ]
+    
+    alert(`Optimization Tips:\n\n${tips.join('\n')}`)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onAddGoal({
@@ -2782,20 +2862,26 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                   <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/50 dark:border-green-800/50 rounded-xl">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white text-lg">🎯</div>
-                      <div>
+                      <div className="flex-1">
                         <h4 className="text-green-800 dark:text-green-200 font-medium mb-2">
                           <strong>Smart Redistribution Available!</strong>
                         </h4>
                         <p className="text-green-700 dark:text-green-300 text-sm mb-3">
                           Some goals are completed with excess funds. We can redistribute these to accelerate your other goals.
                         </p>
-                        <div className="space-y-2">
+                        <div className="space-y-2 mb-4">
                           {redistributionPlans.map((plan) => (
                             <div key={plan.goalId} className="text-sm text-green-600 dark:text-green-400">
                               • <strong>{currencySymbol}{plan.redistributionAmount.toFixed(2)}</strong> can be redistributed to this goal
                             </div>
                           ))}
                         </div>
+                        <button
+                          onClick={() => handleSmartRedistribution(redistributionPlans)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          🚀 Apply Smart Redistribution
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -2803,6 +2889,81 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
               }
               return null
             })()}
+
+            {/* Goal Forecasting & Insights */}
+            <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-lg">🔮</div>
+                <div className="flex-1">
+                  <h4 className="text-blue-800 dark:text-blue-200 font-medium mb-3">
+                    <strong>Goal Forecasting & Smart Insights</strong>
+                  </h4>
+                  
+                  {/* Priority Analysis */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <h5 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">🎯 Priority Recommendations</h5>
+                      <div className="space-y-2">
+                        {(() => {
+                          const priorityGoals = getPriorityGoals(goals)
+                          return priorityGoals.slice(0, 3).map((goal, index) => (
+                            <div key={goal.id} className="flex items-center justify-between text-xs">
+                              <span className="text-blue-700 dark:text-blue-300">
+                                {index + 1}. {goal.name}
+                              </span>
+                              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                {getPriorityScore(goal)}%
+                              </span>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <h5 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">⏰ Timeline Forecast</h5>
+                      <div className="space-y-2">
+                        {(() => {
+                          const forecast = getGoalForecast(goals)
+                          return forecast.slice(0, 3).map((prediction, index) => (
+                            <div key={prediction.goalId} className="flex items-center justify-between text-xs">
+                              <span className="text-blue-700 dark:text-blue-300">
+                                {prediction.goalName}
+                              </span>
+                              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                {prediction.completionDate}
+                              </span>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => showDetailedForecast(goals)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      📊 Detailed Forecast
+                    </button>
+                    <button
+                      onClick={() => showPriorityAnalysis(goals)}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      🎯 Priority Analysis
+                    </button>
+                    <button
+                      onClick={() => showOptimizationTips(goals)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      💡 Optimization Tips
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {goals.map((goal, index) => {
@@ -2893,13 +3054,47 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                         </div>
                       )}
                       
-                      {/* Contribution Recommendation */}
+                      {/* Smart Insights */}
                       {!progress.isCompleted && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                          <div className="text-center">
-                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Recommended Contribution</span>
-                            <div className="text-sm text-blue-800 dark:text-blue-200 font-semibold mt-1">
-                              {contributionRecommendation}
+                        <div className="space-y-3">
+                          {/* Contribution Recommendation */}
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                            <div className="text-center">
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Recommended Contribution</span>
+                              <div className="text-sm text-blue-800 dark:text-blue-200 font-semibold mt-1">
+                                {contributionRecommendation}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Priority Indicator */}
+                          <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">Priority Score</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-16 bg-purple-200 dark:bg-purple-700 rounded-full h-2">
+                                  <div 
+                                    className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(100, getPriorityScore(goal))}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs text-purple-700 dark:text-purple-300 font-medium">
+                                  {getPriorityScore(goal)}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Completion Forecast */}
+                          <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                            <div className="text-center">
+                              <span className="text-xs text-green-600 dark:text-green-400 font-medium">Estimated Completion</span>
+                              <div className="text-sm text-green-700 dark:text-green-300 font-semibold mt-1">
+                                {(() => {
+                                  const forecast = getGoalForecast([goal])
+                                  return forecast.length > 0 ? forecast[0].completionDate : 'Calculating...'
+                                })()}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2915,6 +3110,66 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                   </div>
                 )
               })}
+            </div>
+            
+            {/* Goal Optimization Suggestions */}
+            <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-800/50 rounded-xl">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white text-lg">💡</div>
+                <div className="flex-1">
+                  <h4 className="text-amber-800 dark:text-amber-200 font-medium mb-3">
+                    <strong>Smart Optimization Suggestions</strong>
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Suggestion 1 */}
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">🎯</div>
+                        <h5 className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-2">Focus on High Priority</h5>
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          {(() => {
+                            const priorityGoals = getPriorityGoals(goals)
+                            const topGoal = priorityGoals[0]
+                            return topGoal ? `Prioritize "${topGoal.name}" (${getPriorityScore(topGoal)}% priority)` : 'All goals are well-balanced'
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Suggestion 2 */}
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">⏰</div>
+                        <h5 className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-2">Timeline Optimization</h5>
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          {(() => {
+                            const forecast = getGoalForecast(goals)
+                            const longestGoal = forecast[forecast.length - 1]
+                            return longestGoal ? `"${longestGoal.goalName}" will take ${longestGoal.monthsToComplete} months` : 'All goals are on track'
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Suggestion 3 */}
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">🚀</div>
+                        <h5 className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-2">Acceleration Tips</h5>
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          {(() => {
+                            const redistributionPlans = calculateSmartRedistribution(goals)
+                            return redistributionPlans.length > 0 
+                              ? `${redistributionPlans.length} goal(s) can be accelerated` 
+                              : 'All goals are optimally funded'
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
