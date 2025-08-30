@@ -64,6 +64,7 @@ import { AnalyticsView } from './AnalyticsView'
 import { NotificationManager } from './NotificationManager'
 import { AchievementsView } from './AchievementsView'
 import { PartnerCollaborationView } from './PartnerCollaborationView'
+import { DataExportView } from './DataExportView'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -663,6 +664,7 @@ export function SplitsaveApp() {
               { id: 'analytics', label: 'Analytics', icon: '📊', description: 'Financial Insights & Trends' },
               { id: 'achievements', label: 'Achievements', icon: '🏆', description: 'Unlock Badges & Progress' },
         { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝', description: 'Enhanced Partner Features & Planning' },
+        { id: 'data-export', label: 'Data Export', icon: '📊', description: 'Advanced Reports & Export Tools' },
               { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
               { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
@@ -713,6 +715,7 @@ export function SplitsaveApp() {
               { id: 'analytics', label: 'Analytics', icon: '📊' },
               { id: 'achievements', label: 'Achievements', icon: '🏆' },
         { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝' },
+        { id: 'data-export', label: 'Data Export', icon: '📊' },
               { id: 'activity', label: 'Activity', icon: '📈' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
@@ -863,6 +866,18 @@ export function SplitsaveApp() {
                 profile={profile}
                 partnerProfile={partnerProfile}
                 goals={goals}
+                user={user}
+                currencySymbol={currencySymbol}
+              />
+            )}
+
+            {currentView === 'data-export' && (
+              <DataExportView 
+                partnerships={partnerships}
+                profile={profile}
+                partnerProfile={partnerProfile}
+                goals={goals}
+                expenses={expenses}
                 user={user}
                 currencySymbol={currencySymbol}
               />
