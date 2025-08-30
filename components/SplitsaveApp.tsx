@@ -60,6 +60,9 @@ import { MonthlyContributionSummary } from './MonthlyContributionSummary'
 
 import { ActivityFeed } from './ActivityFeed'
 import { MonthlyProgress } from './MonthlyProgress'
+import { AnalyticsView } from './AnalyticsView'
+import { NotificationManager } from './NotificationManager'
+import { AchievementsView } from './AchievementsView'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -572,6 +575,15 @@ export function SplitsaveApp() {
                 📱
               </button>
               
+              {/* Notification Manager */}
+              <NotificationManager
+                profile={profile}
+                partnerships={partnerships}
+                goals={goals}
+                currentView={currentView}
+                onNavigateToView={setCurrentView}
+              />
+              
               <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {user?.email}</span>
               <button
                 onClick={signOut}
@@ -647,6 +659,8 @@ export function SplitsaveApp() {
               { id: 'expenses', label: 'Expenses', icon: '💰', description: 'Shared Spending' },
               { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets' },
               { id: 'monthly-progress', label: 'Monthly Progress', icon: '📅', description: 'Track Monthly Achievements' },
+              { id: 'analytics', label: 'Analytics', icon: '📊', description: 'Financial Insights & Trends' },
+              { id: 'achievements', label: 'Achievements', icon: '🏆', description: 'Unlock Badges & Progress' },
               { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
               { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
@@ -694,6 +708,8 @@ export function SplitsaveApp() {
               { id: 'expenses', label: 'Expenses', icon: '💰' },
               { id: 'goals', label: 'Goals', icon: '🎯' },
               { id: 'monthly-progress', label: 'Progress', icon: '📅' },
+              { id: 'analytics', label: 'Analytics', icon: '📊' },
+              { id: 'achievements', label: 'Achievements', icon: '🏆' },
               { id: 'activity', label: 'Activity', icon: '📈' },
               { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
               { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
@@ -774,6 +790,7 @@ export function SplitsaveApp() {
             partnerships={partnerships}
             onNavigateToProfile={() => setCurrentView('profile')}
             onNavigateToPartnerships={() => setCurrentView('partnerships')}
+            onNavigateToMonthlyProgress={() => setCurrentView('monthly-progress')}
             profile={profile}
             profileCompletionShown={profileCompletionShown}
             onProfileCompletionShown={() => setProfileCompletionShown(true)}
@@ -818,6 +835,22 @@ export function SplitsaveApp() {
               console.log('Monthly progress update:', data)
               // In real app, this would trigger a refresh of the dashboard
             }}
+          />
+        )}
+        {currentView === 'analytics' && (
+          <AnalyticsView 
+            partnerships={partnerships}
+            profile={profile}
+            user={user}
+            currencySymbol={currencySymbol}
+          />
+        )}
+        {currentView === 'achievements' && (
+          <AchievementsView 
+            partnerships={partnerships}
+            profile={profile}
+            goals={goals}
+            currencySymbol={currencySymbol}
           />
         )}
         {currentView === 'activity' && (
@@ -901,6 +934,7 @@ function DashboardView({
   partnerships,
   onNavigateToProfile, 
   onNavigateToPartnerships,
+  onNavigateToMonthlyProgress,
   profile, 
   profileCompletionShown,
   onProfileCompletionShown,
@@ -914,6 +948,7 @@ function DashboardView({
   partnerships: any[],
   onNavigateToProfile: () => void,
   onNavigateToPartnerships: () => void,
+  onNavigateToMonthlyProgress: () => void,
   profile: any,
   profileCompletionShown: boolean,
   onProfileCompletionShown: () => void,
@@ -1360,6 +1395,99 @@ function DashboardView({
           </div>
         </div>
         
+        {/* Monthly Progress Status Card */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+              <span className="text-lg">📅</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Monthly Progress Status</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Track your current month's financial achievements</p>
+            </div>
+          </div>
+          
+          {/* Progress Status Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Shared Expenses Status */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Shared Expenses</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">70% of base</span>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                  {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7)}
+                </div>
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  ✅ On Track
+                </div>
+              </div>
+            </div>
+            
+            {/* Goal 1 Status */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Goal 1 (Holiday)</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">12% of base</span>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                  {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.2 * 0.6)}
+                </div>
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  ✅ On Track
+                </div>
+              </div>
+            </div>
+            
+            {/* Goal 2 Status */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Goal 2 (House)</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">8% of base</span>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                  {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.2 * 0.4)}
+                </div>
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  ✅ On Track
+                </div>
+              </div>
+            </div>
+            
+            {/* Safety Pot Status */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Safety Pot</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">10% of base</span>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                  {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1)}
+                </div>
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  ✅ On Track
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Quick Action Buttons */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              💡 <strong>Tip:</strong> Update your monthly progress to track actual savings vs. targets
+            </div>
+            <button
+              onClick={onNavigateToMonthlyProgress}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+            >
+              📊 Track Monthly Progress
+            </button>
+          </div>
+        </div>
+
         {/* Unified Joint Financial Hub */}
         {partnerships.length > 0 && (
           <div className="space-y-6">
