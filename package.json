@@ -29,12 +29,12 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@next/font": "^14.2.15",
+
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/auth-helpers-react": "^0.4.2",
     "@supabase/supabase-js": "^2.38.4",
     "bcryptjs": "^2.4.3",
-    "canvas": "^3.2.0",
+
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
     "next": "^14.0.0",
