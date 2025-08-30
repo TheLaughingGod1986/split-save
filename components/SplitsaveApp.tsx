@@ -52,7 +52,7 @@ function useDarkMode() {
   return { isDark, toggleDarkMode }
 }
 import { ProfileManager } from './ProfileManager'
-import PWAInstallPrompt from './PWAInstallPrompt'
+import { PWAInstallPrompt } from './PWAInstallPrompt'
 import SafetyPotManager from './SafetyPotManager'
 import ContributionManager from './ContributionManager'
 import { PartnershipManager } from './PartnershipManager'
@@ -65,6 +65,7 @@ import { NotificationManager } from './NotificationManager'
 import { AchievementsView } from './AchievementsView'
 import { PartnerCollaborationView } from './PartnerCollaborationView'
 import { DataExportView } from './DataExportView'
+import { MobileNavigation, MobileCard, MobileButton, MobileInput, MobileSelect } from './MobileNavigation'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
 
@@ -83,6 +84,8 @@ export function SplitsaveApp() {
   const [error, setError] = useState('')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [partnerProfile, setPartnerProfile] = useState<any>(null)
+  const [isOnline, setIsOnline] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
 
 
   // Currency utility functions
@@ -398,6 +401,32 @@ export function SplitsaveApp() {
       setLoading(false)
     }
   }, [user?.id]) // Only depend on user ID, not the entire loadData function
+
+  // Online/offline and mobile detection
+  useEffect(() => {
+    // Check if online/offline
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    
+    // Check if mobile device
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('resize', checkMobile)
+    
+    // Initial check
+    setIsOnline(navigator.onLine)
+    checkMobile()
+    
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('resize', checkMobile)
+    }
+  }, [])
 
 
 
@@ -924,33 +953,18 @@ export function SplitsaveApp() {
         )}
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden mobile-nav">
-        <div className="flex justify-around">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-            { id: 'expenses', label: 'Expenses', icon: '💰' },
-            { id: 'goals', label: 'Goals', icon: '🎯' },
-            { id: 'monthly-progress', label: 'Progress', icon: '📅' },
-            { id: 'activity', label: 'Activity', icon: '📈' },
-            { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
-            { id: 'contributions', label: 'Contributions', icon: '💳' },
-            { id: 'partnerships', label: 'Partnerships', icon: '🤝' },
-            { id: 'profile', label: 'Profile', icon: '👤' }
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setCurrentView(item.id)}
-              className={`mobile-nav-item ${currentView === item.id ? 'active' : ''}`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span className="text-xs">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Mobile Navigation */}
+      {isMobile && (
+        <MobileNavigation
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          isOnline={isOnline}
+          hasNotifications={approvals.length > 0}
+          notificationCount={approvals.length}
+        />
+      )}
       
-      {/* Single PWA Install Prompt */}
+      {/* PWA Install Prompt */}
       <PWAInstallPrompt />
     </div>
   )
