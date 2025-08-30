@@ -61,53 +61,10 @@ export function PartnerCollaborationView({
   }, [partnerships, goals])
 
   const initializeCollaborationData = () => {
-    // Initialize with demo data
-    const demoSessions: CollaborationSession[] = [
-      {
-        id: '1',
-        type: 'monthly-review',
-        title: 'Monthly Financial Review',
-        description: 'Review our progress and plan for next month',
-        scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
-        status: 'scheduled',
-        participants: [profile?.name || 'You', partnerProfile?.name || 'Partner'],
-        notes: []
-      },
-      {
-        id: '2',
-        type: 'goal-planning',
-        title: 'Holiday Goal Planning',
-        description: 'Discuss our holiday savings strategy and timeline',
-        scheduledDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 2 weeks from now
-        status: 'scheduled',
-        participants: [profile?.name || 'You', partnerProfile?.name || 'Partner'],
-        notes: []
-      }
-    ]
-
-    const demoNotes: SharedNote[] = [
-      {
-        id: '1',
-        title: 'Emergency Fund Strategy',
-        content: 'We should aim to build our emergency fund to cover 6 months of expenses. This gives us security and peace of mind.',
-        author: profile?.name || 'You',
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        tags: ['emergency-fund', 'strategy', 'planning']
-      },
-      {
-        id: '2',
-        title: 'Holiday Budget Planning',
-        content: 'For our summer holiday, we should budget £3000 including flights, accommodation, and spending money. We can save £500/month to reach this goal.',
-        author: partnerProfile?.name || 'Partner',
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        tags: ['holiday', 'budget', 'planning']
-      }
-    ]
-
-    setCollaborationSessions(demoSessions)
-    setSharedNotes(demoNotes)
+    // In a real app, this would fetch from collaboration API
+    // For now, initialize with empty arrays until real data is implemented
+    setCollaborationSessions([])
+    setSharedNotes([])
   }
 
   const checkForTeamAchievements = () => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { toast } from '@/lib/toast'
 
 interface AnalyticsViewProps {
   partnerships: any[]
@@ -39,49 +40,20 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol }: A
   const loadAnalyticsData = async () => {
     setIsLoading(true)
     
-    // TODO: Load from API when backend is ready
-    // For now, generate demo data
-    const demoData = generateDemoData()
-    setMonthlyData(demoData)
-    
-    // Calculate financial health score
-    const healthScore = calculateFinancialHealthScore(demoData)
-    setFinancialHealth(healthScore)
-    
-    setIsLoading(false)
+    try {
+      // In a real app, this would fetch from analytics API
+      // For now, show empty state until real data is implemented
+      setMonthlyData([])
+      setFinancialHealth(null)
+    } catch (error) {
+      console.error('Failed to load analytics data:', error)
+      toast.error('Failed to load analytics data')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const generateDemoData = (): MonthlyData[] => {
-    const months = []
-    const now = new Date()
-    
-    for (let i = 0; i < 6; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthName = date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-      
-      // Generate realistic but varied data
-      const baseSalary = profile?.income || 2600
-      const actualSalary = baseSalary + Math.floor(Math.random() * 400) - 200
-      const extraIncome = Math.max(0, actualSalary - baseSalary)
-      
-      const disposableIncome = actualSalary - (profile?.personal_allowance || 0)
-      const baseSharedExpenses = Math.round(disposableIncome * 0.7)
-      const baseSavings = Math.round(disposableIncome * 0.2)
-      const baseSafety = Math.round(disposableIncome * 0.1)
-      
-      months.push({
-        month: monthName,
-        actualSalary,
-        sharedExpensesContributed: baseSharedExpenses + Math.floor(Math.random() * 100) - 50,
-        goal1Saved: Math.round(baseSavings * 0.6) + Math.floor(Math.random() * 50) - 25,
-        goal2Saved: Math.round(baseSavings * 0.4) + Math.floor(Math.random() * 50) - 25,
-        safetyPotSaved: baseSafety + Math.floor(Math.random() * 30) - 15,
-        extraIncome
-      })
-    }
-    
-    return months.reverse()
-  }
+
 
   const calculateFinancialHealthScore = (data: MonthlyData[]): FinancialHealthScore | null => {
     if (data.length === 0) return null

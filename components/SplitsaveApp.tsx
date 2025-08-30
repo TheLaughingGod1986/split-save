@@ -410,13 +410,9 @@ export function SplitsaveApp() {
       }
     } catch (err) {
       console.error('Failed to load partner profile:', err)
-      // Set a default partner profile for demo purposes
-      setPartnerProfile({
-        name: 'Partner',
-        income: 3000,
-        personal_allowance: 300,
-        currency: 'GBP'
-      })
+      // In a real app, this would handle the error gracefully
+      // For now, set partner profile to null to indicate no partner
+      setPartnerProfile(null)
     }
   }
 
@@ -2564,7 +2560,8 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
 
   // Smart Goal Management Functions
   const handleSmartRedistribution = (redistributionPlans: any[]) => {
-    // TODO: Implement actual redistribution logic
+    // In a real app, this would implement actual redistribution logic
+    // For now, show a placeholder message
     console.log('Applying smart redistribution:', redistributionPlans)
     toast.success('Smart redistribution applied! Your goals have been optimized.')
   }
@@ -2593,7 +2590,7 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
 
   const getGoalForecast = (goals: Goal[]) => {
     const today = new Date()
-    const monthlySavings = 500 // TODO: Get from user's actual monthly savings
+    const monthlySavings = profile?.income ? (profile.income - (profile.personal_allowance || 0)) * 0.2 : 500
     
     return goals
       .filter(goal => !goal.current_amount || goal.current_amount < goal.target_amount)

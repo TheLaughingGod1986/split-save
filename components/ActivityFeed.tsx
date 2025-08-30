@@ -22,93 +22,9 @@ export function ActivityFeed({
 
   useEffect(() => {
     if (activePartnership && profile) {
-      // Simulate activity data for demonstration
-      const mockActivities = [
-        {
-          id: 1,
-          type: 'salary-tracking',
-          user: 'You',
-          month: 'January 2025',
-          actualSalary: 4000,
-          extraIncome: 500,
-          extraIncomeSource: 'Bonus',
-          status: 'completed',
-          description: 'Monthly salary tracking completed'
-        },
-        {
-          id: 2,
-          type: 'salary-tracking',
-          user: 'Partner',
-          month: 'January 2025',
-          actualSalary: 3000,
-          extraIncome: 200,
-          extraIncomeSource: 'Overtime',
-          status: 'completed',
-          description: 'Monthly salary tracking completed'
-        },
-        {
-          id: 3,
-          type: 'contribution',
-          user: 'You',
-          amount: 280,
-          category: 'Expenses',
-          date: '2025-01-28',
-          status: 'on-target',
-          description: 'Monthly expense contribution'
-        },
-        {
-          id: 4,
-          type: 'contribution',
-          user: 'Partner',
-          amount: 200,
-          category: 'Expenses',
-          date: '2025-01-28',
-          status: 'under-target',
-          description: 'Monthly expense contribution (under by £80)'
-        },
-        {
-          id: 5,
-          type: 'contribution',
-          user: 'You',
-          amount: 80,
-          category: 'Savings',
-          date: '2025-01-28',
-          status: 'on-target',
-          description: 'Monthly savings contribution'
-        },
-        {
-          id: 6,
-          type: 'contribution',
-          user: 'Partner',
-          amount: 60,
-          category: 'Savings',
-          date: '2025-01-28',
-          status: 'on-target',
-          description: 'Monthly savings contribution'
-        },
-        {
-          id: 7,
-          type: 'contribution',
-          user: 'You',
-          amount: 40,
-          category: 'Safety Net',
-          date: '2025-01-28',
-          status: 'on-target',
-          description: 'Monthly safety net contribution'
-        },
-        {
-          id: 8,
-          type: 'contribution',
-          user: 'Partner',
-          amount: 30,
-          category: 'Safety Net',
-          date: '2025-01-28',
-          status: 'on-target',
-          description: 'Monthly safety net contribution'
-        }
-      ]
-      
-      setActivities(mockActivities)
+      // In a real app, this would fetch from an activity API
+      // For now, show empty state until real data is implemented
+      setActivities([])
       setLoading(false)
     }
   }, [activePartnership, profile])

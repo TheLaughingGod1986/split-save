@@ -6,8 +6,8 @@ const DYNAMIC_CACHE = 'splitsave-dynamic-v1.0.0'
 const STATIC_FILES = [
   '/',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
   '/offline.html'
 ]
 

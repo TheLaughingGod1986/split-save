@@ -123,34 +123,39 @@ export function MonthlyProgress({
   }
 
   const loadMonthlyProgress = async () => {
-    // TODO: Load from API when backend is ready
-    // For now, check if we have data for current month
-    // If no data exists, don't set monthlyData (form will show)
-    
-    // Check if we're in a new month or have no data
-    const now = new Date()
-    const currentMonthYear = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
-    
-    // Only show demo data if it's a different month (for testing)
-    // In production, this would check the database
-    if (currentMonthYear !== currentMonth) {
-      // This is a new month, no data yet
-      setMonthlyData(null)
-    } else {
-      // For demo purposes, show some historical data but not current month
-      setMonthlyData(null)
+    try {
+      // In a real app, this would fetch from monthly progress API
+      // For now, check if we have data for current month
+      const now = new Date()
+      const currentMonthYear = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+      
+      if (currentMonthYear !== currentMonth) {
+        // This is a new month, no data yet
+        setMonthlyData(null)
+      } else {
+        // Check if we have data for current month
+        setMonthlyData(null)
+      }
+      
+      // Load streak from API
+      await loadStreak()
+    } catch (error) {
+      console.error('Failed to load monthly progress:', error)
     }
-    
-    // Calculate streak (demo data for now)
-    calculateStreak()
   }
 
-  const calculateStreak = () => {
-    // TODO: Load from API when backend is ready
-    // For demo purposes, show a streak
-    const demoStreak = Math.floor(Math.random() * 12) + 1 // 1-12 months
-    setStreakCount(demoStreak)
+  const loadStreak = async () => {
+    try {
+      // In a real app, this would fetch from streak API
+      // For now, set to 0 until real data is implemented
+      setStreakCount(0)
+    } catch (error) {
+      console.error('Failed to load streak:', error)
+      setStreakCount(0)
+    }
   }
+
+
 
   const showAchievementToast = (message: string) => {
     setAchievementMessage(message)

@@ -66,12 +66,20 @@ export function DataExportView({
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1)
       const monthName = date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
       
-      // Mock data - in real app, this would come from actual financial records
+      // Use real data for calculations
       const monthlyIncome = (profile?.income || 0) + (partnerProfile?.income || 0)
-      const monthlyExpenses = (expenses?.length || 0) * 150 // Mock average expense
+      const monthlyExpenses = expenses?.reduce((sum, expense) => {
+        const expenseDate = new Date(expense.created_at || expense.date || new Date())
+        if (expenseDate.getMonth() === date.getMonth() && expenseDate.getFullYear() === date.getFullYear()) {
+          return sum + (expense.amount || 0)
+        }
+        return sum
+      }, 0) || 0
       const monthlySavings = monthlyIncome - monthlyExpenses
       const goalProgress = goals?.reduce((sum, goal) => sum + (goal.current_amount || 0), 0) || 0
-      const partnerContributions = monthlySavings * 0.8 // Mock 80% of savings
+      
+      // Calculate partner contributions based on actual data
+      const partnerContributions = monthlySavings > 0 ? monthlySavings * 0.5 : 0 // Assume 50/50 split
       
       reports.push({
         period: monthName,

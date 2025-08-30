@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { SmartNotificationManager } from './SmartNotificationManager'
@@ -29,6 +29,10 @@ export function EnhancedDashboard() {
   const [selectedView, setSelectedView] = useState<'overview' | 'insights' | 'actions'>('overview')
   const { celebration, showCelebration, hideCelebration } = useCelebration()
 
+  const handleQuickAction = (action: any) => {
+    action.action()
+  }
+
   // Load dashboard data
   useEffect(() => {
     loadDashboardData()
@@ -56,10 +60,43 @@ export function EnhancedDashboard() {
         }
 
         const recommendations = progressResponse.insights.recommendations || []
-        const upcomingDeadlines = generateUpcomingDeadlines()
-        const recentActivity = generateRecentActivity()
-        const partnerUpdates = generatePartnerUpdates()
-        const quickActions = generateQuickActions()
+        const upcomingDeadlines: any[] = [] // Will be populated when goals/expenses API is available
+        const recentActivity: any[] = [] // Will be populated when activity API is available
+        const partnerUpdates: any[] = [] // Will be populated when partner API is available
+        const quickActions = [
+          {
+            id: '1',
+            title: 'Record Contribution',
+            description: 'Add a new contribution to your goals',
+            icon: '💰',
+            action: () => toast.success('Opening contribution form...'),
+            color: 'blue'
+          },
+          {
+            id: '2',
+            title: 'Set New Goal',
+            description: 'Create a new savings target',
+            icon: '🎯',
+            action: () => toast.success('Opening goal creation form...'),
+            color: 'green'
+          },
+          {
+            id: '3',
+            title: 'View Progress',
+            description: 'Check your monthly progress',
+            icon: '📊',
+            action: () => toast.success('Opening progress analytics...'),
+            color: 'purple'
+          },
+          {
+            id: '4',
+            title: 'Partner Chat',
+            description: 'Message your financial partner',
+            icon: '💬',
+            action: () => toast.success('Opening partner chat...'),
+            color: 'orange'
+          }
+        ]
 
         setDashboardData({
           summary,
@@ -78,99 +115,7 @@ export function EnhancedDashboard() {
     }
   }
 
-  // Generate mock data for demonstration
-  const generateUpcomingDeadlines = () => [
-    {
-      id: '1',
-      type: 'goal',
-      title: 'Holiday Fund',
-      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      progress: 75,
-      amount: 1500
-    },
-    {
-      id: '2',
-      type: 'expense',
-      title: 'Car Insurance',
-      deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-      progress: 90,
-      amount: 400
-    }
-  ]
 
-  const generateRecentActivity = () => [
-    {
-      id: '1',
-      type: 'contribution',
-      title: 'Added £200 to Holiday Fund',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      icon: '💰'
-    },
-    {
-      id: '2',
-      type: 'achievement',
-      title: 'Unlocked "First Steps" achievement',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      icon: '🏆'
-    },
-    {
-      id: '3',
-      type: 'goal',
-      title: 'Completed "Emergency Fund" goal',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      icon: '🎯'
-    }
-  ]
-
-  const generatePartnerUpdates = () => [
-    {
-      id: '1',
-      type: 'contribution',
-      title: 'Partner contributed £150',
-      message: 'Your partner added to the Holiday Fund',
-      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      icon: '🤝'
-    }
-  ]
-
-  const generateQuickActions = () => [
-    {
-      id: '1',
-      title: 'Record Contribution',
-      description: 'Add a new contribution to your goals',
-      icon: '💰',
-      action: () => toast.success('Opening contribution form...'),
-      color: 'blue'
-    },
-    {
-      id: '2',
-      title: 'Set New Goal',
-      description: 'Create a new savings target',
-      icon: '🎯',
-      action: () => toast.success('Opening goal creation form...'),
-      color: 'green'
-    },
-    {
-      id: '3',
-      title: 'View Progress',
-      description: 'Check your monthly progress',
-      icon: '📊',
-      action: () => toast.success('Opening progress analytics...'),
-      color: 'purple'
-    },
-    {
-      id: '4',
-      title: 'Partner Chat',
-      description: 'Message your financial partner',
-      icon: '💬',
-      action: () => toast.success('Opening partner chat...'),
-      color: 'orange'
-    }
-  ]
-
-  const handleQuickAction = (action: any) => {
-    action.action()
-  }
 
   const getDaysUntilDeadline = (deadline: Date) => {
     const now = new Date()
