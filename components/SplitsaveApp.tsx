@@ -95,6 +95,13 @@ import { PartnerCollaborationView } from './PartnerCollaborationView'
 import { DataExportView } from './DataExportView'
 import { MobileNavigation, MobileCard, MobileButton, MobileInput, MobileSelect } from './MobileNavigation'
 
+// Import new hub components
+import { OverviewHub } from './OverviewHub'
+import { MoneyHub } from './MoneyHub'
+import { GoalsHub } from './GoalsHub'
+import { PartnerHub } from './PartnerHub'
+import { AccountHub } from './AccountHub'
+
 import { SecurityDashboard } from './SecurityDashboard'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
 import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemaining, getContributionRecommendation } from '@/lib/goal-utils'
@@ -102,7 +109,7 @@ import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemainin
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
   const { isDark, toggleDarkMode } = useDarkMode()
-  const [currentView, setCurrentView] = useState('dashboard')
+  const [currentView, setCurrentView] = useState('overview')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
@@ -847,14 +854,89 @@ export function SplitsaveApp() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-                {currentView === 'dashboard' && (
+        
+        {/* Overview Hub */}
+        {currentView === 'overview' && (
+          <OverviewHub
+            expenses={expenses}
+            goals={goals}
+            partnerships={partnerships}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            user={user}
+            currencySymbol={currencySymbol}
+            currencyEmoji={currencyEmoji}
+            onNavigate={setCurrentView}
+            onNavigateToProfile={() => setCurrentView('account')}
+            onNavigateToPartnerships={() => setCurrentView('partner')}
+          />
+        )}
+
+        {/* Money Hub */}
+        {currentView === 'money' && (
+          <MoneyHub
+            expenses={expenses}
+            partnerships={partnerships}
+            profile={profile}
+            user={user}
+            currencySymbol={currencySymbol}
+            onAddExpense={addExpense}
+            onUpdate={loadData}
+          />
+        )}
+
+        {/* Goals Hub */}
+        {currentView === 'goals' && (
+          <GoalsHub
+            goals={goals}
+            partnerships={partnerships}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            user={user}
+            currencySymbol={currencySymbol}
+            onAddGoal={addGoal}
+          />
+        )}
+
+        {/* Partner Hub */}
+        {currentView === 'partner' && (
+          <PartnerHub
+            partnerships={partnerships}
+            approvals={approvals}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            user={user}
+            goals={goals}
+            currencySymbol={currencySymbol}
+            onApprove={approveRequest}
+            onDecline={declineRequest}
+            onUpdate={loadData}
+          />
+        )}
+
+        {/* Account Hub */}
+        {currentView === 'account' && (
+          <AccountHub
+            profile={profile}
+            partnerProfile={partnerProfile}
+            partnerships={partnerships}
+            goals={goals}
+            expenses={expenses}
+            user={user}
+            currencySymbol={currencySymbol}
+            onUpdate={loadData}
+          />
+        )}
+
+        {/* Legacy views for backward compatibility */}
+        {currentView === 'dashboard' && (
           <DashboardView 
             expenses={expenses}
             goals={goals}
             partnerships={partnerships}
-            onNavigateToProfile={() => setCurrentView('profile')}
-            onNavigateToPartnerships={() => setCurrentView('partnerships')}
-            onNavigateToMonthlyProgress={() => setCurrentView('monthly-progress')}
+            onNavigateToProfile={() => setCurrentView('account')}
+            onNavigateToPartnerships={() => setCurrentView('partner')}
+            onNavigateToMonthlyProgress={() => setCurrentView('money')}
             profile={profile}
             profileCompletionShown={profileCompletionShown}
             onProfileCompletionShown={() => setProfileCompletionShown(true)}

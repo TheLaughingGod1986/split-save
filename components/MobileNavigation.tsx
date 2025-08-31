@@ -29,58 +29,34 @@ export function MobileNavigation({
 
   const navigationItems: NavigationItem[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
+      id: 'overview',
+      label: 'Overview',
       icon: '🏠',
-      description: 'Overview & Summary'
+      description: 'Dashboard & Summary'
     },
     {
-      id: 'expenses',
-      label: 'Expenses',
+      id: 'money',
+      label: 'Money',
       icon: '💰',
-      description: 'Track & Manage'
+      description: 'Expenses & Contributions'
     },
     {
       id: 'goals',
       label: 'Goals',
       icon: '🎯',
-      description: 'Savings & Targets'
+      description: 'Savings & Achievements'
     },
     {
-      id: 'monthly-progress',
-      label: 'Progress',
-      icon: '📊',
-      description: 'Monthly Tracking'
-    },
-    {
-      id: 'ai-insights',
-      label: 'AI Insights',
-      icon: '🤖',
-      description: 'Smart Recommendations'
-    },
-    {
-      id: 'gamification',
-      label: 'Gamification',
-      icon: '🎮',
-      description: 'Achievements & Rewards'
-    },
-    {
-      id: 'advanced-analytics',
-      label: 'Analytics',
-      icon: '📊',
-      description: 'Reports & Insights'
-    },
-    {
-      id: 'security',
-      label: 'Security',
-      icon: '🔒',
-      description: 'Security & Privacy'
-    },
-    {
-      id: 'partner-collaboration',
+      id: 'partner',
       label: 'Partner',
       icon: '🤝',
-      description: 'Collaboration'
+      description: 'Collaboration Hub'
+    },
+    {
+      id: 'account',
+      label: 'Account',
+      icon: '👤',
+      description: 'Profile & Settings'
     }
   ]
 
