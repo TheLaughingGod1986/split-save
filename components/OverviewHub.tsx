@@ -552,32 +552,41 @@ export function OverviewHub({
               </h4>
               
               {/* Shared Expenses */}
-              <div className="mb-4 p-3 bg-white rounded-lg border border-blue-100">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                    <span className="font-medium text-gray-900">Shared Expenses</span>
+              <div className="mb-4 p-4 bg-white rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                      <span className="font-semibold text-gray-900">Shared Expenses</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Household costs, bills, groceries
+                    </div>
                   </div>
-                  <div className="text-lg font-bold text-blue-600">
-                    {currencySymbol}{(
-                      Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7) +
-                      Math.round(((partnerProfile?.income || 0) - (partnerProfile?.personal_allowance || 0)) * 0.7)
-                    ).toLocaleString()}
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-blue-600">
+                      {currencySymbol}{(
+                        Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7) +
+                        Math.round(((partnerProfile?.income || 0) - (partnerProfile?.personal_allowance || 0)) * 0.7)
+                      ).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">per month</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{profile?.name || 'You'}:</span>
-                    <span className="font-medium">{currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7).toLocaleString()}</span>
+                
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+                  <div className="bg-blue-50 rounded-lg p-2">
+                    <div className="text-xs text-gray-600 mb-1">{profile?.name || 'You'}</div>
+                    <div className="font-semibold text-blue-700">{currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.7).toLocaleString()}</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{partnerProfile?.name || 'Partner'}:</span>
-                    <span className="font-medium">
+                  <div className="bg-blue-50 rounded-lg p-2">
+                    <div className="text-xs text-gray-600 mb-1">{partnerProfile?.name || 'Partner'}</div>
+                    <div className="font-semibold text-blue-700">
                       {partnerProfile?.income && partnerProfile?.personal_allowance
                         ? `${currencySymbol}${Math.round((partnerProfile.income - partnerProfile.personal_allowance) * 0.7).toLocaleString()}`
                         : '--'
                       }
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -595,38 +604,53 @@ export function OverviewHub({
                       ? Math.round((partnerProfile.income - partnerProfile.personal_allowance) * percentage)
                       : 0;
                     
+                    const progressPercent = Math.round((goal.current_amount || 0) / (goal.target_amount || 1) * 100);
+                    
                     return (
-                      <div key={goal.id} className="p-3 bg-white rounded-lg border border-green-100">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center">
-                            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                            <span className="font-medium text-gray-900">{goal.title}</span>
-                            <span className="text-xs text-gray-500 ml-2">
-                              {currencySymbol}{goal.current_amount?.toLocaleString()} / {currencySymbol}{goal.target_amount?.toLocaleString()}
-                            </span>
+                      <div key={goal.id} className="p-4 bg-white rounded-lg border border-green-100 hover:border-green-200 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center mb-1">
+                              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                              <span className="font-semibold text-gray-900">{goal.title || 'Untitled Goal'}</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mb-2">
+                              {currencySymbol}{(goal.current_amount || 0).toLocaleString()} / {currencySymbol}{(goal.target_amount || 0).toLocaleString()}
+                              <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                {progressPercent}% complete
+                              </span>
+                            </div>
+                            {goal.target_date && (
+                              <div className="text-xs text-gray-500">
+                                Target: {new Date(goal.target_date).toLocaleDateString('en-GB', { 
+                                  month: 'long', 
+                                  year: 'numeric' 
+                                })}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-lg font-bold text-green-600">
-                            {currencySymbol}{(yourContribution + partnerContribution).toLocaleString()}
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-green-600">
+                              {currencySymbol}{(yourContribution + partnerContribution).toLocaleString()}
+                            </div>
+                            <div className="text-xs text-gray-500">per month</div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">{profile?.name || 'You'}:</span>
-                            <span className="font-medium">{currencySymbol}{yourContribution.toLocaleString()}</span>
+                        
+                        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+                          <div className="bg-blue-50 rounded-lg p-2">
+                            <div className="text-xs text-gray-600 mb-1">{profile?.name || 'You'}</div>
+                            <div className="font-semibold text-blue-700">{currencySymbol}{yourContribution.toLocaleString()}</div>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">{partnerProfile?.name || 'Partner'}:</span>
-                            <span className="font-medium">
+                          <div className="bg-green-50 rounded-lg p-2">
+                            <div className="text-xs text-gray-600 mb-1">{partnerProfile?.name || 'Partner'}</div>
+                            <div className="font-semibold text-green-700">
                               {partnerProfile?.income && partnerProfile?.personal_allowance
                                 ? `${currencySymbol}${partnerContribution.toLocaleString()}`
                                 : '--'
                               }
-                            </span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">
-                          {Math.round((goal.current_amount || 0) / (goal.target_amount || 1) * 100)}% complete • 
-                          {goal.target_date && ` Target: ${new Date(goal.target_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
                         </div>
                       </div>
                     );
@@ -646,36 +670,42 @@ export function OverviewHub({
               )}
 
               {/* Safety Pot */}
-              <div className="mt-4 p-3 bg-white rounded-lg border border-purple-100">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                    <span className="font-medium text-gray-900">Safety Pot</span>
+              <div className="mt-4 p-4 bg-white rounded-lg border border-purple-100 hover:border-purple-200 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                      <span className="font-semibold text-gray-900">Safety Pot</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Emergency fund • 10% of disposable income
+                    </div>
                   </div>
-                  <div className="text-lg font-bold text-purple-600">
-                    {currencySymbol}{(
-                      Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1) +
-                      Math.round(((partnerProfile?.income || 0) - (partnerProfile?.personal_allowance || 0)) * 0.1)
-                    ).toLocaleString()}
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-purple-600">
+                      {currencySymbol}{(
+                        Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1) +
+                        Math.round(((partnerProfile?.income || 0) - (partnerProfile?.personal_allowance || 0)) * 0.1)
+                      ).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">per month</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{profile?.name || 'You'}:</span>
-                    <span className="font-medium">{currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1).toLocaleString()}</span>
+                
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+                  <div className="bg-purple-50 rounded-lg p-2">
+                    <div className="text-xs text-gray-600 mb-1">{profile?.name || 'You'}</div>
+                    <div className="font-semibold text-purple-700">{currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1).toLocaleString()}</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{partnerProfile?.name || 'Partner'}:</span>
-                    <span className="font-medium">
+                  <div className="bg-purple-50 rounded-lg p-2">
+                    <div className="text-xs text-gray-600 mb-1">{partnerProfile?.name || 'Partner'}</div>
+                    <div className="font-semibold text-purple-700">
                       {partnerProfile?.income && partnerProfile?.personal_allowance
                         ? `${currencySymbol}${Math.round((partnerProfile.income - partnerProfile.personal_allowance) * 0.1).toLocaleString()}`
                         : '--'
                       }
-                    </span>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-2 text-xs text-gray-500">
-                  Emergency fund • 10% of disposable income
                 </div>
               </div>
             </div>
