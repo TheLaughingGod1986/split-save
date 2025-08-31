@@ -110,6 +110,33 @@ export function SplitsaveApp() {
   const { user, signOut } = useAuth()
   const { isDark, toggleDarkMode } = useDarkMode()
   const [currentView, setCurrentView] = useState('overview')
+
+  // Handle navigation with view mapping for backward compatibility
+  const handleNavigation = (view: string) => {
+    // Map old view names to new hub names
+    const viewMapping: { [key: string]: string } = {
+      'dashboard': 'overview',
+      'expenses': 'money',
+      'analytics': 'money',
+      'contributions': 'money',
+      'safety-pot': 'money',
+      'monthly-progress': 'overview',
+      'activity': 'overview',
+      'achievements': 'goals',
+      'ai-insights': 'goals',
+      'gamification': 'goals',
+      'partner-collaboration': 'partner',
+      'partnerships': 'partner',
+      'approvals': 'partner',
+      'profile': 'account',
+      'security': 'account',
+      'data-export': 'account',
+      'advanced-analytics': 'money'
+    }
+    
+    const mappedView = viewMapping[view] || view
+    setCurrentView(mappedView)
+  }
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
@@ -738,7 +765,7 @@ export function SplitsaveApp() {
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setCurrentView(item.id)}
+                onClick={() => handleNavigation(item.id)}
                 className={`group relative px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   currentView === item.id
                     ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg transform scale-105'
@@ -789,7 +816,7 @@ export function SplitsaveApp() {
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setCurrentView(item.id)}
+                onClick={() => handleNavigation(item.id)}
                 className={`flex-shrink-0 px-4 py-3 rounded-xl text-xs font-medium transition-all duration-200 ${
                   currentView === item.id
                     ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg transform scale-105'
@@ -829,7 +856,7 @@ export function SplitsaveApp() {
                     </p>
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <button
-                        onClick={() => setCurrentView('profile')}
+                        onClick={() => handleNavigation('profile')}
                         className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
                       >
                         Complete Profile First
@@ -866,9 +893,9 @@ export function SplitsaveApp() {
             user={user}
             currencySymbol={currencySymbol}
             currencyEmoji={currencyEmoji}
-            onNavigate={setCurrentView}
-            onNavigateToProfile={() => setCurrentView('account')}
-            onNavigateToPartnerships={() => setCurrentView('partner')}
+            onNavigate={handleNavigation}
+            onNavigateToProfile={() => handleNavigation('account')}
+            onNavigateToPartnerships={() => handleNavigation('partner')}
           />
         )}
 
@@ -934,9 +961,9 @@ export function SplitsaveApp() {
             expenses={expenses}
             goals={goals}
             partnerships={partnerships}
-            onNavigateToProfile={() => setCurrentView('account')}
-            onNavigateToPartnerships={() => setCurrentView('partner')}
-            onNavigateToMonthlyProgress={() => setCurrentView('money')}
+            onNavigateToProfile={() => handleNavigation('account')}
+            onNavigateToPartnerships={() => handleNavigation('partner')}
+            onNavigateToMonthlyProgress={() => handleNavigation('money')}
             profile={profile}
             profileCompletionShown={profileCompletionShown}
             onProfileCompletionShown={() => setProfileCompletionShown(true)}
@@ -1096,7 +1123,7 @@ export function SplitsaveApp() {
       {isMobile && (
         <MobileNavigation
           currentView={currentView}
-          onNavigate={setCurrentView}
+          onNavigate={handleNavigation}
           isOnline={isOnline}
           hasNotifications={approvals.length > 0}
           notificationCount={approvals.length}

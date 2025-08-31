@@ -139,7 +139,7 @@ export function MobileNavigation({
           <div className="flex items-center justify-around px-2 py-3">
             {navigationItems.map((item) => {
               const isActive = currentView === item.id
-              const hasBadge = item.id === 'partner-collaboration' && hasNotifications
+              const hasBadge = item.id === 'partner' && hasNotifications
 
               return (
                 <button
@@ -187,8 +187,9 @@ export function MobileNavigation({
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}>
         <button
-          onClick={() => onNavigate('expenses')}
+          onClick={() => onNavigate('money')}
           className="w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
+          title="Add Expense"
         >
           <span className="text-2xl">+</span>
         </button>
