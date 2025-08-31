@@ -1,61 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { authenticateRequest } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
-    // Get the current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  const user = await authenticateRequest(req)
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-    // Get the partnership
-    const { data: partnership, error: partnershipError } = await supabase
+  const partnershipId = params.id
+
+  try {
+    // First verify the user is part of this partnership
+    const { data: partnership, error: partnershipError } = await supabaseAdmin
       .from('partnerships')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', partnershipId)
+      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+      .eq('status', 'active')
       .single()
 
     if (partnershipError || !partnership) {
-      return NextResponse.json({ error: 'Partnership not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Partnership not found or unauthorized' }, { status: 404 })
     }
 
-    // Check if user is part of this partnership
-    if (partnership.user1_id !== user.id && partnership.user2_id !== user.id) {
-      return NextResponse.json({ error: 'Not authorized for this partnership' }, { status: 403 })
+    // Get both users' profiles from the partnership
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from('users')
+      .select(`
+        *,
+        profile:user_profiles(*)
+      `)
+      .in('id', [partnership.user1_id, partnership.user2_id])
+
+    if (profilesError) {
+      console.error('Error fetching partnership profiles:', profilesError)
+      return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: 500 })
     }
 
-    // Get both partners' profiles
-    const { data: user1Profile, error: user1Error } = await supabase
-      .from('profiles')
-      .select('id, name, email, income, currency, country_code')
-      .eq('user_id', partnership.user1_id)
-      .single()
+    // Merge user and profile data for each user
+    const mergedProfiles = profiles.map(profile => ({
+      ...profile,
+      ...profile.profile,
+      profile: undefined // Remove the nested profile object
+    }))
 
-    const { data: user2Profile, error: user2Error } = await supabase
-      .from('profiles')
-      .select('id, name, email, income, currency, country_code')
-      .eq('user_id', partnership.user2_id)
-      .single()
-
-    if (user1Error || user2Error) {
-      return NextResponse.json({ error: 'Failed to fetch partner profiles' }, { status: 500 })
-    }
-
-    return NextResponse.json({
-      partnership,
-      user1Profile,
-      user2Profile
-    })
-
+    return NextResponse.json(mergedProfiles)
   } catch (error) {
-    console.error('Partnership profiles error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Get partnership profiles error:', error)
+    return NextResponse.json({ error: 'Failed to fetch partnership profiles' }, { status: 500 })
   }
 }
