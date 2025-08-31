@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
+import { useAnalytics, trackPageView, trackNavigation } from '@/lib/analytics'
 import dynamic from 'next/dynamic'
 
 // Lazy load heavy components for better performance
@@ -24,6 +25,11 @@ const PerformanceOptimizer = dynamic(() => import('./PerformanceOptimizer').then
 
 const GamificationDashboard = dynamic(() => import('./GamificationDashboard').then(mod => ({ default: mod.GamificationDashboard })), {
   loading: () => <div className="p-4 text-center text-gray-500">Loading Gamification...</div>,
+  ssr: false
+});
+
+const AchievementCelebration = dynamic(() => import('./AchievementCelebration').then(mod => ({ default: mod.AchievementCelebration })), {
+  loading: () => null,
   ssr: false
 });
 
@@ -80,7 +86,7 @@ function useDarkMode() {
 }
 import { ProfileManager } from './ProfileManager'
 import { PWAInstallPrompt } from './PWAInstallPrompt'
-import SafetyPotManager from './SafetyPotManager'
+import { EnhancedSafetyPot } from './EnhancedSafetyPot'
 import ContributionManager from './ContributionManager'
 import { PartnershipManager } from './PartnershipManager'
 import { MonthlyContributionSummary } from './MonthlyContributionSummary'
@@ -101,6 +107,7 @@ import { MoneyHub } from './MoneyHub'
 import { GoalsHub } from './GoalsHub'
 import { PartnerHub } from './PartnerHub'
 import { AccountHub } from './AccountHub'
+import { AnalyticsHub } from './AnalyticsHub'
 
 import { SecurityDashboard } from './SecurityDashboard'
 import { calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
@@ -110,31 +117,40 @@ export function SplitsaveApp() {
   const { user, signOut } = useAuth()
   const { isDark, toggleDarkMode } = useDarkMode()
   const [currentView, setCurrentView] = useState('overview')
+  const analytics = useAnalytics()
 
   // Handle navigation with view mapping for backward compatibility
   const handleNavigation = (view: string) => {
-    // Map old view names to new hub names
+    // Map consolidated tab names to hub views
     const viewMapping: { [key: string]: string } = {
       'dashboard': 'overview',
+      'money': 'money',
+      'goals': 'goals',
+      'partners': 'partner',
+      'analytics': 'analytics',
+      'profile': 'account',
+      // Legacy mappings for backward compatibility
       'expenses': 'money',
-      'analytics': 'money',
       'contributions': 'money',
       'safety-pot': 'money',
-      'monthly-progress': 'overview',
-      'activity': 'overview',
+      'monthly-progress': 'money',
+      'activity': 'account',
       'achievements': 'goals',
       'ai-insights': 'goals',
       'gamification': 'goals',
       'partner-collaboration': 'partner',
       'partnerships': 'partner',
       'approvals': 'partner',
-      'profile': 'account',
       'security': 'account',
-      'data-export': 'account',
-      'advanced-analytics': 'money'
+      'data-export': 'analytics',
+      'advanced-analytics': 'analytics'
     }
     
     const mappedView = viewMapping[view] || view
+    // Track navigation change
+    if (currentView !== mappedView) {
+      analytics.trackNavigation(currentView, mappedView, 'main_navigation')
+    }
     setCurrentView(mappedView)
   }
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -143,6 +159,7 @@ export function SplitsaveApp() {
   const [partnerships, setPartnerships] = useState<any[]>([])
   const [invitations, setInvitations] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
+  const [monthlyProgress, setMonthlyProgress] = useState<any>(null)
   const [profileCompletionShown, setProfileCompletionShown] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -150,6 +167,9 @@ export function SplitsaveApp() {
   const [partnerProfile, setPartnerProfile] = useState<any>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [celebratingAchievement, setCelebratingAchievement] = useState<any>(null)
+  const [achievements, setAchievements] = useState<any[]>([])
+  const [achievementSummary, setAchievementSummary] = useState<any>(null)
 
 
   // Currency utility functions
@@ -396,18 +416,41 @@ export function SplitsaveApp() {
           console.log('🤝 Partnerships API response:', err)
           return { partnerships: [], invitations: [] }
         }),
+        apiClient.get('/monthly-progress').catch((err) => {
+          console.log('📊 Monthly Progress API response:', err)
+          if (err.status === 400 && err.message?.includes('partnership')) {
+            return null
+          }
+          return null
+        }),
+        apiClient.get('/achievements').catch((err) => {
+          console.log('🏆 Achievements API response:', err)
+          return { achievements: [], summary: null, newAchievements: [] }
+        }),
       ])
       
-      const [expensesResult, goalsResult, approvalsResult, partnershipsResult] = results
+      const [expensesResult, goalsResult, approvalsResult, partnershipsResult, monthlyProgressResult, achievementsResult] = results
       
       // Handle results safely
       const expensesData = expensesResult.status === 'fulfilled' ? expensesResult.value : []
       const goalsData = goalsResult.status === 'fulfilled' ? goalsResult.value : []
       const approvalsData = approvalsResult.status === 'fulfilled' ? approvalsResult.value : []
+      const monthlyProgressData = monthlyProgressResult.status === 'fulfilled' ? monthlyProgressResult.value : null
+      const achievementsData = achievementsResult.status === 'fulfilled' ? achievementsResult.value : { achievements: [], summary: null, newAchievements: [] }
       
       setExpenses(expensesData)
       setGoals(goalsData)
       setApprovals(approvalsData)
+      setMonthlyProgress(monthlyProgressData)
+      setAchievements(achievementsData.achievements || [])
+      setAchievementSummary(achievementsData.summary)
+      
+      // Show celebration for new achievements
+      if (achievementsData.newAchievements && achievementsData.newAchievements.length > 0) {
+        // Show the first new achievement, queue others
+        setCelebratingAchievement(achievementsData.newAchievements[0])
+        console.log('🎉 New achievement unlocked:', achievementsData.newAchievements[0])
+      }
       
       // Extract partnership data
       const partnershipsData = partnershipsResult.status === 'fulfilled' ? partnershipsResult.value : { partnerships: [], invitations: [] }
@@ -455,10 +498,14 @@ export function SplitsaveApp() {
     if (user) {
       console.log('🔄 User authenticated, calling loadData...')
       loadData()
+      // Track authenticated page view
+      trackPageView('main_app', true)
     } else {
       console.log('🔄 No user, resetting loading state...')
       // Reset loading state when user is not available
       setLoading(false)
+      // Track unauthenticated page view
+      trackPageView('main_app', false)
     }
   }, [user?.id]) // Only depend on user ID, not the entire loadData function
 
@@ -495,6 +542,13 @@ export function SplitsaveApp() {
       console.log('🔄 Adding expense:', expenseData)
       const result = await apiClient.post('/expenses', expenseData)
       console.log('✅ Expense API result:', result)
+      
+      // Track expense creation
+      analytics.financial.trackExpense(
+        expenseData.category || 'uncategorized',
+        expenseData.amount,
+        result.requiresApproval || false
+      )
       
       if (result.requiresApproval) {
         const amount = expenseData.amount
@@ -542,6 +596,13 @@ export function SplitsaveApp() {
     try {
       const result = await apiClient.post('/goals', goalData)
       
+      // Track goal creation
+      analytics.financial.trackGoalCreation(
+        goalData.category || 'general',
+        goalData.target_amount || goalData.targetAmount,
+        partnerships.length > 0
+      )
+      
       if (result.requiresApproval) {
         toast.warning('Goal requires partner approval')
         setError('') // Clear any previous errors
@@ -569,6 +630,40 @@ export function SplitsaveApp() {
         toast.error('Failed to add goal')
       }
       console.error('Add goal error:', err)
+    }
+  }
+
+  const updateGoal = async (goalId: string, updates: any) => {
+    try {
+      const result = await apiClient.put(`/goals/${goalId}`, updates)
+      
+      if (result.requiresApproval) {
+        toast.warning('Goal update requires partner approval')
+        setError('') // Clear any previous errors
+        
+        // Show success message for the approval request
+        toast.success('Goal update sent to your partner for approval!', { duration: 6000 })
+        
+        // Refresh approvals
+        const approvalsData = await apiClient.get('/approvals')
+        setApprovals(approvalsData)
+      } else {
+        toast.success('Goal updated successfully!')
+        setError('') // Clear any previous errors
+        // Refresh goals
+        const goalsData = await apiClient.get('/goals')
+        setGoals(goalsData)
+      }
+    } catch (err: any) {
+      // Check if it's a partnership error
+      if (err.status === 400 && err.message?.includes('partnership')) {
+        setError('Partnership required: You need to be connected with a partner to update shared savings goals')
+        toast.warning('Partnership required: You need to be connected with a partner to update shared savings goals')
+      } else {
+        setError('Failed to update goal')
+        toast.error('Failed to update goal')
+      }
+      console.error('Update goal error:', err)
     }
   }
 
@@ -613,10 +708,16 @@ export function SplitsaveApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your data...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center safe-area-inset-top safe-area-inset-bottom">
+        <div className="text-center p-6">
+          <div className="relative mx-auto mb-6 w-16 h-16">
+            <div className="absolute inset-0 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
+            <div className="absolute inset-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xl font-bold">S</span>
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Loading SplitSave</h2>
+          <p className="text-gray-600 dark:text-gray-300">Setting up your financial dashboard...</p>
         </div>
       </div>
     )
@@ -625,11 +726,14 @@ export function SplitsaveApp() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+      <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 safe-area-inset-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">SplitSave</h1>
+          <div className="flex justify-between items-center py-3 sm:py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                <span className="text-white text-lg sm:text-xl font-bold">S</span>
+              </div>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">SplitSave</h1>
             </div>
             
               {/* Desktop User Menu */}
@@ -687,7 +791,8 @@ export function SplitsaveApp() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="md:hidden p-3 rounded-xl text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Open menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -747,21 +852,11 @@ export function SplitsaveApp() {
           <nav className="flex space-x-1 py-2">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: '📊', description: 'Overview & Insights' },
-              { id: 'expenses', label: 'Expenses', icon: '💰', description: 'Shared Spending' },
-              { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets' },
-              { id: 'monthly-progress', label: 'Monthly Progress', icon: '📅', description: 'Track Monthly Achievements' },
-              { id: 'analytics', label: 'Analytics', icon: '📊', description: 'Financial Insights & Trends' },
-                            { id: 'ai-insights', label: 'AI Insights', icon: '🤖', description: 'AI-Powered Financial Recommendations' },
-              { id: 'gamification', label: 'Gamification', icon: '🎮', description: 'Achievements, Streaks & Rewards' },
-              { id: 'advanced-analytics', label: 'Advanced Analytics', icon: '📊', description: 'Financial Insights, Reports & Visualizations' },
-              { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝', description: 'Enhanced Partner Features & Planning' },
-              { id: 'data-export', label: 'Data Export', icon: '📊', description: 'Advanced Reports & Export Tools' },
-              { id: 'security', label: 'Security & Privacy', icon: '🔒', description: 'Account Security & Privacy Settings' },
-              { id: 'activity', label: 'Activity', icon: '📈', description: 'Progress & History' },
-              { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️', description: 'Emergency Fund' },
-              { id: 'approvals', label: 'Approvals', icon: '✅', description: 'Pending Requests', badge: approvals.length },
-              { id: 'partnerships', label: 'Partnerships', icon: '🤝', description: 'Manage Connections' },
-              { id: 'profile', label: 'Profile', icon: '👤', description: 'Settings & Preferences' }
+              { id: 'money', label: 'Money', icon: '💰', description: 'Expenses, Progress & Emergency Fund' },
+              { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets & AI Insights' },
+              { id: 'partners', label: 'Partners', icon: '🤝', description: 'Partnership & Approvals', badge: approvals.length },
+              { id: 'analytics', label: 'Analytics', icon: '📈', description: 'Reports & Data Export' },
+              { id: 'profile', label: 'Profile', icon: '👤', description: 'Settings, Security & Activity' }
             ].map((item) => (
               <button
                 key={item.id}
@@ -801,25 +896,18 @@ export function SplitsaveApp() {
           <div className="flex space-x-2 px-4 py-3">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-              { id: 'expenses', label: 'Expenses', icon: '💰' },
+              { id: 'money', label: 'Money', icon: '💰' },
               { id: 'goals', label: 'Goals', icon: '🎯' },
-              { id: 'monthly-progress', label: 'Progress', icon: '📅' },
-              { id: 'analytics', label: 'Analytics', icon: '📊' },
-              { id: 'achievements', label: 'Achievements', icon: '🏆' },
-        { id: 'partner-collaboration', label: 'Partner Collaboration', icon: '🤝' },
-        { id: 'data-export', label: 'Data Export', icon: '📊' },
-              { id: 'activity', label: 'Activity', icon: '📈' },
-              { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
-              { id: 'approvals', label: 'Approvals', icon: '✅', badge: approvals.length },
-              { id: 'partnerships', label: 'Partnerships', icon: '🤝' },
+              { id: 'partners', label: 'Partners', icon: '🤝', badge: approvals.length },
+              { id: 'analytics', label: 'Analytics', icon: '📈' },
               { id: 'profile', label: 'Profile', icon: '👤' }
             ].map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavigation(item.id)}
-                className={`flex-shrink-0 px-4 py-3 rounded-xl text-xs font-medium transition-all duration-200 ${
+                className={`flex-shrink-0 px-3 py-3 rounded-xl text-xs font-medium transition-all duration-200 min-h-[60px] min-w-[60px] ${
                   currentView === item.id
-                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg transform scale-105'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
@@ -844,24 +932,30 @@ export function SplitsaveApp() {
 
       {/* Error Display */}
       {error && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4" role="alert">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-4 rounded-xl shadow-sm">
+            <div className="flex items-start justify-between">
               <div className="flex-1">
-                {error}
+                <div className="flex items-center mb-2">
+                  <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-xs font-bold">!</span>
+                  </div>
+                  <h3 className="text-sm font-medium">Action Required</h3>
+                </div>
+                <p className="text-sm mb-3">{error}</p>
                 {error.includes('Partnership required') && (
-                  <div className="mt-2 text-sm">
-                    <p className="text-red-600 mb-2">
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-red-200 dark:border-red-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                       SplitSave is designed for couples and partners to manage shared finances together.
                     </p>
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                       <button
                         onClick={() => handleNavigation('profile')}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
+                        className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                       >
                         Complete Profile First
                       </button>
-                      <span className="text-red-500 text-xs self-center">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm self-center">
                         Then connect with your partner
                       </span>
                     </div>
@@ -870,9 +964,12 @@ export function SplitsaveApp() {
               </div>
               <button
                 onClick={() => setError('')}
-                className="ml-2 text-red-500 hover:text-red-700 text-lg font-bold transition-colors"
+                className="ml-4 p-1 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors rounded-lg hover:bg-red-100 dark:hover:bg-red-800/30"
+                aria-label="Dismiss error"
               >
-                ×
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
@@ -880,7 +977,7 @@ export function SplitsaveApp() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 bg-gray-50 dark:bg-gray-900 min-h-screen safe-area-inset-bottom">
         
         {/* Overview Hub */}
         {currentView === 'overview' && (
@@ -893,6 +990,7 @@ export function SplitsaveApp() {
             user={user}
             currencySymbol={currencySymbol}
             currencyEmoji={currencyEmoji}
+            monthlyProgress={monthlyProgress}
             onNavigate={handleNavigation}
             onNavigateToProfile={() => handleNavigation('account')}
             onNavigateToPartnerships={() => handleNavigation('partner')}
@@ -907,6 +1005,7 @@ export function SplitsaveApp() {
             profile={profile}
             user={user}
             currencySymbol={currencySymbol}
+            monthlyProgress={monthlyProgress}
             onAddExpense={addExpense}
             onUpdate={loadData}
           />
@@ -922,6 +1021,7 @@ export function SplitsaveApp() {
             user={user}
             currencySymbol={currencySymbol}
             onAddGoal={addGoal}
+            onUpdateGoal={updateGoal}
           />
         )}
 
@@ -955,6 +1055,20 @@ export function SplitsaveApp() {
           />
         )}
 
+        {/* Analytics Hub */}
+        {currentView === 'analytics' && (
+          <AnalyticsHub
+            partnerships={partnerships}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            goals={goals}
+            expenses={expenses}
+            user={user}
+            currencySymbol={currencySymbol}
+            monthlyProgress={monthlyProgress}
+          />
+        )}
+
         {/* Legacy views for backward compatibility */}
         {currentView === 'dashboard' && (
           <DashboardView 
@@ -982,23 +1096,16 @@ export function SplitsaveApp() {
           />
         )}
         {currentView === 'goals' && (
-          <>
-            <MonthlyContributionSummary 
-              partnerships={partnerships}
-              profile={profile}
-              user={user}
-              currencySymbol={currencySymbol}
-            />
-            <GoalsView 
-              goals={goals} 
-              partnerships={partnerships}
-              onAddGoal={addGoal}
-              currencySymbol={currencySymbol}
-              userCountry={profile?.country_code}
-              profile={profile}
-              partnerProfile={partnerProfile}
-            />
-          </>
+          <GoalsHub
+            goals={goals}
+            partnerships={partnerships}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            user={user}
+            currencySymbol={currencySymbol}
+            onAddGoal={addGoal}
+            onUpdateGoal={updateGoal}
+          />
         )}
         {currentView === 'monthly-progress' && (
           <MonthlyProgress 
@@ -1086,10 +1193,15 @@ export function SplitsaveApp() {
           />
         )}
         {currentView === 'safety-pot' && (
-          <SafetyPotManager 
+          <EnhancedSafetyPot 
+            profile={profile}
+            partnerships={partnerships}
+            expenses={expenses}
             currencySymbol={currencySymbol}
-            monthlyExpenses={expenses ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0}
-            onUpdate={loadData}
+            onSafetyPotUpdate={(amount) => {
+              console.log('Enhanced safety pot updated:', amount)
+              loadData()
+            }}
           />
         )}
         {currentView === 'contributions' && (
@@ -1132,6 +1244,12 @@ export function SplitsaveApp() {
       
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+      
+      {/* Achievement Celebration */}
+      <AchievementCelebration
+        achievement={celebratingAchievement}
+        onClose={() => setCelebratingAchievement(null)}
+      />
     </div>
   )
 }
@@ -2669,10 +2787,9 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
 
   // Smart Goal Management Functions
   const handleSmartRedistribution = (redistributionPlans: any[]) => {
-    // In a real app, this would implement actual redistribution logic
-    // For now, show a placeholder message
-    console.log('Applying smart redistribution:', redistributionPlans)
-    toast.success('Smart redistribution applied! Your goals have been optimized.')
+    // Smart redistribution feature - requires implementation of goal rebalancing algorithm
+    console.log('Smart redistribution requested:', redistributionPlans)
+    toast.success('Smart redistribution feature available - algorithm implementation needed!')
   }
 
   const getPriorityGoals = (goals: Goal[]) => {

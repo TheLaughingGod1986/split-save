@@ -1,13 +1,24 @@
 import React, { useState } from 'react'
-import { useSecureAuth } from './SecureAuthProvider'
+import { useAuth } from './AuthProvider'
 import { SecuritySettings } from './SecuritySettings'
 import { PrivacySettings } from './PrivacySettings'
 
 type SecurityTab = 'overview' | 'security' | 'privacy' | 'activity'
 
 export function SecurityDashboard() {
-  const { user, getSecurityStatus } = useSecureAuth()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<SecurityTab>('overview')
+  
+  // Mock security status for basic dashboard
+  const getSecurityStatus = () => ({
+    mfaEnabled: false,
+    biometricEnabled: false,
+    lastLogin: new Date(),
+    loginAttempts: 0,
+    isLocked: false,
+    securityScore: 50,
+    lockExpiry: null as Date | null
+  })
   
   const securityStatus = getSecurityStatus()
 

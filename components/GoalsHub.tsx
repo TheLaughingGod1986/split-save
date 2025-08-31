@@ -13,6 +13,7 @@ interface GoalsHubProps {
   user: any
   currencySymbol: string
   onAddGoal: (goal: any) => void
+  onUpdateGoal?: (goalId: string, updates: any) => void
 }
 
 interface Goal {
@@ -34,10 +35,20 @@ export function GoalsHub({
   partnerProfile,
   user,
   currencySymbol,
-  onAddGoal
+  onAddGoal,
+  onUpdateGoal
 }: GoalsHubProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'achievements'>('active')
   const [showAddGoal, setShowAddGoal] = useState(false)
+  const [editingGoal, setEditingGoal] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<{
+    name?: string
+    targetAmount?: string
+    currentAmount?: string
+    targetDate?: string
+    category?: string
+    description?: string
+  }>({})
   const [goalForm, setGoalForm] = useState({
     name: '',
     targetAmount: '',
@@ -60,10 +71,14 @@ export function GoalsHub({
 
   // Separate active and completed goals
   const { activeGoals, completedGoals } = useMemo(() => {
+    console.log('🎯 GoalsHub - Received goals data:', goals)
     if (!goals) return { activeGoals: [], completedGoals: [] }
     
     const active = goals.filter(goal => goal.current_amount < goal.target_amount)
     const completed = goals.filter(goal => goal.current_amount >= goal.target_amount)
+    
+    console.log('🎯 GoalsHub - Active goals:', active)
+    console.log('🎯 GoalsHub - Completed goals:', completed)
     
     return { activeGoals: active, completedGoals: completed }
   }, [goals])
@@ -90,6 +105,7 @@ export function GoalsHub({
       const goal = {
         name: goalForm.name.trim(),
         target_amount: parseFloat(goalForm.targetAmount),
+        current_amount: 0, // Initialize with 0 for new goals
         target_date: goalForm.targetDate,
         category: goalForm.category,
         description: goalForm.description.trim()
@@ -112,6 +128,52 @@ export function GoalsHub({
       console.error('Failed to add goal:', error)
       toast.error('Failed to create goal')
     }
+  }
+
+  const handleEditGoal = (goal: Goal) => {
+    setEditingGoal(goal.id)
+    setEditForm({
+      name: goal.name,
+      targetAmount: goal.target_amount.toString(),
+      currentAmount: goal.current_amount.toString(),
+      targetDate: goal.target_date,
+      category: goal.category,
+      description: goal.description || ''
+    })
+  }
+
+  const handleUpdateGoal = async () => {
+    if (!editingGoal || !onUpdateGoal) return
+
+    try {
+      const updates = {
+        name: editForm.name?.trim() || '',
+        target_amount: parseFloat(editForm.targetAmount || '0'),
+        current_amount: parseFloat(editForm.currentAmount || '0'),
+        target_date: editForm.targetDate || '',
+        category: editForm.category || 'other',
+        description: editForm.description?.trim() || ''
+      }
+
+      await onUpdateGoal(editingGoal, updates)
+      setEditingGoal(null)
+      setEditForm({})
+      toast.success('Goal updated successfully!')
+    } catch (error) {
+      console.error('Failed to update goal:', error)
+      toast.error('Failed to update goal')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingGoal(null)
+    setEditForm({})
+  }
+
+  const getContributionPercentage = (current: number, target: number, income: number) => {
+    if (!income || income <= 0) return 0
+    const monthlyContribution = current / Math.max(1, (new Date().getMonth() + 1))
+    return (monthlyContribution / income) * 100
   }
 
   const getProgressPercentage = (goal: Goal) => {
@@ -273,55 +335,205 @@ export function GoalsHub({
             
             return (
               <div key={goal.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-3xl">{categoryInfo.icon}</div>
-                    <div>
-                      <h4 className="text-lg font-semibold">{goal.name}</h4>
-                      <p className="text-sm text-gray-500">{categoryInfo.label}</p>
+                {editingGoal === goal.id ? (
+                  // Edit Mode
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold text-purple-600">Edit Goal</h4>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleUpdateGoal}
+                          className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="bg-gray-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-600 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Goal Name</label>
+                        <input
+                          type="text"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select
+                          value={editForm.category}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          {categories.map(category => (
+                            <option key={category.value} value={category.value}>
+                              {category.icon} {category.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Target Amount ({currencySymbol})</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editForm.targetAmount}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, targetAmount: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Current Amount ({currencySymbol})</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editForm.currentAmount}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, currentAmount: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
+                        <input
+                          type="date"
+                          value={editForm.targetDate}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, targetDate: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <input
+                          type="text"
+                          value={editForm.description}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Real-time Preview */}
+                    {editForm.currentAmount && editForm.targetAmount && profile?.income && (
+                      <div className="bg-purple-50 rounded-lg p-4 mt-4">
+                        <h5 className="font-medium text-purple-900 mb-2">📊 Live Preview</h5>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Progress:</span>
+                            <span className="ml-2 font-semibold">
+                              {Math.min(100, (parseFloat(editForm.currentAmount || '0') / parseFloat(editForm.targetAmount || '1')) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Monthly Contribution %:</span>
+                            <span className="ml-2 font-semibold text-purple-600">
+                              {getContributionPercentage(parseFloat(editForm.currentAmount || '0'), parseFloat(editForm.targetAmount || '1'), profile.income).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Remaining:</span>
+                            <span className="ml-2 font-semibold">
+                              {currencySymbol}{Math.max(0, parseFloat(editForm.targetAmount || '0') - parseFloat(editForm.currentAmount || '0')).toFixed(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Of Income:</span>
+                            <span className="ml-2 font-semibold">
+                              {currencySymbol}{parseFloat(editForm.currentAmount || '0').toFixed(0)} / {currencySymbol}{parseFloat(editForm.targetAmount || '0').toFixed(0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // View Mode
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-3xl">{categoryInfo.icon}</div>
+                        <div>
+                          <h4 className="text-lg font-semibold">{goal.name}</h4>
+                          <p className="text-sm text-gray-500">{categoryInfo.label}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-gray-900">
+                            {currencySymbol}{goal.current_amount.toFixed(0)} / {currencySymbol}{goal.target_amount.toFixed(0)}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {progressPercentage.toFixed(0)}% complete
+                          </p>
+                          {profile?.income && (
+                            <p className="text-xs text-purple-600 font-medium">
+                              {getContributionPercentage(goal.current_amount, goal.target_amount, profile.income).toFixed(1)}% of income
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleEditGoal(goal)}
+                          className="text-gray-500 hover:text-purple-600 transition-colors p-2 rounded-lg hover:bg-purple-50"
+                          title="Edit goal"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-gray-900">
-                      {currencySymbol}{goal.current_amount.toFixed(0)} / {currencySymbol}{goal.target_amount.toFixed(0)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {progressPercentage.toFixed(0)}% complete
-                    </p>
-                  </div>
-                </div>
+                )}
 
-                {/* Progress Bar */}
-                <div className="mb-4">
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className={`h-3 rounded-full transition-all duration-500 ${
-                        progressColor === 'green' ? 'bg-green-500' :
-                        progressColor === 'blue' ? 'bg-blue-500' :
-                        progressColor === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${progressPercentage}%` }}
-                    ></div>
+                {/* Progress Bar - Show only in view mode */}
+                {editingGoal !== goal.id && (
+                  <div className="mb-4">
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          progressColor === 'green' ? 'bg-green-500' :
+                          progressColor === 'blue' ? 'bg-blue-500' :
+                          progressColor === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${progressPercentage}%` }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Goal Details */}
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <div className="flex items-center space-x-4">
-                    <span>📅 {formatDate(goal.target_date)}</span>
-                    <span className={`${daysRemaining < 30 ? 'text-red-600' : daysRemaining < 90 ? 'text-yellow-600' : 'text-green-600'}`}>
-                      {daysRemaining > 0 ? `${daysRemaining} days left` : 'Overdue'}
-                    </span>
+                {/* Goal Details - Show only in view mode */}
+                {editingGoal !== goal.id && (
+                  <div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <div className="flex items-center space-x-4">
+                        <span>📅 {formatDate(goal.target_date)}</span>
+                        <span className={`${daysRemaining < 30 ? 'text-red-600' : daysRemaining < 90 ? 'text-yellow-600' : 'text-green-600'}`}>
+                          {daysRemaining > 0 ? `${daysRemaining} days left` : 'Overdue'}
+                        </span>
+                      </div>
+                      <span>
+                        {currencySymbol}{(goal.target_amount - goal.current_amount).toFixed(0)} to go
+                      </span>
+                    </div>
+
+                    {goal.description && (
+                      <p className="text-sm text-gray-600 mt-3 p-3 bg-gray-50 rounded-lg">
+                        {goal.description}
+                      </p>
+                    )}
                   </div>
-                  <span>
-                    {currencySymbol}{(goal.target_amount - goal.current_amount).toFixed(0)} to go
-                  </span>
-                </div>
-
-                {goal.description && (
-                  <p className="text-sm text-gray-600 mt-3 p-3 bg-gray-50 rounded-lg">
-                    {goal.description}
-                  </p>
                 )}
               </div>
             )

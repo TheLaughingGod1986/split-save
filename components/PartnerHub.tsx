@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { PartnershipManager } from './PartnershipManager'
-import { ActivityFeed } from './ActivityFeed'
+import { PartnerActivityFeed } from './PartnerActivityFeed'
 
 interface PartnerHubProps {
   partnerships: any[]
@@ -59,9 +59,10 @@ export function PartnerHub({
 
   const loadSharedNotes = async () => {
     try {
-      // In a real app, this would fetch from shared notes API
-      // For now, use mock data
+      // Note: Shared notes feature requires additional API endpoint
+      // For now, return empty array until /api/shared-notes is implemented
       setSharedNotes([])
+      console.log('📝 Shared notes feature available - requires API implementation')
     } catch (error) {
       console.error('Failed to load shared notes:', error)
     }
@@ -76,7 +77,7 @@ export function PartnerHub({
     }
 
     try {
-      // In a real app, this would save to shared notes API
+      // Note: This requires implementing /api/shared-notes endpoint
       const note = {
         id: Date.now().toString(),
         content: newNote.trim(),
@@ -85,6 +86,7 @@ export function PartnerHub({
         type: 'note'
       }
 
+      // Add to local state for now - would be replaced with API call
       setSharedNotes(prev => [note, ...prev])
       setNewNote('')
       setShowAddNote(false)
@@ -301,12 +303,18 @@ export function PartnerHub({
   )
 
   const renderActivity = () => (
-    <ActivityFeed 
-      partnerships={partnerships}
-      profile={profile}
-      user={user}
-      currencySymbol={currencySymbol}
-    />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Partner Activity Feed</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            See what you and your partner have been up to with your shared financial goals
+          </p>
+        </div>
+      </div>
+      
+      <PartnerActivityFeed />
+    </div>
   )
 
   const renderCollaboration = () => (

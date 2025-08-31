@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useSecureAuth } from './SecureAuthProvider'
+import { useAuth } from './AuthProvider'
 import { toast } from 'react-hot-toast'
 
 interface PrivacyPreferences {
@@ -11,7 +11,7 @@ interface PrivacyPreferences {
 }
 
 export function PrivacySettings() {
-  const { user } = useSecureAuth()
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json')
   

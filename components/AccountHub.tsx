@@ -6,6 +6,7 @@ import { useAuth } from './AuthProvider'
 import { ProfileManager } from './ProfileManager'
 import { SecurityDashboard } from './SecurityDashboard'
 import { DataExportView } from './DataExportView'
+import { SmartNotifications } from './SmartNotifications'
 
 interface AccountHubProps {
   profile: any
@@ -58,7 +59,7 @@ export function AccountHub({
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'security', label: 'Security', icon: '🔒' },
     { id: 'data', label: 'Data & Export', icon: '📊' },
-    { id: 'preferences', label: 'Preferences', icon: '⚙️' }
+    { id: 'preferences', label: 'Notifications', icon: '🔔' }
   ]
 
   const renderProfile = () => (
@@ -160,6 +161,10 @@ export function AccountHub({
   )
 
   const renderPreferences = () => (
+    <SmartNotifications />
+  )
+
+  const renderOldPreferences = () => (
     <div className="space-y-6">
       {/* App Preferences */}
       <div className="bg-white border rounded-lg p-6">

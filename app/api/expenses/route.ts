@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { expenseSchema } from '@/lib/validation'
+import { ActivityHelpers } from '@/lib/activity-logger'
 import { z } from 'zod'
 
 export async function GET(req: NextRequest) {
@@ -137,6 +138,25 @@ export async function POST(req: NextRequest) {
       }
 
       console.log('✅ Expenses API - Expense created directly:', expense.id)
+      
+      // Log activity for the expense
+      if (user.partnershipId) {
+        try {
+          await ActivityHelpers.logExpenseActivity(
+            user.id,
+            user.partnershipId,
+            expense.id,
+            expenseData.amount,
+            expenseData.description,
+            false // not approved, created directly
+          )
+          console.log('✅ Activity logged for expense:', expense.id)
+        } catch (activityError) {
+          console.warn('⚠️ Failed to log expense activity:', activityError)
+          // Don't fail the main operation if activity logging fails
+        }
+      }
+      
       return NextResponse.json(expense, { status: 201 })
     }
   } catch (error) {

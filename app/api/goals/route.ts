@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { goalSchema } from '@/lib/validation'
+import { ActivityHelpers } from '@/lib/activity-logger'
 
 export async function GET(req: NextRequest) {
   const user = await authenticateRequest(req)
@@ -112,10 +113,10 @@ export async function POST(req: NextRequest) {
           partnership_id: user.partnershipId,
           name: goalData.name,
           description: goalData.description,
-          target_amount: goalData.targetAmount,
-          current_amount: 0,
+          target_amount: goalData.target_amount,
+          current_amount: goalData.current_amount || 0,
           category: goalData.category,
-          target_date: goalData.targetDate || null,
+          target_date: goalData.target_date || null,
           added_by_user_id: user.id
         })
         .select(`
@@ -127,6 +128,25 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error('Direct goal creation error:', error)
         return NextResponse.json({ error: 'Failed to create goal' }, { status: 400 })
+      }
+
+      // Log activity for the goal creation
+      if (user.partnershipId) {
+        try {
+          await ActivityHelpers.logGoalActivity(
+            user.id,
+            user.partnershipId,
+            goal.id,
+            goalData.name,
+            'created',
+            goalData.target_amount,
+            { category: goalData.category, target_date: goalData.target_date }
+          )
+          console.log('✅ Activity logged for goal creation:', goal.id)
+        } catch (activityError) {
+          console.warn('⚠️ Failed to log goal activity:', activityError)
+          // Don't fail the main operation if activity logging fails
+        }
       }
 
       return NextResponse.json(goal, { status: 201 })

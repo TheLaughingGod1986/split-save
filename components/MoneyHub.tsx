@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
-import SafetyPotManager from './SafetyPotManager'
+import { EnhancedSafetyPot } from './EnhancedSafetyPot'
 import ContributionManager from './ContributionManager'
 import { MonthlyProgress } from './MonthlyProgress'
 
@@ -13,6 +13,7 @@ interface MoneyHubProps {
   profile: any
   user: any
   currencySymbol: string
+  monthlyProgress?: any
   onAddExpense: (expense: any) => void
   onUpdate: () => void
 }
@@ -34,6 +35,7 @@ export function MoneyHub({
   profile,
   user,
   currencySymbol,
+  monthlyProgress,
   onAddExpense,
   onUpdate
 }: MoneyHubProps) {
@@ -287,10 +289,16 @@ export function MoneyHub({
   )
 
   const renderSafetyPotTab = () => (
-    <SafetyPotManager 
+    <EnhancedSafetyPot 
+      profile={profile}
+      partnerships={partnerships}
+      expenses={expenses}
       currencySymbol={currencySymbol}
-      monthlyExpenses={monthlyExpenses}
-      onUpdate={onUpdate}
+      onSafetyPotUpdate={(amount) => {
+        // Trigger a refresh of data if needed
+        console.log('Enhanced safety pot updated:', amount)
+        onUpdate()
+      }}
     />
   )
 

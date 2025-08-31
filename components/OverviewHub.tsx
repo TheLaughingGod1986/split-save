@@ -13,6 +13,7 @@ interface OverviewHubProps {
   user: any
   currencySymbol: string
   currencyEmoji: string
+  monthlyProgress?: any
   onNavigate: (view: string) => void
   onNavigateToProfile: () => void
   onNavigateToPartnerships: () => void
@@ -46,13 +47,14 @@ export function OverviewHub({
   user,
   currencySymbol,
   currencyEmoji,
+  monthlyProgress,
   onNavigate,
   onNavigateToProfile,
   onNavigateToPartnerships
 }: OverviewHubProps) {
   const [loading, setLoading] = useState(false)
   const [recentActivity, setRecentActivity] = useState<any[]>([])
-  const [monthlyProgress, setMonthlyProgress] = useState<any>(null)
+  const [localMonthlyProgress, setLocalMonthlyProgress] = useState<any>(null)
 
   // Calculate dashboard statistics
   const stats: DashboardStats = useMemo(() => {
@@ -74,7 +76,7 @@ export function OverviewHub({
       totalSaved,
       totalTarget,
       completedGoals,
-      currentStreak: 3, // TODO: Get from real streak tracking
+      currentStreak: monthlyProgress?.trends?.consistencyScore ? Math.floor(monthlyProgress.trends.consistencyScore / 10) : 0,
       safetyPotAmount,
       monthsOfExpensesCovered
     }
@@ -171,7 +173,7 @@ export function OverviewHub({
   const loadMonthlyProgress = async () => {
     try {
       const response = await apiClient.get('/monthly-progress')
-      setMonthlyProgress(response)
+      setLocalMonthlyProgress(response)
     } catch (error) {
       console.error('Failed to load monthly progress:', error)
     }

@@ -6,6 +6,7 @@ interface AnalyticsViewProps {
   profile: any
   user: any
   currencySymbol: string
+  monthlyProgress?: any
 }
 
 interface MonthlyData {
@@ -27,7 +28,7 @@ interface FinancialHealthScore {
   recommendations: string[]
 }
 
-export function AnalyticsView({ partnerships, profile, user, currencySymbol }: AnalyticsViewProps) {
+export function AnalyticsView({ partnerships, profile, user, currencySymbol, monthlyProgress }: AnalyticsViewProps) {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
   const [financialHealth, setFinancialHealth] = useState<FinancialHealthScore | null>(null)
   const [selectedTimeframe, setSelectedTimeframe] = useState<'3months' | '6months' | '12months'>('6months')
@@ -35,18 +36,32 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol }: A
 
   useEffect(() => {
     loadAnalyticsData()
-  }, [selectedTimeframe])
+  }, [selectedTimeframe, monthlyProgress])
 
   const loadAnalyticsData = async () => {
     setIsLoading(true)
     
     try {
-      // In a real app, this would fetch from analytics API
-      // For now, show empty state until real data is implemented
-      setMonthlyData([])
-      setFinancialHealth(null)
+      if (monthlyProgress?.monthlyProgress) {
+        // Use the pre-loaded monthly progress data
+        const processedData = monthlyProgress.monthlyProgress.map((month: any) => ({
+          month: month.month,
+          actualSalary: month.actualContributions?.salary || 0,
+          sharedExpensesContributed: month.actualContributions?.sharedExpenses || 0,
+          goal1Saved: month.actualContributions?.goal1 || 0,
+          goal2Saved: month.actualContributions?.goal2 || 0,
+          safetyPotSaved: month.actualContributions?.safetyPot || 0,
+          extraIncome: month.actualContributions?.extraIncome || 0
+        }))
+        
+        setMonthlyData(processedData)
+        setFinancialHealth(calculateFinancialHealthScore(processedData))
+      } else {
+        setMonthlyData([])
+        setFinancialHealth(null)
+      }
     } catch (error) {
-      console.error('Failed to load analytics data:', error)
+      console.error('Failed to process analytics data:', error)
       toast.error('Failed to load analytics data')
     } finally {
       setIsLoading(false)
@@ -348,21 +363,30 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol }: A
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Monthly Savings</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {currencySymbol}-- {/* TODO: Load partner data */}
+                    {monthlyData.length > 0 ? 
+                      `${currencySymbol}${(monthlyData[0]?.goal1Saved + monthlyData[0]?.goal2Saved || 0).toFixed(0)}` : 
+                      `${currencySymbol}0`
+                    }
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Expense Coverage</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {currencySymbol}-- {/* TODO: Load partner data */}
+                    {monthlyData.length > 0 ? 
+                      `${currencySymbol}${monthlyData[0]?.sharedExpensesContributed || 0}` : 
+                      `${currencySymbol}0`
+                    }
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Safety Net</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {currencySymbol}-- {/* TODO: Load partner data */}
+                    {monthlyData.length > 0 ? 
+                      `${currencySymbol}${monthlyData[0]?.safetyPotSaved || 0}` : 
+                      `${currencySymbol}0`
+                    }
                   </span>
                 </div>
               </div>

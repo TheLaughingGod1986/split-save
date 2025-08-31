@@ -27,8 +27,9 @@ export const expenseUpdateSchema = z.object({
 
 export const goalSchema = z.object({
   name: z.string().min(1).max(200),
-  targetAmount: z.number().positive(),
-  targetDate: z.string().optional(),
+  target_amount: z.number().positive(),
+  current_amount: z.number().min(0).optional(),
+  target_date: z.string().optional(),
   description: z.string().optional(),
   category: z.string().min(1).max(50).optional(),
   message: z.string().optional()

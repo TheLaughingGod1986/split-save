@@ -372,8 +372,38 @@ export function MonthlyProgress({
         submittedAt: new Date().toISOString()
       }
 
-      // TODO: Save to API when backend is ready
-      console.log('Saving monthly progress:', progressData)
+      // Save to backend API
+      try {
+        const response = await fetch('/api/monthly-progress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+          },
+          body: JSON.stringify({
+            month: currentMonth,
+            notes,
+            goalsProgress: {
+              actualSalary,
+              extraIncome,
+              sharedExpensesContributed,
+              goal1Saved,
+              goal2Saved,
+              safetyPotSaved
+            }
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to save monthly progress')
+        }
+
+        console.log('✅ Monthly progress saved to database')
+      } catch (error) {
+        console.error('❌ Failed to save monthly progress:', error)
+        toast.error('Failed to save progress to database')
+        return
+      }
       
       setMonthlyData(progressData)
       setShowProgressForm(false)

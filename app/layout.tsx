@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/components/AuthProvider'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import SEO from '../components/SEO'
 import { usePerformance } from '../lib/usePerformance'
 
@@ -89,7 +91,6 @@ export default function RootLayout({
         
         {/* Preload critical resources */}
         <link rel="preload" href="/api/health" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         
         {/* DNS prefetch for external domains */}
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
@@ -157,6 +158,10 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        
+        {/* Vercel Analytics */}
+        <Analytics />
+        <SpeedInsights />
         
         {/* Service Worker registration */}
         <script
