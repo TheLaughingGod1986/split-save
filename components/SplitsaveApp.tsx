@@ -106,7 +106,6 @@ export function SplitsaveApp() {
       'activity': 'account',
       'achievements': 'goals',
       'ai-insights': 'goals',
-      'gamification': 'goals',
       'partner-collaboration': 'partner',
       'partnerships': 'partner',
       'approvals': 'partner',
@@ -432,7 +431,7 @@ export function SplitsaveApp() {
       }
       
       // Setup payday reminders and check for missed contributions
-      if (profileData) {
+      if (profileData && user) {
         await setupPaydayReminders(user.id, profileData, partnershipsData.partnerships || [])
         await checkMissedContributions(user.id, profileData, partnershipsData.partnerships || [], monthlyProgressData)
       }
@@ -548,7 +547,7 @@ export function SplitsaveApp() {
       )
 
       // Trigger partner activity notification
-      if (partnerships.length > 0) {
+      if (partnerships.length > 0 && user) {
         const partnership = partnerships[0]
         const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
         
@@ -579,7 +578,7 @@ export function SplitsaveApp() {
         toast.success('Approval request sent to your partner! They will review and approve/decline your expense.', { duration: 6000 })
         
         // Trigger approval request notification
-        if (partnerships.length > 0) {
+        if (partnerships.length > 0 && user) {
           const partnership = partnerships[0]
           const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
           
@@ -635,7 +634,7 @@ export function SplitsaveApp() {
       )
 
       // Trigger partner activity notification
-      if (partnerships.length > 0) {
+      if (partnerships.length > 0 && user) {
         const partnership = partnerships[0]
         const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
         
@@ -660,7 +659,7 @@ export function SplitsaveApp() {
         toast.success('Approval request sent to your partner! They will review and approve/decline your goal.', { duration: 6000 })
         
         // Trigger approval request notification
-        if (partnerships.length > 0) {
+        if (partnerships.length > 0 && user) {
           const partnership = partnerships[0]
           const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
           
@@ -877,11 +876,13 @@ export function SplitsaveApp() {
       </div>
 
       {/* Notification Tester (Development Only) */}
-      <NotificationTester 
-        userId={user.id}
-        partnershipId={partnerships.length > 0 ? partnerships[0].id : undefined}
-        currency={profile?.currency || 'GBP'}
-      />
+      {user && (
+        <NotificationTester 
+          userId={user.id}
+          partnershipId={partnerships.length > 0 ? partnerships[0].id : undefined}
+          currency={profile?.currency || 'GBP'}
+        />
+      )}
 
       {/* Mobile Menu */}
       {showMobileMenu && (
@@ -1350,6 +1351,7 @@ export function SplitsaveApp() {
       {/* Achievement Celebration */}
       <AchievementCelebration
         achievement={celebratingAchievement}
+        isVisible={!!celebratingAchievement}
         onClose={() => setCelebratingAchievement(null)}
       />
     </div>

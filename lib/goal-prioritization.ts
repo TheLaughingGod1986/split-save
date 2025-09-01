@@ -187,7 +187,7 @@ export class GoalPrioritizationEngine {
       [GoalPriority.OPTIONAL]: { label: 'Optional', color: 'text-purple-600', bgColor: 'bg-purple-100', borderColor: 'border-purple-200' }
     }
 
-    return priorityInfo[priority] || priorityInfo[GoalPriority.MEDIUM]
+    return priorityInfo[priority as keyof typeof priorityInfo] || priorityInfo[GoalPriority.MEDIUM]
   }
 
   /**

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -210,7 +210,7 @@ function calculateQuickStatsWidget(goals: any[], expenses: any[], achievements: 
 }
 
 function calculateExpenseOverviewWidget(expenses: any[]) {
-  const monthlyData = {}
+  const monthlyData: { [key: string]: number } = {}
   expenses.forEach(expense => {
     const month = new Date(expense.date).toISOString().slice(0, 7)
     monthlyData[month] = (monthlyData[month] || 0) + expense.amount
@@ -218,7 +218,7 @@ function calculateExpenseOverviewWidget(expenses: any[]) {
 
   const monthlyExpenses = Object.entries(monthlyData).map(([month, amount]) => ({ month, amount }))
   
-  const categories = {}
+  const categories: { [key: string]: number } = {}
   expenses.forEach(expense => {
     const category = expense.category || 'Uncategorized'
     categories[category] = (categories[category] || 0) + expense.amount

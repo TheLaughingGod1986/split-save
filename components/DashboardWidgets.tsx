@@ -231,7 +231,7 @@ export function DashboardWidgets({
   }
 
   const calculateMonthlyExpenses = (expenses: any[]): any[] => {
-    const monthlyData = {}
+    const monthlyData: { [key: string]: number } = {}
     expenses.forEach(expense => {
       const month = new Date(expense.date).toISOString().slice(0, 7)
       monthlyData[month] = (monthlyData[month] || 0) + expense.amount
@@ -240,7 +240,7 @@ export function DashboardWidgets({
   }
 
   const calculateCategoryBreakdown = (expenses: any[]): any[] => {
-    const categories = {}
+    const categories: { [key: string]: number } = {}
     expenses.forEach(expense => {
       const category = expense.category || 'Uncategorized'
       categories[category] = (categories[category] || 0) + expense.amount
@@ -433,7 +433,7 @@ function GoalProgressWidget({ data }: { data: any }) {
 }
 
 function SafetyPotWidget({ data }: { data: any }) {
-  const statusColors = {
+  const statusColors: { [key: string]: string } = {
     excellent: 'text-green-600 dark:text-green-400',
     good: 'text-blue-600 dark:text-blue-400',
     warning: 'text-yellow-600 dark:text-yellow-400',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from '@/lib/toast'
+import { MLInsightsPanel } from './MLInsightsPanel'
 
 interface AnalyticsViewProps {
   partnerships: any[]
@@ -415,34 +416,14 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
         </div>
       )}
 
-      {/* Smart Insights */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">🧠 Smart Insights</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Savings Velocity */}
-          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
-            <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">🚀 Savings Velocity</h3>
-            <div className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">
-              {currencySymbol}{Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.2)}/month
-            </div>
-            <p className="text-sm text-green-700 dark:text-green-300">
-              At this rate, you'll reach your savings goals in approximately 8-12 months.
-            </p>
-          </div>
-          
-          {/* Expense Efficiency */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-            <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">⚡ Expense Efficiency</h3>
-            <div className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">
-              70% allocation
-            </div>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              Your expense allocation is optimal for maintaining financial stability while building savings.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* ML Insights Panel */}
+      <MLInsightsPanel 
+        userId={user.id} 
+        onInsightAction={(action, data) => {
+          console.log('ML Insight action:', action, data)
+          // Handle insight actions here
+        }}
+      />
     </div>
   )
 }

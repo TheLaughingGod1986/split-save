@@ -11,7 +11,8 @@ export function LandingPage() {
   const handleGetStarted = () => {
     trackEvent('cta_clicked', { 
       location: 'hero_section', 
-      cta_type: 'get_started' 
+      cta_type: 'get_started',
+      page: 'landing'
     })
     setShowLogin(true)
   }
@@ -19,7 +20,8 @@ export function LandingPage() {
   const handleLearnMore = () => {
     trackEvent('cta_clicked', { 
       location: 'hero_section', 
-      cta_type: 'learn_more' 
+      cta_type: 'learn_more',
+      page: 'landing'
     })
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
   }

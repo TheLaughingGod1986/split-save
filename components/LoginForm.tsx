@@ -5,7 +5,11 @@ import { supabase } from '@/lib/supabase'
 import { toast } from '@/lib/toast'
 import { validationRules, sanitizeInput } from '@/lib/validation'
 
-export function LoginForm() {
+interface LoginFormProps {
+  onBack?: () => void
+}
+
+export function LoginForm({ onBack }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -157,6 +161,21 @@ export function LoginForm() {
               {isSignUp ? 'Start your financial journey together' : 'Continue managing your shared finances'}
             </p>
           </div>
+
+          {onBack && (
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={onBack}
+                className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to landing page
+              </button>
+            </div>
+          )}
 
           <form className="space-y-6" onSubmit={handleAuth}>
             {error && (

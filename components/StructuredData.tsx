@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 interface StructuredDataProps {
-  type: 'website' | 'organization' | 'webapp' | 'article' | 'faq'
+  type: 'website' | 'organization' | 'webapp' | 'article' | 'faq' | 'financialService'
   data: any
 }
 

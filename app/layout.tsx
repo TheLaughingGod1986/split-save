@@ -110,7 +110,6 @@ export const metadata: Metadata = {
     google: 'your-google-verification-code',
     yandex: 'your-yandex-verification-code',
     yahoo: 'your-yahoo-verification-code',
-    bing: 'your-bing-verification-code',
   },
   category: 'Finance',
   classification: 'Financial Management Application',

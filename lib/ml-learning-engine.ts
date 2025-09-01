@@ -561,28 +561,153 @@ class MLLearningEngine {
 
   // Database operations
   private async storeBehaviorAnalysis(analysis: BehaviorAnalysis): Promise<void> {
-    // Implementation for storing behavior analysis
-    console.log('📊 Storing behavior analysis for user:', analysis.userId)
+    try {
+      const { error } = await supabaseAdmin
+        .from('behavior_analysis')
+        .insert({
+          user_id: analysis.userId,
+          analysis_period: analysis.analysisPeriod,
+          saving_consistency: analysis.savingConsistency,
+          goal_achievement_rate: analysis.goalAchievementRate,
+          risk_tolerance: analysis.riskTolerance,
+          preferred_timing: analysis.preferredTiming,
+          stress_factors: analysis.stressFactors,
+          success_patterns: analysis.successPatterns,
+          improvement_areas: analysis.improvementAreas,
+          last_analyzed: analysis.lastAnalyzed
+        })
+
+      if (error) {
+        console.error('❌ ML Engine: Failed to store behavior analysis:', error)
+        throw error
+      }
+
+      console.log('📊 ML Engine: Stored behavior analysis for user:', analysis.userId)
+    } catch (error) {
+      console.error('❌ ML Engine: Error storing behavior analysis:', error)
+      throw error
+    }
   }
 
   private async getLatestBehaviorAnalysis(userId: string): Promise<BehaviorAnalysis | null> {
-    // Implementation for retrieving latest behavior analysis
-    return null
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('behavior_analysis')
+        .select('*')
+        .eq('user_id', userId)
+        .order('last_analyzed', { ascending: false })
+        .limit(1)
+
+      if (error) {
+        console.error('❌ ML Engine: Failed to get latest behavior analysis:', error)
+        return null
+      }
+
+      if (!data || data.length === 0) {
+        return null
+      }
+
+      const analysis = data[0]
+      return {
+        userId: analysis.user_id,
+        analysisPeriod: analysis.analysis_period,
+        savingConsistency: analysis.saving_consistency,
+        goalAchievementRate: analysis.goal_achievement_rate,
+        riskTolerance: analysis.risk_tolerance,
+        preferredTiming: analysis.preferred_timing,
+        stressFactors: analysis.stress_factors || [],
+        successPatterns: analysis.success_patterns || [],
+        improvementAreas: analysis.improvement_areas || [],
+        lastAnalyzed: new Date(analysis.last_analyzed)
+      }
+    } catch (error) {
+      console.error('❌ ML Engine: Error getting latest behavior analysis:', error)
+      return null
+    }
   }
 
   private async storeAdaptiveRecommendations(recommendations: AdaptiveRecommendation[]): Promise<void> {
-    // Implementation for storing recommendations
-    console.log('💡 Storing', recommendations.length, 'adaptive recommendations')
+    try {
+      const recommendationsData = recommendations.map(rec => ({
+        user_id: rec.userId,
+        recommendation_type: rec.recommendationType,
+        title: rec.title,
+        description: rec.description,
+        suggested_action: rec.suggestedAction,
+        expected_impact_short_term: rec.expectedImpact.shortTerm,
+        expected_impact_long_term: rec.expectedImpact.longTerm,
+        confidence: rec.confidence,
+        reasoning: rec.reasoning,
+        created_at: rec.createdAt
+      }))
+
+      const { error } = await supabaseAdmin
+        .from('adaptive_recommendations')
+        .insert(recommendationsData)
+
+      if (error) {
+        console.error('❌ ML Engine: Failed to store adaptive recommendations:', error)
+        throw error
+      }
+
+      console.log('💡 ML Engine: Stored', recommendations.length, 'adaptive recommendations')
+    } catch (error) {
+      console.error('❌ ML Engine: Error storing adaptive recommendations:', error)
+      throw error
+    }
   }
 
   private async storeLearningInsight(insight: LearningInsight): Promise<void> {
-    // Implementation for storing learning insights
-    console.log('🧠 Storing learning insight:', insight.title)
+    try {
+      const { error } = await supabaseAdmin
+        .from('learning_insights')
+        .insert({
+          user_id: insight.userId,
+          insight_type: insight.insightType,
+          title: insight.title,
+          description: insight.description,
+          confidence: insight.confidence,
+          recommendations: insight.recommendations,
+          data_points: insight.dataPoints,
+          created_at: insight.createdAt,
+          expires_at: insight.expiresAt
+        })
+
+      if (error) {
+        console.error('❌ ML Engine: Failed to store learning insight:', error)
+        throw error
+      }
+
+      console.log('🧠 ML Engine: Stored learning insight:', insight.title)
+    } catch (error) {
+      console.error('❌ ML Engine: Error storing learning insight:', error)
+      throw error
+    }
   }
 
   private async updateBehaviorPattern(userId: string, patternType: string, reason: string, context: any): Promise<void> {
-    // Implementation for updating behavior patterns
-    console.log('🔄 Updating behavior pattern for user:', userId, 'Type:', patternType)
+    try {
+      const { error } = await supabaseAdmin
+        .from('user_behavior_patterns')
+        .upsert({
+          user_id: userId,
+          pattern_type: patternType,
+          confidence: 0.8,
+          factors: [reason],
+          context_data: context,
+          last_updated: new Date()
+        })
+
+      if (error) {
+        console.error('❌ ML Engine: Failed to update behavior pattern:', error)
+        throw error
+      }
+
+      console.log('🔄 ML Engine: Updated behavior pattern for user:', userId, 'Type:', patternType)
+    } catch (error) {
+      console.error('❌ ML Engine: Error updating behavior pattern:', error)
+      throw error
+    }
   }
 }
 
