@@ -120,77 +120,48 @@ export function PWAInstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-24 left-4 right-4 z-50 animate-fade-in-up">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📱</span>
+    <div className="fixed bottom-6 right-6 z-40">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xs">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <span className="text-sm">📱</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Install SplitSave
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                Install App
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Get the full mobile experience
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Better experience
               </p>
             </div>
           </div>
 
           <button
             onClick={handleDismiss}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
           >
-            <span className="text-xl">×</span>
+            <span className="text-lg">×</span>
           </button>
         </div>
 
-        {/* Benefits */}
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center space-x-3 text-sm">
-            <span className="text-green-500">✓</span>
-            <span className="text-gray-700 dark:text-gray-300">Access from home screen</span>
-          </div>
-          <div className="flex items-center space-x-3 text-sm">
-            <span className="text-green-500">✓</span>
-            <span className="text-gray-700 dark:text-gray-300">Works offline</span>
-          </div>
-          <div className="flex items-center space-x-3 text-sm">
-            <span className="text-green-500">✓</span>
-            <span className="text-gray-700 dark:text-gray-300">Faster loading</span>
-          </div>
-          <div className="flex items-center space-x-3 text-sm">
-            <span className="text-green-500">✓</span>
-            <span className="text-gray-700 dark:text-gray-300">Native app feel</span>
-          </div>
-        </div>
+        {/* Simple Action Button */}
+        <button
+          onClick={handleInstall}
+          disabled={isInstalling}
+          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isInstalling ? 'Installing...' : 'Install'}
+        </button>
 
-        {/* Action Buttons */}
-        <div className="flex space-x-3">
-          <button
-            onClick={handleInstall}
-            disabled={isInstalling}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isInstalling ? '🔄 Installing...' : '📱 Install App'}
-          </button>
-
-          <button
-            onClick={handleManualInstall}
-            className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            How?
-          </button>
-        </div>
-
-        {/* Dismiss Link */}
-        <div className="text-center mt-4">
+        {/* Subtle Dismiss */}
+        <div className="text-center mt-2">
           <button
             onClick={handleDismiss}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            Maybe later
+            Not now
           </button>
         </div>
       </div>

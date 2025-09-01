@@ -397,8 +397,8 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-center">
-          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-100 px-4 py-3 rounded-lg flex items-center">
+          <svg className="w-5 h-5 mr-2 flex-shrink-0 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           {error}
@@ -416,18 +416,17 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information Section */}
-        <div className="card space-card">
-          <div className="text-center space-card">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto space-item">
-              <span className="text-3xl">👤</span>
-            </div>
-            <h2 className="text-heading-2 text-gray-900 dark:text-white space-small">Personal Information</h2>
-            <p className="text-body text-gray-600 dark:text-gray-400">Basic details about yourself</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Personal Information</h2>
+            <p className="text-gray-600 dark:text-gray-400">Basic details about yourself</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Full Name
+              </label>
               <input
                 type="text"
                 value={formData.name}
@@ -439,7 +438,9 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Country</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Country
+              </label>
               <select
                 value={formData.countryCode}
                 onChange={(e) => {
@@ -463,10 +464,11 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Currency</label>
-            <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl">
-              <span className="text-2xl">{getCurrencyEmoji(formData.currency)}</span>
-              <span className="text-lg font-medium text-blue-900 dark:text-blue-100">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Currency
+            </label>
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl">
+              <span className="text-lg font-medium text-gray-900 dark:text-white">
                 {getCurrencySymbol(formData.currency)} {formData.currency}
               </span>
             </div>
@@ -479,9 +481,6 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
         {/* Financial Information Section */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">💰</span>
-            </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Financial Information</h2>
             <p className="text-gray-600 dark:text-gray-400">Details about your income and financial preferences</p>
           </div>
@@ -532,33 +531,28 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
               {formData.payday && formData.payday !== 'custom' && (
                 <div className="mt-3 space-y-3">
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-blue-600 dark:text-blue-400">📅</span>
-                      <div>
-                        <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                          Next Payday: {getNextPaydayDescription(formData.payday)}
-                        </p>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">
-                          {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                        {isTodayPayday(formData.payday) && (
-                          <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                            🎉 Today is payday!
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      Next Payday: {getNextPaydayDescription(formData.payday)}
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                      {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    {isTodayPayday(formData.payday) && (
+                      <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                        🎉 Today is payday!
+                      </p>
+                    )}
                   </div>
 
                   {/* Payday Explanation */}
                   <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">ℹ️ Schedule:</span> {getPaydayExplanation(formData.payday)}
+                      <span className="font-medium">Schedule:</span> {getPaydayExplanation(formData.payday)}
                     </p>
                   </div>
 
@@ -566,7 +560,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                   {(formData.payday === 'last-friday' || formData.payday === 'last-working-day') && (
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                       <h4 className="text-xs font-medium text-green-800 dark:text-green-200 mb-2">
-                        📋 Next 3 Paydays:
+                        Next 3 Paydays:
                       </h4>
                       <div className="space-y-1">
                         {getUpcomingPaydays(formData.payday).map((date, index) => (
@@ -601,21 +595,18 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
               {/* Custom Payday Preview */}
               {formData.payday && formData.payday !== 'custom' && (
                 <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-600 dark:text-green-400">📅</span>
-                    <div>
-                      <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Next Payday: {getNextPaydayDescription(formData.payday)}
-                      </p>
-                      <p className="text-xs text-green-600 dark:text-green-400">
-                        {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                      Next Payday: {getNextPaydayDescription(formData.payday)}
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
                   </div>
                 </div>
               )}
@@ -650,9 +641,6 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
         {formData.income && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📊</span>
-              </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Income Summary</h2>
               <p className="text-gray-600 dark:text-gray-400">Overview of your financial breakdown</p>
             </div>
@@ -734,19 +722,22 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
         )}
 
         {/* Submit Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-6">
           <button
             type="submit"
             disabled={saving}
-            className="btn btn-primary px-8 py-3 text-lg font-medium"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {saving ? (
-              <>
-                <div className="loading-spinner mr-2"></div>
-                Saving...
-              </>
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                Saving Profile...
+              </div>
             ) : (
-              'Save Profile'
+              <div className="flex items-center">
+                <span className="mr-2">💾</span>
+                Save Profile
+              </div>
             )}
           </button>
         </div>

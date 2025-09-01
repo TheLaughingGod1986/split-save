@@ -1,4 +1,5 @@
 import { track } from '@vercel/analytics'
+import { useEffect, useCallback } from 'react'
 
 // Analytics event types for SplitSave
 export interface AnalyticsEvent {
@@ -6,6 +7,15 @@ export interface AnalyticsEvent {
   'user_signup': { method: 'email' | 'google' | 'oauth' }
   'user_login': { method: 'email' | 'google' | 'oauth' }
   'user_logout': Record<string, never>
+  
+  // CRO & Conversion Events
+  'cta_clicked': { location: string; cta_type: string; page: string }
+  'landing_page_view': { source: string; utm_campaign?: string; utm_source?: string }
+  'signup_started': { method: string; source: string }
+  'signup_completed': { method: string; time_to_complete: number }
+  'onboarding_started': { step: string }
+  'onboarding_completed': { total_steps: number; time_to_complete: number }
+  'first_feature_used': { feature: string; time_since_signup: number }
   
   // Partnership Events
   'partnership_created': { inviteMethod: 'email' | 'link' }
@@ -41,6 +51,13 @@ export interface AnalyticsEvent {
   'tab_switched': { from: string; to: string; section: string }
   'feature_used': { feature: string; section: string }
   
+  // User Behavior & Retention
+  'session_started': { duration: number; pages_visited: number }
+  'session_ended': { duration: number; pages_visited: number; exit_page: string }
+  'return_visit': { days_since_last_visit: number; visit_count: number }
+  'feature_discovery': { feature: string; discovery_method: string }
+  'error_encountered': { error_type: string; page: string; user_action: string }
+  
   // Notifications
   'notification_received': { type: string; channel: 'web' | 'push' }
   'notification_clicked': { type: string; actionTaken: string }
@@ -53,6 +70,10 @@ export interface AnalyticsEvent {
   // Data Export & Privacy
   'data_exported': { format: 'csv' | 'json' | 'pdf'; dataType: string }
   'privacy_setting_changed': { setting: string; value: boolean }
+  
+  // A/B Testing
+  'ab_test_viewed': { test_name: string; variant: string; page: string }
+  'ab_test_converted': { test_name: string; variant: string; conversion_type: string }
 }
 
 /**
@@ -78,7 +99,7 @@ export function trackEvent<K extends keyof AnalyticsEvent>(
 /**
  * Track page views with context
  */
-export function trackPageView(page: string, authenticated: boolean): void {
+export function trackPageView(page: string, authenticated: boolean = false): void {
   trackEvent('page_view', { page, authenticated })
 }
 
@@ -97,115 +118,127 @@ export function trackFeatureUsage(feature: string, section: string): void {
 }
 
 /**
- * Track financial actions with proper context
- */
-export class FinancialAnalytics {
-  static trackExpense(category: string, amount: number, requiresApproval: boolean): void {
-    trackEvent('expense_added', { category, amount, requiresApproval })
-  }
-  
-  static trackGoalCreation(category: string, targetAmount: number, hasPartner: boolean): void {
-    trackEvent('goal_created', { category, targetAmount, hasPartner })
-  }
-  
-  static trackGoalContribution(goalId: string, amount: number, percentage: number): void {
-    trackEvent('goal_contribution', { goalId, amount, percentage })
-  }
-  
-  static trackGoalCompletion(goalId: string, totalAmount: number, timeToCompletion: number): void {
-    trackEvent('goal_completed', { goalId, totalAmount, timeToCompletion })
-  }
-  
-  static trackSafetyPotAction(action: 'contribution' | 'withdrawal', amount: number, newTotal: number): void {
-    if (action === 'contribution') {
-      trackEvent('safety_pot_contribution', { amount, newTotal })
-    } else {
-      trackEvent('safety_pot_withdrawal', { amount })
-    }
-  }
-}
-
-/**
- * Track gamification events
- */
-export class GamificationAnalytics {
-  static trackAchievement(achievementId: string, points: number, category: string): void {
-    trackEvent('achievement_unlocked', { achievementId, points, category })
-  }
-  
-  static trackLevelUp(newLevel: number, totalPoints: number): void {
-    trackEvent('level_up', { newLevel, totalPoints })
-  }
-  
-  static trackStreakMilestone(streakLength: number, type: 'contribution' | 'login'): void {
-    trackEvent('streak_milestone', { streakLength, type })
-  }
-}
-
-/**
- * Track social/activity events
- */
-export class SocialAnalytics {
-  static trackActivityReaction(activityType: string, reactionType: string): void {
-    trackEvent('activity_reaction', { activityType, reactionType })
-  }
-  
-  static trackActivityComment(activityType: string, commentLength: number): void {
-    trackEvent('activity_comment', { activityType, commentLength })
-  }
-  
-  static trackPartnershipCreated(inviteMethod: 'email' | 'link'): void {
-    trackEvent('partnership_created', { inviteMethod })
-  }
-}
-
-/**
- * Track user journey and onboarding
- */
-export class UserJourneyAnalytics {
-  static trackSignup(method: 'email' | 'google' | 'oauth'): void {
-    trackEvent('user_signup', { method })
-  }
-  
-  static trackLogin(method: 'email' | 'google' | 'oauth'): void {
-    trackEvent('user_login', { method })
-  }
-  
-  static trackLogout(): void {
-    trackEvent('user_logout', {})
-  }
-}
-
-/**
- * Track performance metrics
- */
-export class PerformanceAnalytics {
-  static trackPerformanceIssue(metric: 'LCP' | 'FID' | 'CLS', value: number, page: string): void {
-    // Only track if performance is poor
-    const thresholds = { LCP: 2500, FID: 100, CLS: 0.1 }
-    if (value > thresholds[metric]) {
-      trackEvent('performance_issue', { metric, value, page })
-    }
-  }
-  
-  static trackError(errorType: string, page: string, authenticated: boolean): void {
-    trackEvent('error_occurred', { errorType, page, authenticated })
-  }
-}
-
-/**
- * Custom analytics hook for React components
+ * React hook for analytics with session tracking
  */
 export function useAnalytics() {
+  const trackEventWithHook = useCallback(<K extends keyof AnalyticsEvent>(
+    event: K,
+    properties: AnalyticsEvent[K]
+  ) => {
+    trackEvent(event, properties)
+  }, [])
+
+  const trackPageViewWithHook = useCallback((page: string, authenticated: boolean = false) => {
+    trackPageView(page, authenticated)
+  }, [])
+
+  const trackNavigationWithHook = useCallback((from: string, to: string, section: string) => {
+    trackNavigation(from, to, section)
+  }, [])
+
+  // Track session start on mount
+  useEffect(() => {
+    trackEvent('session_started', { duration: 0, pages_visited: 1 })
+    
+    // Track session end on unmount
+    return () => {
+      trackEvent('session_ended', { duration: 0, pages_visited: 1, exit_page: 'unknown' })
+    }
+  }, [])
+
   return {
-    track: trackEvent,
-    trackPageView,
-    trackNavigation,
-    trackFeatureUsage,
-    financial: FinancialAnalytics,
-    gamification: GamificationAnalytics,
-    social: SocialAnalytics,
-    userJourney: UserJourneyAnalytics,
-    performance: PerformanceAnalytics,
+    trackEvent: trackEventWithHook,
+    trackPageView: trackPageViewWithHook,
+    trackNavigation: trackNavigationWithHook,
+    // Legacy analytics object for backward compatibility
+    financial: {
+      trackExpense: (category: string, amount: number, requiresApproval: boolean) => 
+        trackEvent('expense_added', { category, amount, requiresApproval }),
+      trackGoalCreation: (category: string, targetAmount: number, hasPartner: boolean) => 
+        trackEvent('goal_created', { category, targetAmount, hasPartner })
+    },
+    conversion: {
+      landingPageView: (source: string, options?: any) => 
+        trackEvent('landing_page_view', { source, ...options })
+    },
+    session: {
+      started: () => trackEvent('session_started', { duration: 0, pages_visited: 1 })
+    }
   }
+}
+
+// Analytics namespace for easier access (for non-hook usage)
+export const analytics = {
+  user: {
+    signup: (method: 'email' | 'google' | 'oauth') => trackEvent('user_signup', { method }),
+    login: (method: 'email' | 'google' | 'oauth') => trackEvent('user_login', { method }),
+    logout: () => trackEvent('user_logout', {}),
+  },
+  conversion: {
+    ctaClick: (location: string, ctaType: string, page: string = 'landing') => 
+      trackEvent('cta_clicked', { location, cta_type: ctaType, page }),
+    landingPageView: (source: string, utmParams?: { campaign?: string; source?: string }) => 
+      trackEvent('landing_page_view', { 
+        source, 
+        utm_campaign: utmParams?.campaign,
+        utm_source: utmParams?.source
+      }),
+    signupStarted: (method: string, source: string) => 
+      trackEvent('signup_started', { method, source }),
+    signupCompleted: (method: string, timeToComplete: number) => 
+      trackEvent('signup_completed', { method, time_to_complete: timeToComplete }),
+    onboardingStarted: (step: string) => 
+      trackEvent('onboarding_started', { step }),
+    onboardingCompleted: (totalSteps: number, timeToComplete: number) => 
+      trackEvent('onboarding_completed', { total_steps: totalSteps, time_to_complete: timeToComplete }),
+    firstFeatureUsed: (feature: string, timeSinceSignup: number) => 
+      trackEvent('first_feature_used', { feature, time_since_signup: timeSinceSignup }),
+  },
+  session: {
+    started: () => trackEvent('session_started', { duration: 0, pages_visited: 1 }),
+    ended: () => trackEvent('session_ended', { duration: 0, pages_visited: 1, exit_page: 'unknown' }),
+    returnVisit: () => trackEvent('return_visit', { days_since_last_visit: 0, visit_count: 1 }),
+  },
+  behavior: {
+    featureDiscovery: (feature: string, discoveryMethod: string) => 
+      trackEvent('feature_discovery', { feature, discovery_method: discoveryMethod }),
+    errorEncountered: (errorType: string, page: string, userAction: string) => 
+      trackEvent('error_encountered', { error_type: errorType, page, user_action: userAction }),
+    navigation: trackNavigation,
+    featureUsage: trackFeatureUsage,
+  },
+  financial: {
+    trackExpense: (category: string, amount: number, requiresApproval: boolean) => 
+      trackEvent('expense_added', { category, amount, requiresApproval }),
+    trackGoalCreation: (category: string, targetAmount: number, hasPartner: boolean) => 
+      trackEvent('goal_created', { category, targetAmount, hasPartner }),
+    trackAchievement: (achievementId: string, points: number, category: string) => 
+      trackEvent('achievement_unlocked', { achievementId, points, category }),
+    trackLevelUp: (newLevel: number, totalPoints: number) => 
+      trackEvent('level_up', { newLevel, totalPoints }),
+    trackStreak: (streakLength: number, type: 'contribution' | 'login') => 
+      trackEvent('streak_milestone', { streakLength, type }),
+  },
+  notifications: {
+    received: (type: string, channel: 'web' | 'push') => 
+      trackEvent('notification_received', { type, channel }),
+    clicked: (type: string, actionTaken: string) => 
+      trackEvent('notification_clicked', { type, actionTaken }),
+  },
+  performance: {
+    issue: (metric: 'LCP' | 'FID' | 'CLS', value: number, page: string) => 
+      trackEvent('performance_issue', { metric, value, page }),
+  },
+  privacy: {
+    settingChanged: (setting: string, value: boolean) => 
+      trackEvent('privacy_setting_changed', { setting, value }),
+    dataExported: (format: 'csv' | 'json' | 'pdf', dataType: string) => 
+      trackEvent('data_exported', { format, dataType }),
+  },
+  abTesting: {
+    viewed: (testName: string, variant: string, page: string) => 
+      trackEvent('ab_test_viewed', { test_name: testName, variant, page }),
+    converted: (testName: string, variant: string, conversionType: string) => 
+      trackEvent('ab_test_converted', { test_name: testName, variant, conversion_type: conversionType }),
+  },
 }

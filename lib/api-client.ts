@@ -185,6 +185,23 @@ export interface Goal {
   added_by_user_id: string
   partnership_id: string
   created_at: string
+  updated_at?: string
+  
+  // Prioritization fields
+  recommended_amount?: number
+  recommended_deadline?: string
+  recommended_priority?: number
+  allocation_percentage?: number
+  risk_level?: 'low' | 'medium' | 'high' | 'critical'
+  last_recommendation_date?: string
+  recommendation_reason?: string
+  
+  // Feasibility fields
+  monthly_contribution_needed?: number
+  days_to_deadline?: number
+  is_feasible?: boolean
+  feasibility_score?: number
+  
   added_by_user?: {
     id: string
     name: string

@@ -5,6 +5,7 @@ interface NotificationManagerProps {
   profile: any
   partnerships: any[]
   goals: any[]
+  approvals: any[]
   currentView: string
   onNavigateToView: (view: string) => void
 }
@@ -39,6 +40,7 @@ export function NotificationManager({
   profile, 
   partnerships, 
   goals, 
+  approvals,
   currentView,
   onNavigateToView 
 }: NotificationManagerProps) {
@@ -52,7 +54,8 @@ export function NotificationManager({
     checkForNewAchievements()
     checkPaydayReminders()
     checkGoalMilestones()
-  }, [profile, goals, partnerships])
+    checkApprovalRequests()
+  }, [profile, goals, partnerships, approvals])
 
   useEffect(() => {
     setUnreadCount(notifications.filter(n => !n.read).length)
@@ -306,6 +309,35 @@ export function NotificationManager({
           }
         }
       })
+    })
+  }
+
+  const checkApprovalRequests = () => {
+    if (!approvals) return
+
+    const pendingApprovals = approvals.filter(approval => approval.status === 'pending')
+    
+    pendingApprovals.forEach(approval => {
+      const approvalKey = `approval-${approval.id}`
+      const existingNotification = notifications.find(n => n.id === approvalKey)
+      
+      if (!existingNotification) {
+        const notification: Notification = {
+          id: approvalKey,
+          type: 'alert',
+          title: `⏳ Approval Required: ${approval.title}`,
+          message: `${approval.requester_name} is waiting for your approval on a ${approval.type} request.`,
+          icon: '⏳',
+          priority: 'high',
+          read: false,
+          createdAt: new Date(approval.created_at),
+          actionRequired: true,
+          actionLabel: 'Review',
+          actionView: 'partners'
+        }
+
+        addNotification(notification)
+      }
     })
   }
 

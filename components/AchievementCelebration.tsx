@@ -1,223 +1,220 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Achievement } from '@/lib/achievement-utils'
 
 interface AchievementCelebrationProps {
   achievement: Achievement | null
+  isVisible: boolean
   onClose: () => void
 }
 
-export function AchievementCelebration({ achievement, onClose }: AchievementCelebrationProps) {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
+export function AchievementCelebration({ achievement, isVisible, onClose }: AchievementCelebrationProps) {
+  const [showConfetti, setShowConfetti] = useState(false)
 
   useEffect(() => {
-    if (achievement) {
-      setIsVisible(true)
-      setIsAnimating(true)
-      
-      // Auto-close after 5 seconds
+    if (isVisible && achievement) {
+      setShowConfetti(true)
+      // Auto-hide after 5 seconds
       const timer = setTimeout(() => {
-        handleClose()
+        onClose()
       }, 5000)
-
       return () => clearTimeout(timer)
     }
-  }, [achievement])
+  }, [isVisible, achievement, onClose])
 
-  const handleClose = () => {
-    setIsAnimating(false)
-    setTimeout(() => {
-      setIsVisible(false)
-      onClose()
-    }, 300)
-  }
-
-  if (!achievement || !isVisible) return null
-
-  const getRarityColor = (rarity: Achievement['rarity']) => {
+  const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'common':
-        return 'from-gray-500 to-gray-700'
-      case 'rare':
-        return 'from-blue-500 to-blue-700'
-      case 'epic':
-        return 'from-purple-500 to-purple-700'
-      case 'legendary':
-        return 'from-orange-500 to-red-600'
-      default:
-        return 'from-gray-500 to-gray-700'
+      case 'legendary': return 'from-yellow-400 to-orange-500'
+      case 'epic': return 'from-purple-500 to-pink-500'
+      case 'rare': return 'from-blue-500 to-cyan-500'
+      default: return 'from-green-500 to-emerald-500'
     }
   }
 
-  const getRarityParticles = (rarity: Achievement['rarity']) => {
+  const getRarityGlow = (rarity: string) => {
     switch (rarity) {
-      case 'common':
-        return ['✨', '⭐']
-      case 'rare':
-        return ['💙', '✨', '⭐']
-      case 'epic':
-        return ['💜', '🌟', '✨', '⭐']
-      case 'legendary':
-        return ['🔥', '💎', '🌟', '✨', '⭐']
-      default:
-        return ['✨']
+      case 'legendary': return 'shadow-yellow-400/50'
+      case 'epic': return 'shadow-purple-500/50'
+      case 'rare': return 'shadow-blue-500/50'
+      default: return 'shadow-green-500/50'
     }
   }
 
-  const particles = getRarityParticles(achievement.rarity)
+  if (!achievement) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-          isAnimating ? 'bg-opacity-50' : 'bg-opacity-0'
-        }`}
-        onClick={handleClose}
-      />
-
-      {/* Achievement Card */}
-      <div 
-        className={`relative bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl border-2 border-gray-200 dark:border-gray-700 transform transition-all duration-500 ${
-          isAnimating 
-            ? 'scale-100 opacity-100 rotate-0' 
-            : 'scale-50 opacity-0 rotate-12'
-        }`}
-      >
-        {/* Floating Particles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-          {particles.map((particle, index) => (
-            <div
-              key={index}
-              className={`absolute text-2xl animate-bounce`}
-              style={{
-                left: `${20 + index * 15}%`,
-                top: `${10 + (index % 3) * 20}%`,
-                animationDelay: `${index * 0.2}s`,
-                animationDuration: `${2 + index * 0.3}s`
-              }}
-            >
-              {particle}
-            </div>
-          ))}
-        </div>
-
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${getRarityColor(achievement.rarity)} mb-4 shadow-lg`}>
-            <span className="text-4xl">{achievement.icon}</span>
-          </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            🎉 Achievement Unlocked!
-          </h2>
-          
-          <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
-            achievement.rarity === 'common' ? 'bg-gray-100 text-gray-800' :
-            achievement.rarity === 'rare' ? 'bg-blue-100 text-blue-800' :
-            achievement.rarity === 'epic' ? 'bg-purple-100 text-purple-800' :
-            'bg-orange-100 text-orange-800'
-          }`}>
-            {achievement.rarity}
-          </div>
-        </div>
-
-        {/* Achievement Details */}
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {achievement.name}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {achievement.description}
-          </p>
-          
-          {/* Points */}
-          <div className="flex items-center justify-center space-x-2">
-            <span className="text-2xl">💎</span>
-            <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-              +{achievement.points} points
-            </span>
-          </div>
-        </div>
-
-        {/* Progress Celebration */}
-        <div className="mb-6">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-            <div 
-              className={`h-full bg-gradient-to-r ${getRarityColor(achievement.rarity)} transition-all duration-1000 ease-out`}
-              style={{ width: '100%' }}
-            />
-          </div>
-          <div className="text-center mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-            100% Complete!
-          </div>
-        </div>
-
-        {/* Requirements Met */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Requirements Completed:
-          </h4>
-          <div className="space-y-1">
-            {achievement.requirements.map((req, index) => (
-              <div key={index} className="flex items-center space-x-2 text-sm">
-                <span className="text-green-500">✓</span>
-                <span className="text-gray-600 dark:text-gray-400">
-                  {req.description}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex space-x-3">
-          <button
-            onClick={handleClose}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium transition-colors"
-          >
-            Continue
-          </button>
-          <button
-            onClick={() => {
-              // Could navigate to achievements page
-              handleClose()
-            }}
-            className={`flex-1 bg-gradient-to-r ${getRarityColor(achievement.rarity)} text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all transform hover:scale-105`}
-          >
-            View All
-          </button>
-        </div>
-
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          aria-label="Close"
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Confetti Effect */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 20 }).map((_, index) => (
-          <div
-            key={index}
-            className={`absolute w-2 h-2 bg-gradient-to-br ${getRarityColor(achievement.rarity)} rounded-full animate-ping`}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${1 + Math.random() * 2}s`
-            }}
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
           />
-        ))}
-      </div>
-    </div>
+
+          {/* Confetti */}
+          {showConfetti && (
+            <div className="absolute inset-0 pointer-events-none">
+              {[...Array(50)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                  initial={{
+                    x: Math.random() * window.innerWidth,
+                    y: -10,
+                    rotate: 0,
+                    scale: 0
+                  }}
+                  animate={{
+                    y: window.innerHeight + 10,
+                    rotate: 360,
+                    scale: [0, 1, 0]
+                  }}
+                  transition={{
+                    duration: 3 + Math.random() * 2,
+                    delay: Math.random() * 0.5,
+                    ease: "easeOut"
+                  }}
+                  onAnimationComplete={() => {
+                    if (i === 49) setShowConfetti(false)
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Achievement Card */}
+          <motion.div
+            className="relative bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-gray-200 dark:border-gray-700"
+            initial={{ scale: 0.5, y: 50, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.5, y: 50, opacity: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Achievement Icon */}
+            <motion.div
+              className={`w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r ${getRarityColor(achievement.rarity)} flex items-center justify-center text-4xl shadow-lg ${getRarityGlow(achievement.rarity)}`}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: "spring", damping: 15, stiffness: 200 }}
+            >
+              {achievement.icon}
+            </motion.div>
+
+            {/* Achievement Title */}
+            <motion.h2
+              className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              🎉 Achievement Unlocked!
+            </motion.h2>
+
+            <motion.h3
+              className="text-xl font-semibold text-center text-gray-800 dark:text-gray-200 mb-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              {achievement.name}
+            </motion.h3>
+
+            {/* Achievement Description */}
+            <motion.p
+              className="text-center text-gray-600 dark:text-gray-400 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              {achievement.description}
+            </motion.p>
+
+            {/* Rarity Badge */}
+            <motion.div
+              className="flex items-center justify-center mb-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white bg-gradient-to-r ${getRarityColor(achievement.rarity)}`}>
+                {achievement.rarity.toUpperCase()}
+              </span>
+            </motion.div>
+
+            {/* Points Earned */}
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Points Earned</div>
+              <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                +{achievement.points}
+              </div>
+            </motion.div>
+
+            {/* Celebration Message */}
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Keep up the great work! 🚀
+              </p>
+            </motion.div>
+
+            {/* Floating Particles */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+                  initial={{
+                    x: Math.random() * 300,
+                    y: Math.random() * 400,
+                    opacity: 0
+                  }}
+                  animate={{
+                    y: Math.random() * -100,
+                    opacity: [0, 1, 0]
+                  }}
+                  transition={{
+                    duration: 2 + Math.random() * 2,
+                    delay: Math.random() * 1,
+                    repeat: Infinity,
+                    repeatDelay: Math.random() * 2
+                  }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -239,3 +236,4 @@ export function useAchievementCelebration() {
     closeCelebration
   }
 }
+

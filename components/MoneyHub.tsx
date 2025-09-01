@@ -314,21 +314,21 @@ export function MoneyHub({
                 /* Edit Form */
                 <form onSubmit={handleEditExpense} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Description *
                     </label>
                     <input
                       type="text"
                       value={editForm.description}
                       onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Amount * ({currencySymbol})
                       </label>
                       <input
@@ -337,19 +337,19 @@ export function MoneyHub({
                         min="0"
                         value={editForm.amount}
                         onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Category
                       </label>
                       <select
                         value={editForm.category}
                         onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       >
                         {categories.map(category => (
                           <option key={category.value} value={category.value}>
@@ -361,7 +361,7 @@ export function MoneyHub({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Notes (Optional)
                     </label>
                     <textarea
@@ -369,7 +369,7 @@ export function MoneyHub({
                       onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Add any additional notes..."
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
 
@@ -383,7 +383,7 @@ export function MoneyHub({
                     <button
                       type="button"
                       onClick={cancelEdit}
-                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                      className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                     >
                       Cancel
                     </button>
@@ -395,20 +395,20 @@ export function MoneyHub({
                   <div className="flex items-center space-x-3">
                     <div className="text-2xl">{getCategoryIcon(expense.category)}</div>
                     <div>
-                      <h4 className="font-medium">{expense.description}</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 className="font-medium text-gray-900 dark:text-white">{expense.description}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {getCategoryLabel(expense.category)} • {formatDate(expense.created_at)}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="text-lg font-semibold text-gray-900">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
                       {currencySymbol}{expense.amount.toFixed(2)}
                     </div>
                     <div className="flex space-x-1">
                       <button
                         onClick={() => startEditExpense(expense)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                         title="Edit expense"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,7 +417,7 @@ export function MoneyHub({
                       </button>
                       <button
                         onClick={() => setShowDeleteConfirm(expense.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Delete expense"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,9 +431,9 @@ export function MoneyHub({
             </div>
           ))
         ) : (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <div className="text-4xl mb-4">💰</div>
-            <h3 className="text-lg font-medium mb-2">No expenses yet</h3>
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">No expenses yet</h3>
             <p className="text-sm mb-4">Start by adding your first shared expense</p>
             <button
               onClick={() => setShowAddExpense(true)}
@@ -447,18 +447,18 @@ export function MoneyHub({
 
       {/* Monthly Summary */}
       {expenses && expenses.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Monthly Summary</h4>
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Monthly Summary</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-blue-700">Total Expenses</p>
-              <p className="text-xl font-bold text-blue-900">
+              <p className="text-blue-700 dark:text-blue-300">Total Expenses</p>
+              <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
                 {currencySymbol}{monthlyExpenses.toFixed(2)}
               </p>
             </div>
             <div>
-              <p className="text-blue-700">Number of Expenses</p>
-              <p className="text-xl font-bold text-blue-900">{expenses.length}</p>
+              <p className="text-blue-700 dark:text-blue-300">Number of Expenses</p>
+              <p className="text-xl font-bold text-blue-900 dark:text-blue-100">{expenses.length}</p>
             </div>
           </div>
         </div>
@@ -496,12 +496,12 @@ export function MoneyHub({
 
   const renderAnalyticsTab = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg p-6 shadow-sm border">
-        <h3 className="text-lg font-semibold mb-4">Spending Analytics</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Spending Analytics</h3>
         
         {/* Category Breakdown */}
         <div className="space-y-4">
-          <h4 className="font-medium">Spending by Category</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white">Spending by Category</h4>
           {expenses && expenses.length > 0 ? (
             <div className="space-y-2">
               {categories.map(category => {
@@ -515,16 +515,16 @@ export function MoneyHub({
                   <div key={category.value} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <span>{category.icon}</span>
-                      <span className="text-sm">{category.label}</span>
+                      <span className="text-sm text-gray-900 dark:text-white">{category.label}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
+                      <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div 
                           className="bg-blue-500 h-2 rounded-full"
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
-                      <span className="text-sm font-medium w-16 text-right">
+                      <span className="text-sm font-medium w-16 text-right text-gray-900 dark:text-white">
                         {currencySymbol}{categoryTotal.toFixed(0)}
                       </span>
                     </div>
@@ -533,23 +533,23 @@ export function MoneyHub({
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">No expenses to analyze yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No expenses to analyze yet</p>
           )}
         </div>
 
         {/* Monthly Trends */}
         <div className="mt-6">
-          <h4 className="font-medium mb-2">Monthly Overview</h4>
+          <h4 className="font-medium mb-2 text-gray-900 dark:text-white">Monthly Overview</h4>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-green-50 p-3 rounded-lg">
-              <p className="text-green-700 text-sm">Average per Expense</p>
-              <p className="text-xl font-bold text-green-900">
+            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+              <p className="text-green-700 dark:text-green-300 text-sm">Average per Expense</p>
+              <p className="text-xl font-bold text-green-900 dark:text-green-100">
                 {currencySymbol}{expenses && expenses.length > 0 ? (monthlyExpenses / expenses.length).toFixed(2) : '0.00'}
               </p>
             </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-blue-700 text-sm">Total This Month</p>
-              <p className="text-xl font-bold text-blue-900">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-blue-700 dark:text-blue-300 text-sm">Total This Month</p>
+              <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
                 {currencySymbol}{monthlyExpenses.toFixed(2)}
               </p>
             </div>
@@ -564,18 +564,18 @@ export function MoneyHub({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full border border-gray-200 dark:border-gray-700">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Expense</h3>
-              <p className="text-sm text-gray-500 mb-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Delete Expense</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Are you sure you want to delete this expense? This action cannot be undone.
                 {expenses.find(e => e.id === showDeleteConfirm)?.amount > 100 && (
-                  <span className="block mt-2 text-orange-600 font-medium">
+                  <span className="block mt-2 text-orange-600 dark:text-orange-400 font-medium">
                     ⚠️ This expense is over {currencySymbol}100 and may require partner approval to delete.
                   </span>
                 )}
@@ -589,7 +589,7 @@ export function MoneyHub({
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(null)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                 >
                   Cancel
                 </button>
@@ -600,14 +600,14 @@ export function MoneyHub({
       )}
 
       {/* Header */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h1 className="text-2xl font-bold mb-2">Money Management</h1>
-        <p className="text-gray-600">Track expenses, record contributions, and manage your safety pot</p>
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Money Management</h1>
+        <p className="text-gray-600 dark:text-gray-300">Track expenses, record contributions, and manage your safety pot</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8 px-6">
             {tabs.map((tab) => (
               <button
@@ -615,8 +615,8 @@ export function MoneyHub({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <span className="mr-2">{tab.icon}</span>

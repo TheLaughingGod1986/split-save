@@ -4,6 +4,9 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { AchievementsView } from './AchievementsView'
+import { GoalPrioritizationEngine, GoalPriority } from '@/lib/goal-prioritization'
+import { GoalRecommendations } from './GoalRecommendations'
+import { GoalAllocationView } from './GoalAllocationView'
 
 interface GoalsHubProps {
   goals: any[]
@@ -38,7 +41,7 @@ export function GoalsHub({
   onAddGoal,
   onUpdateGoal
 }: GoalsHubProps) {
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'achievements'>('active')
+  const [activeTab, setActiveTab] = useState<'active' | 'prioritization' | 'completed' | 'achievements'>('active')
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<{
@@ -54,8 +57,15 @@ export function GoalsHub({
     targetAmount: '',
     targetDate: '',
     category: 'vacation',
-    description: ''
+    description: '',
+    priority: GoalPriority.MEDIUM
   })
+
+  // Prioritization state
+  const [showPrioritization, setShowPrioritization] = useState(false)
+  const [prioritizationEngine, setPrioritizationEngine] = useState<GoalPrioritizationEngine | null>(null)
+  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [allocations, setAllocations] = useState<any[]>([])
 
   const categories = [
     { value: 'vacation', label: 'Vacation', icon: '🏖️', color: 'blue' },
@@ -93,6 +103,22 @@ export function GoalsHub({
     return totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0
   }, [goals])
 
+  // Initialize prioritization engine
+  useEffect(() => {
+    if (goals && profile) {
+      const monthlyIncome = profile.monthly_income || 0
+      const engine = new GoalPrioritizationEngine(goals, monthlyIncome)
+      setPrioritizationEngine(engine)
+      
+      // Calculate recommendations and allocations
+      const recs = engine.generateRecommendations()
+      const allocs = engine.calculateOptimalAllocations()
+      
+      setRecommendations(recs)
+      setAllocations(allocs)
+    }
+  }, [goals, profile])
+
   const handleAddGoal = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -108,7 +134,8 @@ export function GoalsHub({
         current_amount: 0, // Initialize with 0 for new goals
         target_date: goalForm.targetDate,
         category: goalForm.category,
-        description: goalForm.description.trim()
+        description: goalForm.description.trim(),
+        priority: goalForm.priority
       }
 
       await onAddGoal(goal)
@@ -119,7 +146,8 @@ export function GoalsHub({
         targetAmount: '',
         targetDate: '',
         category: 'vacation',
-        description: ''
+        description: '',
+        priority: GoalPriority.MEDIUM
       })
       setShowAddGoal(false)
       
@@ -170,6 +198,65 @@ export function GoalsHub({
     setEditForm({})
   }
 
+  const handleApplyRecommendation = async (goalId: string, type: string, value: any) => {
+    try {
+      const goal = goals.find(g => g.id === goalId)
+      if (!goal || !onUpdateGoal) return
+
+      let updates: any = {}
+      
+      switch (type) {
+        case 'amount':
+          updates.target_amount = value
+          break
+        case 'deadline':
+          updates.target_date = value
+          break
+        case 'priority':
+          updates.priority = value
+          break
+        case 'contribution':
+          // This would update user's savings rate - handled separately
+          toast.success('Consider updating your monthly savings rate in profile settings')
+          return
+      }
+
+      await onUpdateGoal(goalId, updates)
+      toast.success('Recommendation applied successfully!')
+      
+      // Refresh recommendations
+      if (prioritizationEngine) {
+        const recs = prioritizationEngine.generateRecommendations()
+        setRecommendations(recs)
+      }
+    } catch (error) {
+      console.error('Failed to apply recommendation:', error)
+      toast.error('Failed to apply recommendation')
+    }
+  }
+
+  const handleDismissRecommendation = (goalId: string, type: string) => {
+    setRecommendations(prev => prev.filter(r => !(r.goalId === goalId && r.type === type)))
+  }
+
+  const handleUpdateAllocation = async (goalId: string, allocation: number) => {
+    try {
+      if (!onUpdateGoal) return
+      
+      await onUpdateGoal(goalId, { allocation_percentage: allocation })
+      toast.success('Allocation updated successfully!')
+      
+      // Refresh allocations
+      if (prioritizationEngine) {
+        const allocs = prioritizationEngine.calculateOptimalAllocations()
+        setAllocations(allocs)
+      }
+    } catch (error) {
+      console.error('Failed to update allocation:', error)
+      toast.error('Failed to update allocation')
+    }
+  }
+
   const getContributionPercentage = (current: number, target: number, income: number) => {
     if (!income || income <= 0) return 0
     const monthlyContribution = current / Math.max(1, (new Date().getMonth() + 1))
@@ -180,12 +267,25 @@ export function GoalsHub({
     return Math.min(100, (goal.current_amount / goal.target_amount) * 100)
   }
 
-  const getDaysRemaining = (targetDate: string) => {
+  const getTimeRemaining = (targetDate: string) => {
     const now = new Date()
     const target = new Date(targetDate)
     const diffTime = target.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    
+    if (diffDays < 0) {
+      return { value: Math.abs(diffDays), unit: 'days', text: 'Overdue' }
+    }
+    
+    if (diffDays >= 365) {
+      const months = Math.floor(diffDays / 30.44)
+      return { value: months, unit: 'months', text: `${months} month${months !== 1 ? 's' : ''} left` }
+    } else if (diffDays >= 30) {
+      const weeks = Math.floor(diffDays / 7)
+      return { value: weeks, unit: 'weeks', text: `${weeks} week${weeks !== 1 ? 's' : ''} left` }
+    } else {
+      return { value: diffDays, unit: 'days', text: `${diffDays} day${diffDays !== 1 ? 's' : ''} left` }
+    }
   }
 
   const getCategoryInfo = (category: string) => {
@@ -209,6 +309,7 @@ export function GoalsHub({
 
   const tabs = [
     { id: 'active', label: 'Active Goals', icon: '🎯', count: activeGoals.length },
+    { id: 'prioritization', label: 'Prioritization', icon: '📊', count: recommendations.length },
     { id: 'completed', label: 'Completed', icon: '🏆', count: completedGoals.length },
     { id: 'achievements', label: 'Achievements', icon: '🏅', count: 0 }
   ]
@@ -293,6 +394,23 @@ export function GoalsHub({
             </div>
 
             <div>
+              <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
+                Priority
+              </label>
+              <select
+                value={goalForm.priority}
+                onChange={(e) => setGoalForm(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                className="input"
+              >
+                <option value={GoalPriority.CRITICAL}>🔥 Critical - Must achieve</option>
+                <option value={GoalPriority.HIGH}>⭐ High - Very important</option>
+                <option value={GoalPriority.MEDIUM}>📊 Medium - Important</option>
+                <option value={GoalPriority.LOW}>💭 Low - Nice to have</option>
+                <option value={GoalPriority.OPTIONAL}>🤔 Optional - Future consideration</option>
+              </select>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description (Optional)
               </label>
@@ -331,7 +449,7 @@ export function GoalsHub({
             const categoryInfo = getCategoryInfo(goal.category)
             const progressPercentage = getProgressPercentage(goal)
             const progressColor = getProgressColor(progressPercentage)
-            const daysRemaining = getDaysRemaining(goal.target_date)
+            const timeRemaining = getTimeRemaining(goal.target_date)
             
             return (
               <div key={goal.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -358,21 +476,21 @@ export function GoalsHub({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Goal Name</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Goal Name</label>
                         <input
                           type="text"
                           value={editForm.name}
                           onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                         <select
                           value={editForm.category}
                           onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         >
                           {categories.map(category => (
                             <option key={category.value} value={category.value}>
@@ -383,74 +501,74 @@ export function GoalsHub({
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Target Amount ({currencySymbol})</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Amount ({currencySymbol})</label>
                         <input
                           type="number"
                           step="0.01"
                           value={editForm.targetAmount}
                           onChange={(e) => setEditForm(prev => ({ ...prev, targetAmount: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Current Amount ({currencySymbol})</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Amount ({currencySymbol})</label>
                         <input
                           type="number"
                           step="0.01"
                           value={editForm.currentAmount}
                           onChange={(e) => setEditForm(prev => ({ ...prev, currentAmount: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Date</label>
                         <input
                           type="date"
                           value={editForm.targetDate}
                           onChange={(e) => setEditForm(prev => ({ ...prev, targetDate: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                         <input
                           type="text"
                           value={editForm.description}
                           onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                     </div>
 
                     {/* Real-time Preview */}
                     {editForm.currentAmount && editForm.targetAmount && profile?.income && (
-                      <div className="bg-purple-50 rounded-lg p-4 mt-4">
-                        <h5 className="font-medium text-purple-900 mb-2">📊 Live Preview</h5>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 mt-4">
+                        <h5 className="font-medium text-purple-900 dark:text-purple-100 mb-2">📊 Live Preview</h5>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <span className="text-gray-600">Progress:</span>
-                            <span className="ml-2 font-semibold">
+                            <span className="text-gray-600 dark:text-gray-300">Progress:</span>
+                            <span className="ml-2 font-semibold text-gray-900 dark:text-white">
                               {Math.min(100, (parseFloat(editForm.currentAmount || '0') / parseFloat(editForm.targetAmount || '1')) * 100).toFixed(1)}%
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Monthly Contribution %:</span>
-                            <span className="ml-2 font-semibold text-purple-600">
+                            <span className="text-gray-600 dark:text-gray-300">Monthly Contribution %:</span>
+                            <span className="ml-2 font-semibold text-purple-600 dark:text-purple-400">
                               {getContributionPercentage(parseFloat(editForm.currentAmount || '0'), parseFloat(editForm.targetAmount || '1'), profile.income).toFixed(1)}%
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Remaining:</span>
-                            <span className="ml-2 font-semibold">
+                            <span className="text-gray-600 dark:text-gray-300">Remaining:</span>
+                            <span className="ml-2 font-semibold text-gray-900 dark:text-white">
                               {currencySymbol}{Math.max(0, parseFloat(editForm.targetAmount || '0') - parseFloat(editForm.currentAmount || '0')).toFixed(0)}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Of Income:</span>
-                            <span className="ml-2 font-semibold">
+                            <span className="text-gray-600 dark:text-gray-300">Of Income:</span>
+                            <span className="ml-2 font-semibold text-gray-900 dark:text-white">
                               {currencySymbol}{parseFloat(editForm.currentAmount || '0').toFixed(0)} / {currencySymbol}{parseFloat(editForm.targetAmount || '0').toFixed(0)}
                             </span>
                           </div>
@@ -465,27 +583,37 @@ export function GoalsHub({
                       <div className="flex items-center space-x-3">
                         <div className="text-3xl">{categoryInfo.icon}</div>
                         <div>
-                          <h4 className="text-lg font-semibold">{goal.name}</h4>
-                          <p className="text-sm text-gray-500">{categoryInfo.label}</p>
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{goal.name}</h4>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{categoryInfo.label}</p>
+                            {goal.priority && (
+                              <>
+                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                <span className={`text-xs px-2 py-1 rounded-full ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).bgColor} ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).color}`}>
+                                  {GoalPrioritizationEngine.getPriorityInfo(goal.priority).label}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <div className="text-right">
-                          <p className="text-xl font-bold text-gray-900">
+                          <p className="text-xl font-bold text-gray-900 dark:text-white">
                             {currencySymbol}{goal.current_amount.toFixed(0)} / {currencySymbol}{goal.target_amount.toFixed(0)}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             {progressPercentage.toFixed(0)}% complete
                           </p>
                           {profile?.income && (
-                            <p className="text-xs text-purple-600 font-medium">
+                            <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">
                               {getContributionPercentage(goal.current_amount, goal.target_amount, profile.income).toFixed(1)}% of income
                             </p>
                           )}
                         </div>
                         <button
                           onClick={() => handleEditGoal(goal)}
-                          className="text-gray-500 hover:text-purple-600 transition-colors p-2 rounded-lg hover:bg-purple-50"
+                          className="text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30"
                           title="Edit goal"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,7 +628,7 @@ export function GoalsHub({
                 {/* Progress Bar - Show only in view mode */}
                 {editingGoal !== goal.id && (
                   <div className="mb-4">
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                       <div 
                         className={`h-3 rounded-full transition-all duration-500 ${
                           progressColor === 'green' ? 'bg-green-500' :
@@ -516,11 +644,11 @@ export function GoalsHub({
                 {/* Goal Details - Show only in view mode */}
                 {editingGoal !== goal.id && (
                   <div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
                       <div className="flex items-center space-x-4">
                         <span>📅 {formatDate(goal.target_date)}</span>
-                        <span className={`${daysRemaining < 30 ? 'text-red-600' : daysRemaining < 90 ? 'text-yellow-600' : 'text-green-600'}`}>
-                          {daysRemaining > 0 ? `${daysRemaining} days left` : 'Overdue'}
+                        <span className={`${timeRemaining.value < 30 && timeRemaining.unit === 'days' ? 'text-red-600 dark:text-red-400' : timeRemaining.value < 90 && timeRemaining.unit === 'days' ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}`}>
+                          {timeRemaining.text}
                         </span>
                       </div>
                       <span>
@@ -529,7 +657,7 @@ export function GoalsHub({
                     </div>
 
                     {goal.description && (
-                      <p className="text-sm text-gray-600 mt-3 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         {goal.description}
                       </p>
                     )}
@@ -539,9 +667,9 @@ export function GoalsHub({
             )
           })
         ) : (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <div className="text-4xl mb-4">🎯</div>
-            <h3 className="text-lg font-medium mb-2">No active goals yet</h3>
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">No active goals yet</h3>
             <p className="text-sm mb-4">Create your first savings goal to get started</p>
             <button
               onClick={() => setShowAddGoal(true)}
@@ -557,7 +685,7 @@ export function GoalsHub({
 
   const renderCompletedGoals = () => (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Completed Goals 🎉</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Completed Goals 🎉</h3>
       
       {completedGoals.length > 0 ? (
         <div className="space-y-4">
@@ -565,35 +693,65 @@ export function GoalsHub({
             const categoryInfo = getCategoryInfo(goal.category)
             
             return (
-              <div key={goal.id} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 shadow-sm">
+              <div key={goal.id} className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="text-3xl">{categoryInfo.icon}</div>
                     <div>
-                      <h4 className="text-lg font-semibold text-green-900">{goal.name}</h4>
-                      <p className="text-sm text-green-700">
+                      <h4 className="text-lg font-semibold text-green-900 dark:text-green-100">{goal.name}</h4>
+                      <p className="text-sm text-green-700 dark:text-green-300">
                         Completed on {formatDate(goal.updated_at)}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-green-900">
+                    <p className="text-xl font-bold text-green-900 dark:text-green-100">
                       {currencySymbol}{goal.target_amount.toFixed(0)}
                     </p>
-                    <p className="text-sm text-green-700">🏆 Goal Achieved!</p>
+                    <p className="text-sm text-green-700 dark:text-green-300">🏆 Goal Achieved!</p>
                   </div>
                 </div>
               </div>
             )
           })}
         </div>
-      ) : (
-        <div className="text-center py-12 text-gray-500">
-          <div className="text-4xl mb-4">🏆</div>
-          <h3 className="text-lg font-medium mb-2">No completed goals yet</h3>
-          <p className="text-sm">Complete your first goal to see it here!</p>
+              ) : (
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-4xl mb-4">🏆</div>
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">No completed goals yet</h3>
+            <p className="text-sm">Complete your first goal to see it here!</p>
+          </div>
+        )}
+    </div>
+  )
+
+  const renderPrioritization = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Goal Prioritization</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Smart recommendations to optimize your savings strategy
+        </p>
+      </div>
+
+      {/* Recommendations */}
+      {recommendations.length > 0 && (
+        <div className="mb-8">
+          <GoalRecommendations
+            recommendations={recommendations}
+            goals={goals}
+            onApplyRecommendation={handleApplyRecommendation}
+            onDismissRecommendation={handleDismissRecommendation}
+          />
         </div>
       )}
+
+      {/* Allocations */}
+      <GoalAllocationView
+        allocations={allocations}
+        goals={goals}
+        onUpdateAllocation={handleUpdateAllocation}
+      />
     </div>
   )
 
@@ -630,8 +788,8 @@ export function GoalsHub({
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8 px-6">
             {tabs.map((tab) => (
               <button
@@ -639,15 +797,15 @@ export function GoalsHub({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                   activeTab === tab.id
-                    ? 'border-purple-500 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    activeTab === tab.id ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600'
+                    activeTab === tab.id ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }`}>
                     {tab.count}
                   </span>
@@ -660,6 +818,7 @@ export function GoalsHub({
         {/* Tab Content */}
         <div className="p-6">
           {activeTab === 'active' && renderActiveGoals()}
+          {activeTab === 'prioritization' && renderPrioritization()}
           {activeTab === 'completed' && renderCompletedGoals()}
           {activeTab === 'achievements' && renderAchievements()}
         </div>

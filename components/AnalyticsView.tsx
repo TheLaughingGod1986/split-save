@@ -262,53 +262,67 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
       <div className="card space-card">
         <h2 className="text-heading-2 text-gray-900 dark:text-white space-card">📈 Monthly Trends</h2>
         
-        <div className="space-y-6">
-          {monthlyData.map((month, index) => (
-            <div key={month.month} className="border-b border-gray-200 dark:border-gray-600 pb-4 last:border-b-0">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{month.month}</h3>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Salary: {currencySymbol}{month.actualSalary.toLocaleString()}
-                  {month.extraIncome > 0 && (
-                    <span className="ml-2 text-green-600 dark:text-green-400">
-                      (+{currencySymbol}{month.extraIncome})
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                    {currencySymbol}{month.sharedExpensesContributed.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Expenses</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                    {currencySymbol}{month.goal1Saved.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Goal 1</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                    {currencySymbol}{month.goal2Saved.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Goal 2</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                    {currencySymbol}{month.safetyPotSaved.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Safety</div>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b-2 border-gray-200 dark:border-gray-600">
+                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Month</th>
+                <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white">Salary</th>
+                <th className="text-center py-3 px-4 font-semibold text-blue-600 dark:text-blue-400">Expenses</th>
+                <th className="text-center py-3 px-4 font-semibold text-green-600 dark:text-green-400">Goal 1</th>
+                <th className="text-center py-3 px-4 font-semibold text-green-600 dark:text-green-400">Goal 2</th>
+                <th className="text-center py-3 px-4 font-semibold text-purple-600 dark:text-purple-400">Safety</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyData.map((month, index) => (
+                <tr key={month.month} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <td className="py-4 px-4 font-medium text-gray-900 dark:text-white">
+                    {month.month}
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-gray-900 dark:text-white font-medium">
+                      {currencySymbol}{month.actualSalary.toLocaleString()}
+                    </div>
+                    {month.extraIncome > 0 && (
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        +{currencySymbol}{month.extraIncome}
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {currencySymbol}{month.sharedExpensesContributed.toLocaleString()}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                      {currencySymbol}{month.goal1Saved.toLocaleString()}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                      {currencySymbol}{month.goal2Saved.toLocaleString()}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      {currencySymbol}{month.safetyPotSaved.toLocaleString()}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+        
+        {monthlyData.length === 0 && (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-4xl mb-4">📊</div>
+            <p className="text-lg font-medium mb-2">No monthly data available</p>
+            <p className="text-sm">Start tracking your finances to see trends here</p>
+          </div>
+        )}
       </div>
 
       {/* Partner Comparison */}

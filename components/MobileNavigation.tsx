@@ -47,6 +47,12 @@ export function MobileNavigation({
       description: 'Savings & Achievements'
     },
     {
+      id: 'gamification',
+      label: 'Rewards',
+      icon: '🏆',
+      description: 'Achievements & Streaks'
+    },
+    {
       id: 'partner',
       label: 'Partner',
       icon: '🤝',

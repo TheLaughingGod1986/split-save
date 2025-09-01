@@ -14,10 +14,44 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'SplitSave - Smart Financial Management & Savings Goals',
-  description: 'SplitSave helps you manage shared expenses, track savings goals, and build financial security with AI-powered insights and gamified progress tracking.',
-  keywords: 'financial management, savings goals, expense tracking, budget planning, AI insights, financial security, money management app',
-  authors: [{ name: 'SplitSave Team' }],
+  title: {
+    default: 'SplitSave - Smart Financial Management & Savings Goals for Couples',
+    template: '%s | SplitSave'
+  },
+  description: 'SplitSave helps couples manage shared expenses fairly, track savings goals together, and build financial harmony. Proportional splitting, real-time sync, and gamified progress tracking.',
+  keywords: [
+    'financial management',
+    'expense splitting',
+    'couple finance',
+    'shared expenses',
+    'savings goals',
+    'budget planning',
+    'proportional splitting',
+    'money management app',
+    'couple budgeting',
+    'joint finances',
+    'expense tracker',
+    'savings tracker',
+    'financial transparency',
+    'relationship finance',
+    'fair expense splitting',
+    'income-based splitting',
+    'financial harmony',
+    'couple money app',
+    'shared budgeting',
+    'financial goals',
+    'expense calculator',
+    'savings calculator',
+    'financial planning',
+    'money management',
+    'budget app',
+    'expense app',
+    'savings app',
+    'couple app',
+    'relationship app',
+    'financial app'
+  ].join(', '),
+  authors: [{ name: 'SplitSave Team', url: 'https://splitsave.app' }],
   creator: 'SplitSave Team',
   publisher: 'SplitSave',
   formatDetection: {
@@ -30,8 +64,8 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'SplitSave - Smart Financial Management & Savings Goals',
-    description: 'SplitSave helps you manage shared expenses, track savings goals, and build financial security with AI-powered insights and gamified progress tracking.',
+    title: 'SplitSave - Smart Financial Management & Savings Goals for Couples',
+    description: 'SplitSave helps couples manage shared expenses fairly, track savings goals together, and build financial harmony. Proportional splitting, real-time sync, and gamified progress tracking.',
     url: 'https://splitsave.app',
     siteName: 'SplitSave',
     images: [
@@ -39,18 +73,27 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'SplitSave - Financial Management App',
+        alt: 'SplitSave - Financial Management App for Couples',
+        type: 'image/png',
       },
+      {
+        url: '/og-image-mobile.png',
+        width: 600,
+        height: 315,
+        alt: 'SplitSave - Financial Management App for Couples',
+        type: 'image/png',
+      }
     ],
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SplitSave - Smart Financial Management & Savings Goals',
-    description: 'SplitSave helps you manage shared expenses, track savings goals, and build financial security with AI-powered insights and gamified progress tracking.',
+    title: 'SplitSave - Smart Financial Management & Savings Goals for Couples',
+    description: 'SplitSave helps couples manage shared expenses fairly, track savings goals together, and build financial harmony.',
     images: ['/og-image.png'],
     creator: '@splitsave',
+    site: '@splitsave',
   },
   robots: {
     index: true,
@@ -67,6 +110,22 @@ export const metadata: Metadata = {
     google: 'your-google-verification-code',
     yandex: 'your-yandex-verification-code',
     yahoo: 'your-yahoo-verification-code',
+    bing: 'your-bing-verification-code',
+  },
+  category: 'Finance',
+  classification: 'Financial Management Application',
+  other: {
+    'application-name': 'SplitSave',
+    'apple-mobile-web-app-title': 'SplitSave',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'mobile-web-app-capable': 'yes',
+    'msapplication-TileColor': '#7c3aed',
+    'msapplication-config': '/browserconfig.xml',
+    'theme-color': '#7c3aed',
+    'color-scheme': 'light dark',
+    'supported-color-schemes': 'light dark',
+    'viewport-fit': 'cover',
   },
 }
 
@@ -81,101 +140,103 @@ export default function RootLayout({
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://vercel.live" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
         
         {/* Apple Touch Icons */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png" />
+        <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png" />
+        <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png" />
+        <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png" />
+        <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png" />
+        <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png" />
+        <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png" />
+        
+        {/* Favicons */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
         
         {/* Microsoft Tiles */}
         <meta name="msapplication-TileColor" content="#7c3aed" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
+        <meta name="msapplication-TileImage" content="/mstile-144x144.png" />
         
         {/* Theme Color */}
         <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)" />
         
-        {/* Viewport for mobile optimization */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover, user-scalable=yes" />
+        {/* Additional SEO Meta Tags */}
+        <meta name="author" content="SplitSave Team" />
+        <meta name="copyright" content="SplitSave" />
+        <meta name="language" content="English" />
+        <meta name="coverage" content="Worldwide" />
+        <meta name="distribution" content="Global" />
+        <meta name="rating" content="General" />
+        <meta name="revisit-after" content="7 days" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         
-        {/* Mobile optimization */}
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="SplitSave" />
+        {/* Social Media Meta Tags */}
+        <meta property="og:site_name" content="SplitSave" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:locale:alternate" content="en_GB" />
+        <meta property="og:locale:alternate" content="en_CA" />
+        <meta property="og:locale:alternate" content="en_AU" />
         
-        {/* Security headers */}
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@splitsave" />
+        <meta name="twitter:creator" content="@splitsave" />
+        <meta name="twitter:app:country" content="US" />
+        <meta name="twitter:app:name:iphone" content="SplitSave" />
+        <meta name="twitter:app:name:ipad" content="SplitSave" />
+        <meta name="twitter:app:name:googleplay" content="SplitSave" />
+        
+        {/* Additional Performance Optimizations */}
+        <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/api/health" as="fetch" crossOrigin="anonymous" />
+        
+        {/* Security Headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
-        <meta httpEquiv="Referrer-Policy" content="origin-when-cross-origin" />
+        <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
         
-        {/* Performance optimization */}
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-        
-        {/* Structured Data for SEO */}
+        {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "WebApplication",
+              "@type": "WebSite",
               "name": "SplitSave",
-              "description": "Smart financial management for couples with expense splitting, goal tracking, and financial transparency.",
-              "url": "https://www.splitsave.community",
-              "applicationCategory": "FinanceApplication",
-              "operatingSystem": "Web Browser",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
-              },
-              "author": {
-                "@type": "Organization",
-                "name": "SplitSave"
-              },
-              "screenshot": "https://www.splitsave.community/og-image.png",
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "ratingCount": "150"
+              "url": "https://splitsave.app",
+              "description": "Smart financial management app for couples to split expenses fairly and track savings goals together.",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://splitsave.app/search?q={search_term_string}",
+                "query-input": "required name=search_term_string"
               }
             })
           }}
         />
       </head>
       <body className="antialiased">
-        {/* Service Worker Registration */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').then(registration => {
-                    console.log('SW registered: ', registration);
-                  }).catch(registrationError => {
-                    console.log('SW registration failed: ', registrationError);
-                  });
-                });
-              }
-            `,
-          }}
-        />
-        
-        <ThemeProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <ThemeProvider>
             {children}
-          </AuthProvider>
-        </ThemeProvider>
-        
-        {/* Vercel Analytics */}
-        <Analytics />
-        <SpeedInsights />
+            <Analytics />
+            <SpeedInsights />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

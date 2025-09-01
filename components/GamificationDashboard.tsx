@@ -1,356 +1,332 @@
-import React, { useState } from 'react'
-import { AchievementSystem } from './AchievementSystem'
-import { StreakTracker } from './StreakTracker'
+'use client'
 
-type GamificationTab = 'overview' | 'achievements' | 'streaks' | 'rewards'
+import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { StreakTracker } from './StreakTracker'
+import { AchievementSystem } from './AchievementSystem'
+import { AchievementCelebration } from './AchievementCelebration'
+import { apiClient } from '@/lib/api-client'
+import { toast } from '@/lib/toast'
+import { Achievement } from '@/lib/achievement-utils'
+
+interface GamificationStats {
+  totalPoints: number
+  level: number
+  levelProgress: number
+  achievementsUnlocked: number
+  totalAchievements: number
+  currentStreak: number
+  longestStreak: number
+  totalContributions: number
+  averageContribution: number
+}
 
 export function GamificationDashboard() {
-  const [activeTab, setActiveTab] = useState<GamificationTab>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'streaks' | 'achievements'>('overview')
+  const [stats, setStats] = useState<GamificationStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [celebratingAchievement, setCelebratingAchievement] = useState<Achievement | null>(null)
+  const [showCelebration, setShowCelebration] = useState(false)
 
-  // Mock user stats for overview
-  const userStats = {
-    totalPoints: 285,
-    achievementsUnlocked: 8,
-    totalAchievements: 25,
-    currentStreak: 4,
-    longestStreak: 8,
-    totalContributions: 20,
-    level: 3,
-    levelProgress: 75,
-    nextLevelPoints: 100
+  useEffect(() => {
+    loadGamificationStats()
+  }, [])
+
+  const loadGamificationStats = async () => {
+    try {
+      setLoading(true)
+      const [achievementsResponse, streaksResponse] = await Promise.all([
+        apiClient.get('/achievements'),
+        apiClient.get('/streaks')
+      ])
+
+      // Calculate stats from responses
+      const achievements = achievementsResponse.achievements || []
+      const streakData = streaksResponse
+
+      const unlockedAchievements = achievements.filter((a: Achievement) => a.unlocked)
+      const totalPoints = unlockedAchievements.reduce((sum: number, a: Achievement) => sum + a.points, 0)
+      const level = Math.floor(totalPoints / 100) + 1
+      const levelProgress = (totalPoints % 100) / 100
+
+      setStats({
+        totalPoints,
+        level,
+        levelProgress,
+        achievementsUnlocked: unlockedAchievements.length,
+        totalAchievements: achievements.length,
+        currentStreak: streakData.currentStreak || 0,
+        longestStreak: streakData.longestStreak || 0,
+        totalContributions: streakData.totalContributions || 0,
+        averageContribution: streakData.averageContributionAmount || 0
+      })
+
+      // Check for new achievements to celebrate
+      if (achievementsResponse.newAchievements && achievementsResponse.newAchievements.length > 0) {
+        const newAchievement = achievementsResponse.newAchievements[0]
+        setCelebratingAchievement(newAchievement)
+        setShowCelebration(true)
+      }
+    } catch (error) {
+      console.error('Error loading gamification stats:', error)
+      toast.error('Failed to load gamification data')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getLevelTitle = (level: number) => {
-    if (level <= 2) return 'Savings Novice'
-    if (level <= 5) return 'Savings Apprentice'
-    if (level <= 8) return 'Savings Expert'
-    if (level <= 12) return 'Savings Master'
-    return 'Savings Legend'
+    if (level >= 20) return 'Legendary Saver'
+    if (level >= 15) return 'Epic Financier'
+    if (level >= 10) return 'Rare Budget Master'
+    if (level >= 5) return 'Common Saver'
+    return 'Novice Saver'
   }
 
   const getLevelColor = (level: number) => {
-    if (level <= 2) return 'text-blue-600 dark:text-blue-400'
-    if (level <= 5) return 'text-green-600 dark:text-green-400'
-    if (level <= 8) return 'text-purple-600 dark:text-purple-400'
-    if (level <= 12) return 'text-orange-600 dark:text-orange-400'
-    return 'text-red-600 dark:text-red-400'
+    if (level >= 20) return 'from-yellow-400 to-orange-500'
+    if (level >= 15) return 'from-purple-500 to-pink-500'
+    if (level >= 10) return 'from-blue-500 to-cyan-500'
+    if (level >= 5) return 'from-green-500 to-emerald-500'
+    return 'from-gray-500 to-blue-500'
   }
 
-  const getLevelIcon = (level: number) => {
-    if (level <= 2) return '🌱'
-    if (level <= 5) return '🌿'
-    if (level <= 8) return '🌳'
-    if (level <= 12) return '🏔️'
-    return '👑'
+  const handleCelebrationClose = () => {
+    setShowCelebration(false)
+    setCelebratingAchievement(null)
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white">
+          <div className="flex items-center space-x-3 mb-2">
+            <span className="text-3xl">🎮</span>
+            <div>
+              <h1 className="text-2xl font-bold">Gamification Dashboard</h1>
+              <p className="text-purple-100">Loading your progress...</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-lg p-6 text-white">
-        <div className="flex items-center space-x-3 space-small">
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white">
+        <div className="flex items-center space-x-3 mb-4">
           <span className="text-3xl">🎮</span>
           <div>
-            <h1 className="text-heading-2">Gamification Center</h1>
-            <p className="text-body text-purple-100">Level up your savings journey with fun challenges and rewards!</p>
+            <h1 className="text-2xl font-bold">Gamification Dashboard</h1>
+            <p className="text-purple-100">Track your progress and celebrate achievements!</p>
           </div>
         </div>
+
+        {/* Level Progress */}
+        {stats && (
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="text-lg font-semibold">Level {stats.level}</div>
+                <div className="text-sm text-purple-100">{getLevelTitle(stats.level)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold">{stats.totalPoints}</div>
+                <div className="text-sm text-purple-100">Total Points</div>
+              </div>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+              <motion.div
+                className={`h-2 rounded-full bg-gradient-to-r ${getLevelColor(stats.level)}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${stats.levelProgress * 100}%` }}
+                transition={{ duration: 1, delay: 0.5 }}
+              />
+            </div>
+            <div className="text-xs text-purple-100">
+              {Math.round(stats.levelProgress * 100)}% to Level {stats.level + 1}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-        {[
-          { id: 'overview', label: 'Overview', icon: '📊' },
-          { id: 'achievements', label: 'Achievements', icon: '🏆' },
-          { id: 'streaks', label: 'Streaks', icon: '🔥' },
-          { id: 'rewards', label: 'Rewards', icon: '🎁' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as GamificationTab)}
-            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all ${
-              activeTab === tab.id
-                ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
-          >
-            <span>{tab.icon}</span>
-            <span className="font-medium">{tab.label}</span>
-          </button>
-        ))}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex space-x-1">
+          {[
+            { id: 'overview', label: 'Overview', icon: '📊' },
+            { id: 'streaks', label: 'Streaks', icon: '🔥' },
+            { id: 'achievements', label: 'Achievements', icon: '🏆' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium transition-all ${
+                activeTab === tab.id
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Content Tabs */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Level & Progress */}
-          <div className="card space-card">
-            <h2 className="text-heading-2 text-gray-900 dark:text-white space-item">
-              🎯 Your Level & Progress
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Current Level */}
-              <div className="text-center">
-                <div className={`text-6xl mb-2 ${getLevelColor(userStats.level)}`}>
-                  {getLevelIcon(userStats.level)}
+      {/* Tab Content */}
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        {activeTab === 'overview' && stats && (
+          <div className="space-y-4">
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <motion.div
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                <div className="text-2xl mb-1">🏆</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{stats.achievementsUnlocked}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Achievements</div>
+              </motion.div>
+
+              <motion.div
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="text-2xl mb-1">🔥</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{stats.currentStreak}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Current Streak</div>
+              </motion.div>
+
+              <motion.div
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="text-2xl mb-1">💰</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{stats.totalContributions}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Contributions</div>
+              </motion.div>
+
+              <motion.div
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="text-2xl mb-1">📈</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                  £{Math.round(stats.averageContribution)}
                 </div>
-                <div className={`text-3xl font-bold ${getLevelColor(userStats.level)} mb-2`}>
-                  Level {userStats.level}
-                </div>
-                <div className="text-lg text-gray-600 dark:text-gray-400 mb-2">
-                  {getLevelTitle(userStats.level)}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-500">
-                  {userStats.totalPoints} total points
-                </div>
-              </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Avg. Contribution</div>
+              </motion.div>
+            </div>
+
+            {/* Progress Summary */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Progress Summary</h3>
               
-              {/* Level Progress */}
               <div className="space-y-4">
+                {/* Achievement Progress */}
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Progress to Next Level</span>
-                    <span className="font-medium">{userStats.levelProgress}%</span>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">Achievements</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {stats.achievementsUnlocked} / {stats.totalAchievements}
+                    </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                    <div 
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${userStats.levelProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {userStats.nextLevelPoints - userStats.totalPoints} more points to reach Level {userStats.level + 1}
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <motion.div
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(stats.achievementsUnlocked / stats.totalAchievements) * 100}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                {userStats.totalPoints}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Points</div>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
-                {userStats.achievementsUnlocked}/{userStats.totalAchievements}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Achievements</div>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-                {userStats.currentStreak}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Month Streak</div>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                {userStats.totalContributions}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Contributions</div>
-            </div>
-          </div>
+                {/* Streak Progress */}
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">Streak Progress</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {stats.currentStreak} / {Math.max(stats.longestStreak, 1)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <motion.div
+                      className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(stats.currentStreak / Math.max(stats.longestStreak, 1)) * 100}%` }}
+                      transition={{ duration: 1, delay: 0.6 }}
+                    />
+                  </div>
+                </div>
 
-          {/* Recent Achievements */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              🎉 Recent Achievements
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🔥</span>
-                  <div>
-                    <div className="font-medium text-green-800 dark:text-green-200">Getting Started</div>
-                    <div className="text-sm text-green-700 dark:text-green-300">3-month streak</div>
+                {/* Level Progress */}
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">Level Progress</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {Math.round(stats.levelProgress * 100)}% to Level {stats.level + 1}
+                    </span>
                   </div>
-                </div>
-              </div>
-              
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">💰</span>
-                  <div>
-                    <div className="font-medium text-blue-800 dark:text-blue-200">First Steps</div>
-                    <div className="text-sm text-blue-700 dark:text-blue-300">£100 saved</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🎯</span>
-                  <div>
-                    <div className="font-medium text-purple-800 dark:text-purple-200">Goal Setter</div>
-                    <div className="text-sm text-purple-700 dark:text-purple-300">First goal completed</div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <motion.div
+                      className={`h-2 rounded-full bg-gradient-to-r ${getLevelColor(stats.level)}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${stats.levelProgress * 100}%` }}
+                      transition={{ duration: 1, delay: 0.7 }}
+                    />
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              ⚡ Quick Actions
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                onClick={() => setActiveTab('achievements')}
-                className="p-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg text-white text-left hover:from-blue-600 hover:to-indigo-600 transition-all"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🏆</span>
-                  <div>
-                    <div className="font-medium">View All Achievements</div>
-                    <div className="text-sm opacity-90">See what you can unlock next</div>
-                  </div>
-                </div>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('streaks')}
-                className="p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg text-white text-left hover:from-orange-600 hover:to-red-600 transition-all"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🔥</span>
-                  <div>
-                    <div className="font-medium">Track Your Streaks</div>
-                    <div className="text-sm opacity-90">Maintain your momentum</div>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Motivation */}
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 text-center">
-            <span className="text-4xl mb-4 block">💪</span>
-            <h3 className="text-lg font-semibold text-green-900 dark:text-green-200 mb-2">
-              Keep Up the Great Work!
-            </h3>
-            <p className="text-green-700 dark:text-green-300">
-              You're making excellent progress on your financial goals. Every contribution counts towards your next achievement!
-            </p>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'achievements' && (
-        <AchievementSystem />
-      )}
-
-      {activeTab === 'streaks' && (
-        <StreakTracker />
-      )}
-
-      {activeTab === 'rewards' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              🎁 Rewards & Benefits
-            </h2>
-            
-            <div className="space-y-6">
-              {/* Points System */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h3 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
-                  💎 Points System
-                </h3>
-                <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
-                  Earn points for every achievement and milestone. Points unlock special features and rewards.
+            {/* Motivation Card */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🚀</div>
+                <h3 className="text-lg font-semibold mb-2">Keep Up the Great Work!</h3>
+                <p className="text-green-100">
+                  You're making excellent progress on your financial journey. 
+                  {stats.currentStreak > 0 && ` Your ${stats.currentStreak}-month streak is impressive!`}
                 </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex justify-between">
-                    <span>Bronze Achievement:</span>
-                    <span className="font-medium">10-25 pts</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Silver Achievement:</span>
-                    <span className="font-medium">30-60 pts</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Gold Achievement:</span>
-                    <span className="font-medium">75-125 pts</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Platinum Achievement:</span>
-                    <span className="font-medium">150-200 pts</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Level Benefits */}
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <h3 className="font-medium text-green-900 dark:text-green-200 mb-2">
-                  🌟 Level Benefits
-                </h3>
-                <p className="text-green-700 dark:text-green-300 text-sm mb-3">
-                  Unlock new features and capabilities as you level up.
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-600 dark:text-green-400">✓</span>
-                    <span>Level 1-2: Basic features</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-600 dark:text-green-400">✓</span>
-                    <span>Level 3-5: Advanced analytics</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-600 dark:text-green-400">✓</span>
-                    <span>Level 6-8: AI insights</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-600 dark:text-green-400">✓</span>
-                    <span>Level 9+: Premium features</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Coming Soon */}
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                <h3 className="font-medium text-purple-900 dark:text-purple-200 mb-2">
-                  🚀 Coming Soon
-                </h3>
-                <p className="text-purple-700 dark:text-purple-300 text-sm mb-3">
-                  We're working on exciting new rewards and features.
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-purple-600 dark:text-purple-400">🔮</span>
-                    <span>Exclusive badges and themes</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-purple-600 dark:text-purple-400">🎯</span>
-                    <span>Partner challenges and competitions</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-purple-600 dark:text-purple-400">🏆</span>
-                    <span>Leaderboards and rankings</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-purple-600 dark:text-purple-400">🎁</span>
-                    <span>Real-world rewards and partnerships</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {activeTab === 'streaks' && (
+          <StreakTracker />
+        )}
+
+        {activeTab === 'achievements' && (
+          <AchievementSystem />
+        )}
+      </motion.div>
+
+      {/* Achievement Celebration Modal */}
+      <AchievementCelebration
+        achievement={celebratingAchievement}
+        isVisible={showCelebration}
+        onClose={handleCelebrationClose}
+      />
     </div>
   )
 }

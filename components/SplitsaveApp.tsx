@@ -6,7 +6,12 @@ import { useTheme } from 'next-themes'
 import { toast } from '@/lib/toast'
 import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
 import { useAnalytics, trackPageView, trackNavigation } from '@/lib/analytics'
+import { notificationSystem } from '@/lib/notification-system'
+import { paydayReminderSystem, setupPaydayReminders, checkMissedContributions } from '@/lib/payday-reminder-system'
 import { DarkModeToggle } from './DesignSystem'
+// import { NotificationBell } from './NotificationBell' // Removed - using NotificationManager instead
+import { NotificationTester } from './NotificationTester'
+import { DashboardWidgets } from './DashboardWidgets'
 import dynamic from 'next/dynamic'
 
 // Lazy load heavy components for better performance
@@ -89,6 +94,7 @@ export function SplitsaveApp() {
       'dashboard': 'overview',
       'money': 'money',
       'goals': 'goals',
+      'gamification': 'gamification',
       'partners': 'partner',
       'analytics': 'analytics',
       'profile': 'account',
@@ -424,6 +430,12 @@ export function SplitsaveApp() {
       if (partnershipsData.partnerships && partnershipsData.partnerships.length > 0) {
         await loadPartnerProfile(partnershipsData.partnerships[0])
       }
+      
+      // Setup payday reminders and check for missed contributions
+      if (profileData) {
+        await setupPaydayReminders(user.id, profileData, partnershipsData.partnerships || [])
+        await checkMissedContributions(user.id, profileData, partnershipsData.partnerships || [], monthlyProgressData)
+      }
     } catch (err) {
       setError('Failed to load data')
       toast.error('Failed to load data')
@@ -461,6 +473,11 @@ export function SplitsaveApp() {
     if (user) {
       console.log('🔄 User authenticated, calling loadData...')
       loadData()
+      
+      // Initialize notification and payday reminder systems
+      notificationSystem.initialize(user.id)
+      paydayReminderSystem.initialize()
+      
       // Track authenticated page view
       trackPageView('main_app', true)
     } else {
@@ -472,7 +489,7 @@ export function SplitsaveApp() {
     }
   }, [user?.id]) // Only depend on user ID, not the entire loadData function
 
-  // Online/offline and mobile detection
+  // Online/offline, mobile detection, and PWA install setup
   useEffect(() => {
     // Check if online/offline
     const handleOnline = () => setIsOnline(true)
@@ -483,9 +500,24 @@ export function SplitsaveApp() {
       setIsMobile(window.innerWidth <= 768)
     }
     
+    // PWA install prompt setup
+    const handleBeforeInstallPrompt = (e: any) => {
+      console.log('PWA: Before install prompt captured')
+      e.preventDefault()
+      ;(window as any).deferredPrompt = e
+    }
+    
+    // PWA install success
+    const handleAppInstalled = () => {
+      console.log('PWA: App was installed')
+      ;(window as any).deferredPrompt = null
+    }
+    
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
     window.addEventListener('resize', checkMobile)
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('appinstalled', handleAppInstalled)
     
     // Initial check
     setIsOnline(navigator.onLine)
@@ -495,6 +527,8 @@ export function SplitsaveApp() {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleAppInstalled)
     }
   }, [])
 
@@ -512,6 +546,25 @@ export function SplitsaveApp() {
         expenseData.amount,
         result.requiresApproval || false
       )
+
+      // Trigger partner activity notification
+      if (partnerships.length > 0) {
+        const partnership = partnerships[0]
+        const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
+        
+        // Dispatch partner activity event
+        document.dispatchEvent(new CustomEvent('partnerActivity', {
+          detail: {
+            partnerId,
+            partnerName: 'Your Partner', // In real app, get from partnership data
+            activityType: 'expense_added',
+            amount: expenseData.amount,
+            currency: profile?.currency || 'GBP',
+            entityName: expenseData.description,
+            partnershipId: partnership.id
+          }
+        }))
+      }
       
       if (result.requiresApproval) {
         const amount = expenseData.amount
@@ -524,6 +577,21 @@ export function SplitsaveApp() {
         
         // Show success message for the approval request
         toast.success('Approval request sent to your partner! They will review and approve/decline your expense.', { duration: 6000 })
+        
+        // Trigger approval request notification
+        if (partnerships.length > 0) {
+          const partnership = partnerships[0]
+          const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
+          
+          notificationSystem.createApprovalRequest(
+            partnerId,
+            partnership.id,
+            'expense',
+            expenseData.description,
+            expenseData.amount,
+            profile?.currency || 'GBP'
+          )
+        }
         
         // Refresh approvals
         console.log('🔄 Refreshing approvals...')
@@ -565,6 +633,24 @@ export function SplitsaveApp() {
         goalData.target_amount || goalData.targetAmount,
         partnerships.length > 0
       )
+
+      // Trigger partner activity notification
+      if (partnerships.length > 0) {
+        const partnership = partnerships[0]
+        const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
+        
+        // Dispatch partner activity event
+        document.dispatchEvent(new CustomEvent('partnerActivity', {
+          detail: {
+            partnerId,
+            partnerName: 'Your Partner', // In real app, get from partnership data
+            activityType: 'goal_created',
+            currency: profile?.currency || 'GBP',
+            entityName: goalData.name,
+            partnershipId: partnership.id
+          }
+        }))
+      }
       
       if (result.requiresApproval) {
         toast.warning('Goal requires partner approval')
@@ -572,6 +658,21 @@ export function SplitsaveApp() {
         
         // Show success message for the approval request
         toast.success('Approval request sent to your partner! They will review and approve/decline your goal.', { duration: 6000 })
+        
+        // Trigger approval request notification
+        if (partnerships.length > 0) {
+          const partnership = partnerships[0]
+          const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id
+          
+          notificationSystem.createApprovalRequest(
+            partnerId,
+            partnership.id,
+            'goal',
+            goalData.name,
+            goalData.target_amount || goalData.targetAmount,
+            profile?.currency || 'GBP'
+          )
+        }
         
         // Refresh approvals
         const approvalsData = await apiClient.get('/approvals')
@@ -707,10 +808,32 @@ export function SplitsaveApp() {
               {/* PWA Install Button */}
               <button
                 onClick={() => {
-                  if ((window as any).deferredPrompt) {
-                    (window as any).deferredPrompt.prompt()
+                  const deferredPrompt = (window as any).deferredPrompt
+                  if (deferredPrompt) {
+                    console.log('PWA: Showing install prompt')
+                    deferredPrompt.prompt()
+                    
+                    // Wait for the user to respond to the prompt
+                    deferredPrompt.userChoice.then((choiceResult: any) => {
+                      if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA: User accepted the install prompt')
+                        toast.success('SplitSave is being installed!')
+                      } else {
+                        console.log('PWA: User dismissed the install prompt')
+                        toast.info('You can install SplitSave later from your browser menu')
+                      }
+                      ;(window as any).deferredPrompt = null
+                    })
                   } else {
-                    alert('PWA install prompt not available. Try refreshing the page or check browser console for details.')
+                    // Check if app is already installed
+                    if (window.matchMedia('(display-mode: standalone)').matches) {
+                      toast.info('SplitSave is already installed as an app!')
+                    } else {
+                      // Show helpful instructions
+                      toast.info('Install SplitSave from your browser menu (⋮ → Install app)', {
+                        duration: 5000
+                      })
+                    }
                   }
                 }}
                 className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -724,10 +847,12 @@ export function SplitsaveApp() {
                 profile={profile}
                 partnerships={partnerships}
                 goals={goals}
+                approvals={approvals}
                 currentView={currentView}
                 onNavigateToView={setCurrentView}
               />
               
+              {/* NotificationBell removed - using NotificationManager instead */}
               <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {user?.email}</span>
               <button
                 onClick={signOut}
@@ -751,12 +876,32 @@ export function SplitsaveApp() {
         </div>
       </div>
 
+      {/* Notification Tester (Development Only) */}
+      <NotificationTester 
+        userId={user.id}
+        partnershipId={partnerships.length > 0 ? partnerships[0].id : undefined}
+        currency={profile?.currency || 'GBP'}
+      />
+
       {/* Mobile Menu */}
       {showMobileMenu && (
         <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg">
           <div className="px-4 py-2 space-y-2">
             <div className="text-sm text-gray-600 dark:text-gray-300 py-2">
               Welcome, {user?.email}
+            </div>
+            
+            {/* Mobile Notification Bell */}
+            <div className="w-full text-left py-2">
+              <div className="flex items-center">
+                <div className="w-6 h-6 text-gray-600 dark:text-gray-400">🔔</div>
+                <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Notifications</span>
+                {approvals.length > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                    {approvals.length}
+                  </span>
+                )}
+              </div>
             </div>
             
             {/* Mobile Dark Mode Toggle */}
@@ -767,10 +912,32 @@ export function SplitsaveApp() {
             {/* Mobile PWA Install Button */}
             <button
               onClick={() => {
-                if ((window as any).deferredPrompt) {
-                  (window as any).deferredPrompt.prompt()
+                const deferredPrompt = (window as any).deferredPrompt
+                if (deferredPrompt) {
+                  console.log('PWA: Showing install prompt')
+                  deferredPrompt.prompt()
+                  
+                  // Wait for the user to respond to the prompt
+                  deferredPrompt.userChoice.then((choiceResult: any) => {
+                    if (choiceResult.outcome === 'accepted') {
+                      console.log('PWA: User accepted the install prompt')
+                      toast.success('SplitSave is being installed!')
+                    } else {
+                      console.log('PWA: User dismissed the install prompt')
+                      toast.info('You can install SplitSave later from your browser menu')
+                    }
+                    ;(window as any).deferredPrompt = null
+                  })
                 } else {
-                  alert('PWA install prompt not available. Try refreshing the page or check browser console for details.')
+                  // Check if app is already installed
+                  if (window.matchMedia('(display-mode: standalone)').matches) {
+                    toast.info('SplitSave is already installed as an app!')
+                  } else {
+                    // Show helpful instructions
+                    toast.info('Install SplitSave from your browser menu (⋮ → Install app)', {
+                      duration: 5000
+                    })
+                  }
                 }
               }}
               className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2 transition-colors flex items-center"
@@ -876,16 +1043,16 @@ export function SplitsaveApp() {
       {/* Error Display */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4" role="alert">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-4 rounded-xl shadow-sm">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-100 px-4 py-4 rounded-xl shadow-sm">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center mb-2">
-                  <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-5 h-5 bg-red-600 dark:bg-red-500 rounded-full flex items-center justify-center mr-3">
                     <span className="text-white text-xs font-bold">!</span>
                   </div>
-                  <h3 className="text-sm font-medium">Action Required</h3>
+                  <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Action Required</h3>
                 </div>
-                <p className="text-sm mb-3">{error}</p>
+                <p className="text-sm mb-3 text-red-800 dark:text-red-200">{error}</p>
                 {error.includes('Partnership required') && (
                   <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-red-200 dark:border-red-700">
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
@@ -907,7 +1074,7 @@ export function SplitsaveApp() {
               </div>
               <button
                 onClick={() => setError('')}
-                className="ml-4 p-1 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors rounded-lg hover:bg-red-100 dark:hover:bg-red-800/30"
+                className="ml-4 p-1 text-red-600 hover:text-red-800 dark:text-red-300 dark:hover:text-red-100 transition-colors rounded-lg hover:bg-red-100 dark:hover:bg-red-800/30"
                 aria-label="Dismiss error"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1037,18 +1204,6 @@ export function SplitsaveApp() {
             partnerships={partnerships}
             onAddExpense={addExpense}
             currencySymbol={currencySymbol}
-          />
-        )}
-        {currentView === 'goals' && (
-          <GoalsHub
-            goals={goals}
-            partnerships={partnerships}
-            profile={profile}
-            partnerProfile={partnerProfile}
-            user={user}
-            currencySymbol={currencySymbol}
-            onAddGoal={addGoal}
-            onUpdateGoal={updateGoal}
           />
         )}
         {currentView === 'monthly-progress' && (
@@ -1274,6 +1429,16 @@ function DashboardView({
 
   return (
     <div className="space-y-8">
+      {/* Enhanced Dashboard Widgets */}
+      <DashboardWidgets
+        goals={goals || []}
+        expenses={expenses || []}
+        monthlyProgress={null} // This would come from monthly progress data
+        partnerships={partnerships}
+        profile={profile}
+        achievements={[]} // This would come from achievements data
+      />
+      
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -1288,10 +1453,32 @@ function DashboardView({
         {/* PWA Install Button */}
         <button
           onClick={() => {
-            if ((window as any).deferredPrompt) {
-              (window as any).deferredPrompt.prompt()
+            const deferredPrompt = (window as any).deferredPrompt
+            if (deferredPrompt) {
+              console.log('PWA: Showing install prompt')
+              deferredPrompt.prompt()
+              
+              // Wait for the user to respond to the prompt
+              deferredPrompt.userChoice.then((choiceResult: any) => {
+                if (choiceResult.outcome === 'accepted') {
+                  console.log('PWA: User accepted the install prompt')
+                  toast.success('SplitSave is being installed!')
+                } else {
+                  console.log('PWA: User dismissed the install prompt')
+                  toast.info('You can install SplitSave later from your browser menu')
+                }
+                ;(window as any).deferredPrompt = null
+              })
             } else {
-              alert('PWA install prompt not available. Try refreshing the page or check browser console for details.')
+              // Check if app is already installed
+              if (window.matchMedia('(display-mode: standalone)').matches) {
+                toast.info('SplitSave is already installed as an app!')
+              } else {
+                // Show helpful instructions
+                toast.info('Install SplitSave from your browser menu (⋮ → Install app)', {
+                  duration: 5000
+                })
+              }
             }
           }}
           className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:from-purple-700 hover:to-blue-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-3 font-medium"

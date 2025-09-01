@@ -26,8 +26,12 @@ interface Approval {
   amount: number
   description: string
   requester_name: string
+  requester_id: string
   created_at: string
   status: 'pending' | 'approved' | 'declined'
+  category?: string
+  target_date?: string
+  request_data?: any
 }
 
 export function PartnerHub({
@@ -50,6 +54,10 @@ export function PartnerHub({
   const activePartnership = partnerships.find(p => p.status === 'active')
   const pendingApprovals = approvals?.filter(approval => approval.status === 'pending') || []
   const hasPartner = activePartnership && partnerProfile
+
+  // Calculate approval counts
+  const actionRequiredCount = pendingApprovals.filter(approval => approval.requester_id !== user.id).length
+  const pendingMyRequestsCount = pendingApprovals.filter(approval => approval.requester_id === user.id).length
 
   useEffect(() => {
     if (hasPartner) {
@@ -115,9 +123,17 @@ export function PartnerHub({
     }
   }
 
+  const getApprovalTypeLabel = (type: string) => {
+    switch (type) {
+      case 'expense': return 'Expense Request'
+      case 'goal': return 'Savings Goal'
+      default: return 'Request'
+    }
+  }
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '👥' },
-    { id: 'approvals', label: 'Approvals', icon: '⏳', count: pendingApprovals.length },
+    { id: 'approvals', label: 'Approvals', icon: '⏳', count: actionRequiredCount },
     { id: 'activity', label: 'Activity', icon: '📱' },
     { id: 'collaboration', label: 'Collaboration', icon: '💬' }
   ]
@@ -187,8 +203,8 @@ export function PartnerHub({
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-1">⏳</div>
-                <div className="text-lg font-bold text-gray-900 dark:text-white">{pendingApprovals.length}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Pending Approvals</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{actionRequiredCount}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Action Required</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-1">💬</div>
@@ -206,22 +222,44 @@ export function PartnerHub({
           </div>
 
           {/* Pending Actions */}
-          {pendingApprovals.length > 0 && (
+          {actionRequiredCount > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                    Action Required ({actionRequiredCount} approval{actionRequiredCount !== 1 ? 's' : ''})
+                  </h4>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm">
+                    Your partner is waiting for your decision on these requests
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('approvals')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Review Now
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Your Pending Requests */}
+          {pendingMyRequestsCount > 0 && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium text-yellow-900 dark:text-yellow-100">
-                    Action Required ({pendingApprovals.length} pending)
+                    Your Requests ({pendingMyRequestsCount} pending)
                   </h4>
                   <p className="text-yellow-700 dark:text-yellow-300 text-sm">
-                    You have approval requests that need your attention
+                    Waiting for your partner to review your requests
                   </p>
                 </div>
                 <button
                   onClick={() => setActiveTab('approvals')}
                   className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
                 >
-                  Review Now
+                  View Status
                 </button>
               </div>
             </div>
@@ -238,59 +276,158 @@ export function PartnerHub({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pending Approvals</h3>
-        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm px-2 py-1 rounded-full">
-          {pendingApprovals.length} pending
-        </span>
+        <div className="flex items-center space-x-2">
+          {actionRequiredCount > 0 && (
+            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm px-2 py-1 rounded-full">
+              {actionRequiredCount} action required
+            </span>
+          )}
+          {pendingMyRequestsCount > 0 && (
+            <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-sm px-2 py-1 rounded-full">
+              {pendingMyRequestsCount} your requests
+            </span>
+          )}
+        </div>
       </div>
 
       {pendingApprovals.length > 0 ? (
         <div className="space-y-4">
-          {pendingApprovals.map((approval) => (
-            <div key={approval.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl">{getApprovalIcon(approval.type)}</div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{approval.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Requested by {approval.requester_name} • {formatDate(approval.created_at)}
+          {pendingApprovals.map((approval) => {
+            const isRequester = approval.requester_id === user.id
+            const needsMyApproval = !isRequester
+            const approvalStatus = needsMyApproval ? 'Awaiting your approval' : 'Awaiting partner approval'
+            
+            return (
+              <div key={approval.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+                {/* Header with approval status */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl">{getApprovalIcon(approval.type)}</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{approval.title}</h4>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {isRequester ? 'You requested' : `${approval.requester_name} requested`}
+                        </span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {formatDate(approval.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
+                      {currencySymbol}{approval.amount ? approval.amount.toFixed(2) : '0.00'}
                     </p>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      needsMyApproval 
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' 
+                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                    }`}>
+                      {needsMyApproval ? 'Action Required' : 'Pending'}
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-gray-900 dark:text-white">
-                    {currencySymbol}{approval.amount ? approval.amount.toFixed(2) : '0.00'}
-                  </p>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
-                    Pending
-                  </span>
+
+                {/* Approval Status Banner */}
+                <div className={`mb-4 p-3 rounded-lg ${
+                  needsMyApproval 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
+                    : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+                }`}>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-lg ${needsMyApproval ? 'text-blue-600 dark:text-blue-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                      {needsMyApproval ? '⏳' : '👀'}
+                    </span>
+                    <div>
+                      <p className={`text-sm font-medium ${needsMyApproval ? 'text-blue-800 dark:text-blue-200' : 'text-yellow-800 dark:text-yellow-200'}`}>
+                        {approvalStatus}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {needsMyApproval 
+                          ? 'Your partner is waiting for your decision' 
+                          : 'Your partner will review this request'
+                        }
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {approval.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  {approval.description}
-                </p>
-              )}
+                {/* Request Details */}
+                <div className="mb-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                         <div>
+                       <span className="text-gray-500 dark:text-gray-400">Type:</span>
+                       <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                         {getApprovalTypeLabel(approval.type)}
+                       </span>
+                     </div>
+                    {approval.category && (
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white capitalize">
+                          {approval.category}
+                        </span>
+                      </div>
+                    )}
+                    {approval.target_date && (
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">Target Date:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                          {new Date(approval.target_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Requested by:</span>
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                        {approval.requester_name}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => onApprove(approval.id)}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <span>✓</span>
-                  <span>Approve</span>
-                </button>
-                <button
-                  onClick={() => onDecline(approval.id)}
-                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <span>✗</span>
-                  <span>Decline</span>
-                </button>
+                {/* Description */}
+                {approval.description && (
+                  <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Description:</span> {approval.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Action Buttons - Only show if user needs to approve */}
+                {needsMyApproval && (
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => onApprove(approval.id)}
+                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <span>✓</span>
+                      <span>Approve</span>
+                    </button>
+                    <button
+                      onClick={() => onDecline(approval.id)}
+                      className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <span>✗</span>
+                      <span>Decline</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* View Only - If user is the requester */}
+                {!needsMyApproval && (
+                  <div className="text-center py-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Waiting for {partnerProfile?.name || 'your partner'} to review this request
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">

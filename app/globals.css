@@ -85,6 +85,82 @@
   to { transform: rotate(360deg); }
 }
 
+/* Notification System Styles */
+.toast {
+  position: fixed;
+  z-index: 9999;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  max-width: 400px;
+  word-wrap: break-word;
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-success {
+  background-color: #10b981;
+  color: white;
+  border-left: 4px solid #059669;
+}
+
+.toast-error {
+  background-color: #ef4444;
+  color: white;
+  border-left: 4px solid #dc2626;
+}
+
+.toast-warning {
+  background-color: #f59e0b;
+  color: white;
+  border-left: 4px solid #d97706;
+}
+
+.toast-info {
+  background-color: #3b82f6;
+  color: white;
+  border-left: 4px solid #2563eb;
+}
+
+.toast-top-right {
+  top: 1rem;
+  right: 1rem;
+}
+
+.toast-top-left {
+  top: 1rem;
+  left: 1rem;
+}
+
+.toast-bottom-right {
+  bottom: 1rem;
+  right: 1rem;
+}
+
+.toast-bottom-left {
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.toast-top-center {
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toast-bottom-center {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 /* Mobile-specific enhancements */
 @layer utilities {
   /* Smooth mobile animations */

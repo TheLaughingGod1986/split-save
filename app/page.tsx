@@ -3,10 +3,31 @@
 import { useAuth } from '@/components/AuthProvider'
 import { LoginForm } from '@/components/LoginForm'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
+import { LandingPage } from '@/components/LandingPage'
 import { ClientOnly } from '@/components/ClientOnly'
+import { StructuredData, structuredDataSchemas } from '@/components/StructuredData'
+import { useEffect } from 'react'
+import { analytics } from '@/lib/analytics'
 
 export default function Home() {
   const { user, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        analytics.session.started()
+        analytics.conversion.landingPageView('direct', {
+          campaign: 'returning_user',
+          source: 'direct'
+        })
+      } else {
+        analytics.conversion.landingPageView('direct', {
+          campaign: 'new_visitor',
+          source: 'direct'
+        })
+      }
+    }
+  }, [loading, user])
 
   if (loading) {
     return (
@@ -20,7 +41,15 @@ export default function Home() {
   }
 
   if (!user) {
-    return <LoginForm />
+    return (
+      <>
+        <StructuredData type="website" data={structuredDataSchemas.website} />
+        <StructuredData type="organization" data={structuredDataSchemas.organization} />
+        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+        <LandingPage />
+      </>
+    )
   }
 
   return (

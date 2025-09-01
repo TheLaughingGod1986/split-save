@@ -1,0 +1,182 @@
+{
+  "widgets": [
+    {
+      "id": "goal-progress",
+      "name": "Goal Progress",
+      "description": "Track your savings goals progress",
+      "size": "medium",
+      "data": {
+        "goals": {
+          "type": "array",
+          "required": true,
+          "description": "Array of goal objects with progress data"
+        },
+        "totalProgress": {
+          "type": "number",
+          "required": true,
+          "description": "Overall progress percentage"
+        }
+      },
+      "refreshInterval": 3600,
+      "icon": "🎯"
+    },
+    {
+      "id": "safety-pot",
+      "name": "Safety Pot",
+      "description": "Emergency fund status and coverage",
+      "size": "small",
+      "data": {
+        "currentAmount": {
+          "type": "number",
+          "required": true,
+          "description": "Current safety pot amount"
+        },
+        "targetAmount": {
+          "type": "number",
+          "required": true,
+          "description": "Target safety pot amount"
+        },
+        "monthsCovered": {
+          "type": "number",
+          "required": true,
+          "description": "Number of months of expenses covered"
+        },
+        "status": {
+          "type": "string",
+          "required": true,
+          "enum": ["excellent", "good", "warning", "critical"],
+          "description": "Safety pot status"
+        }
+      },
+      "refreshInterval": 7200,
+      "icon": "🛡️"
+    },
+    {
+      "id": "partner-activity",
+      "name": "Partner Activity",
+      "description": "Recent partner actions and contributions",
+      "size": "medium",
+      "data": {
+        "recentActivities": {
+          "type": "array",
+          "required": true,
+          "description": "Array of recent partner activities"
+        },
+        "partnerName": {
+          "type": "string",
+          "required": true,
+          "description": "Partner's name"
+        },
+        "lastContribution": {
+          "type": "object",
+          "required": false,
+          "description": "Last contribution details"
+        }
+      },
+      "refreshInterval": 1800,
+      "icon": "👥"
+    },
+    {
+      "id": "quick-stats",
+      "name": "Quick Stats",
+      "description": "Key financial metrics at a glance",
+      "size": "small",
+      "data": {
+        "totalSaved": {
+          "type": "number",
+          "required": true,
+          "description": "Total amount saved"
+        },
+        "monthlyAverage": {
+          "type": "number",
+          "required": true,
+          "description": "Monthly average contribution"
+        },
+        "goalCount": {
+          "type": "number",
+          "required": true,
+          "description": "Number of active goals"
+        },
+        "streakDays": {
+          "type": "number",
+          "required": true,
+          "description": "Current streak in days"
+        }
+      },
+      "refreshInterval": 3600,
+      "icon": "⚡"
+    },
+    {
+      "id": "expense-overview",
+      "name": "Expense Overview",
+      "description": "Monthly expense breakdown and trends",
+      "size": "large",
+      "data": {
+        "monthlyExpenses": {
+          "type": "array",
+          "required": true,
+          "description": "Monthly expense data"
+        },
+        "categoryBreakdown": {
+          "type": "array",
+          "required": true,
+          "description": "Expense breakdown by category"
+        },
+        "trend": {
+          "type": "string",
+          "required": true,
+          "enum": ["increasing", "decreasing", "stable"],
+          "description": "Expense trend direction"
+        }
+      },
+      "refreshInterval": 7200,
+      "icon": "📊"
+    },
+    {
+      "id": "savings-forecast",
+      "name": "Savings Forecast",
+      "description": "Projected savings trajectory and completion dates",
+      "size": "medium",
+      "data": {
+        "forecast": {
+          "type": "object",
+          "required": true,
+          "description": "Savings forecast data"
+        },
+        "projectedCompletion": {
+          "type": "array",
+          "required": true,
+          "description": "Projected completion dates for goals"
+        }
+      },
+      "refreshInterval": 86400,
+      "icon": "🔮"
+    }
+  ],
+  "api": {
+    "endpoint": "/api/widgets",
+    "authentication": "required",
+    "rateLimit": "100 requests per hour",
+    "dataFormat": "json"
+  },
+  "styling": {
+    "theme": "auto",
+    "colors": {
+      "primary": "#3B82F6",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "danger": "#EF4444",
+      "background": "#FFFFFF",
+      "text": "#111827"
+    },
+    "darkMode": {
+      "background": "#1F2937",
+      "text": "#F9FAFB"
+    }
+  },
+  "permissions": [
+    "read_financial_data",
+    "read_goals",
+    "read_partnership_data"
+  ]
+}
