@@ -179,7 +179,7 @@ export class GoalPrioritizationEngine {
    * Get priority label and color
    */
   static getPriorityInfo(priority: number) {
-    const priorityInfo = {
+    const priorityInfo: { [key: number]: { label: string; color: string; bgColor: string; borderColor: string } } = {
       [GoalPriority.CRITICAL]: { label: 'Critical', color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-200' },
       [GoalPriority.HIGH]: { label: 'High', color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-orange-200' },
       [GoalPriority.MEDIUM]: { label: 'Medium', color: 'text-blue-600', bgColor: 'bg-blue-100', borderColor: 'border-blue-200' },
@@ -187,7 +187,7 @@ export class GoalPrioritizationEngine {
       [GoalPriority.OPTIONAL]: { label: 'Optional', color: 'text-purple-600', bgColor: 'bg-purple-100', borderColor: 'border-purple-200' }
     }
 
-    return priorityInfo[priority as keyof typeof priorityInfo] || priorityInfo[GoalPriority.MEDIUM]
+    return priorityInfo[priority] || priorityInfo[GoalPriority.MEDIUM]
   }
 
   /**
