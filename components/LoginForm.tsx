@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/lib/toast'
+import { validationRules, sanitizeInput } from '@/lib/validation'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,9 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordStrength, setPasswordStrength] = useState('')
 
   // Auto-focus email field on mobile for better UX
   useEffect(() => {
@@ -22,15 +26,63 @@ export function LoginForm() {
     }
   }, [])
 
+  // Real-time email validation
+  const handleEmailChange = (value: string) => {
+    const sanitized = sanitizeInput.email(value)
+    setEmail(sanitized)
+    
+    if (value.trim()) {
+      const validation = validationRules.email(sanitized)
+      setEmailError(validation.isValid ? '' : validation.error || '')
+    } else {
+      setEmailError('')
+    }
+  }
+
+  // Real-time password validation
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    
+    if (isSignUp && value.trim()) {
+      const validation = validationRules.password(value)
+      setPasswordError(validation.isValid ? '' : validation.error || '')
+      setPasswordStrength(validation.strength || '')
+    } else {
+      setPasswordError('')
+      setPasswordStrength('')
+    }
+  }
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setEmailError('')
+    setPasswordError('')
+
+    // Final validation before submission
+    const emailValidation = validationRules.email(email)
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || 'Invalid email')
+      setLoading(false)
+      return
+    }
+
+    if (isSignUp) {
+      const passwordValidation = validationRules.password(password)
+      if (!passwordValidation.isValid) {
+        setPasswordError(passwordValidation.error || 'Invalid password')
+        setLoading(false)
+        return
+      }
+    }
 
     try {
+      const sanitizedEmail = sanitizeInput.email(email)
+      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: sanitizedEmail,
           password,
         })
         if (error) throw error
@@ -38,7 +90,7 @@ export function LoginForm() {
         toast.success('Check your email for the confirmation link!')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: sanitizedEmail,
           password,
         })
         if (error) throw error
@@ -51,20 +103,15 @@ export function LoginForm() {
     }
   }
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
 
-  const validatePassword = (password: string) => {
-    return password.length >= 8
-  }
 
   const isFormValid = () => {
+    const emailValid = validationRules.email(email).isValid
     if (isSignUp) {
-      return validateEmail(email) && validatePassword(password)
+      const passwordValid = validationRules.password(password).isValid
+      return emailValid && passwordValid && !emailError && !passwordError
     }
-    return email.length > 0 && password.length > 0
+    return emailValid && password.length > 0 && !emailError
   }
 
   return (
@@ -122,7 +169,7 @@ export function LoginForm() {
             )}
             
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="email" className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
                 Email address
               </label>
               <div className="relative">
@@ -133,19 +180,19 @@ export function LoginForm() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   onFocus={() => setEmailFocused(true)}
                   onBlur={() => setEmailFocused(false)}
-                  className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200 ${
+                  className={`input ${
                     emailFocused 
-                      ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
+                      ? 'border-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/30' 
                       : ''
                   } ${
-                    email && !validateEmail(email) ? 'border-red-500 dark:border-red-400' : ''
+                    emailError ? 'input-error' : ''
                   }`}
                   placeholder="Enter your email"
                 />
-                {email && validateEmail(email) && (
+                {email && !emailError && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -153,13 +200,18 @@ export function LoginForm() {
                   </div>
                 )}
               </div>
-              {email && !validateEmail(email) && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Please enter a valid email address</p>
+              {emailError && (
+                <p className="space-small text-body-small text-red-600 dark:text-red-400 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {emailError}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="password" className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
                 Password
               </label>
               <div className="relative">
@@ -170,15 +222,15 @@ export function LoginForm() {
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
-                  className={`w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors duration-200 ${
+                  className={`input pr-12 ${
                     passwordFocused 
-                      ? 'border-purple-500 ring-4 ring-purple-100 dark:ring-purple-900/30' 
+                      ? 'border-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/30' 
                       : ''
                   } ${
-                    password && !validatePassword(password) ? 'border-red-500 dark:border-red-400' : ''
+                    passwordError ? 'input-error' : ''
                   }`}
                   placeholder={isSignUp ? 'Create a password' : 'Enter your password'}
                 />
@@ -200,9 +252,38 @@ export function LoginForm() {
                   )}
                 </button>
               </div>
-              {isSignUp && password && !validatePassword(password) && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">Password must be at least 8 characters long</p>
+              {passwordError && (
+                <p className="space-small text-body-small text-red-600 dark:text-red-400 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {passwordError}
+                </p>
               )}
+              {isSignUp && password && passwordStrength && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Password strength:</span>
+                    <span className={`text-xs font-medium ${
+                      passwordStrength === 'strong' ? 'text-green-600 dark:text-green-400' :
+                      passwordStrength === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 
+                      'text-red-600 dark:text-red-400'
+                    }`}>
+                      {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-300 ${
+                        passwordStrength === 'strong' ? 'bg-green-500 w-full' :
+                        passwordStrength === 'medium' ? 'bg-yellow-500 w-2/3' : 
+                        'bg-red-500 w-1/3'
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+
             </div>
 
             {/* Password strength indicator for sign up */}

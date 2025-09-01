@@ -46,11 +46,11 @@ export function MonthlyContributionSummary({
   
   if (!partnerProfiles) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
         <div className="text-center py-8">
           <div className="text-4xl mb-4">💰</div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Monthly Contribution Summary</h3>
-          <p className="text-gray-500">Click to load your contribution breakdown</p>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Monthly Contribution Summary</h3>
+          <p className="text-gray-500 dark:text-gray-400">Click to load your contribution breakdown</p>
           <button 
             onClick={() => setPartnerProfiles(null)} // Reset to trigger reload
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -59,12 +59,12 @@ export function MonthlyContributionSummary({
           </button>
           
           {/* Fallback: Show basic info using current profile */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-gray-700 mb-2">Quick Preview (Your Income Only)</h4>
-            <p className="text-sm text-gray-600">
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Quick Preview (Your Income Only)</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Your monthly income: <strong>{currencySymbol}{profile.income || 0}</strong>
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Partner income data needed for full breakdown
             </p>
           </div>
@@ -89,11 +89,11 @@ export function MonthlyContributionSummary({
 
           if (totalDisposableIncome <= 0) {
             return (
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
                 <div className="text-center py-8">
                   <div className="text-4xl mb-4">⚠️</div>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Insufficient Disposable Income</h3>
-                  <p className="text-gray-500">After personal allowances, there's not enough income for shared expenses</p>
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Insufficient Disposable Income</h3>
+                  <p className="text-gray-500 dark:text-gray-400">After personal allowances, there's not enough income for shared expenses</p>
                 </div>
               </div>
             )
@@ -117,8 +117,8 @@ export function MonthlyContributionSummary({
           const partnerSafetyNetContribution = totalMonthlySafetyNet * partnerShare
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
         <span className="mr-2">💰</span>
         Monthly Contribution Summary
       </h2>

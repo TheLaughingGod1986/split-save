@@ -13,6 +13,7 @@ interface MoneyHubProps {
   profile: any
   user: any
   currencySymbol: string
+  goals?: any[]
   monthlyProgress?: any
   onAddExpense: (expense: any) => void
   onUpdate: () => void
@@ -35,13 +36,22 @@ export function MoneyHub({
   profile,
   user,
   currencySymbol,
+  goals = [],
   monthlyProgress,
   onAddExpense,
   onUpdate
 }: MoneyHubProps) {
   const [activeTab, setActiveTab] = useState<'expenses' | 'contributions' | 'safety-pot' | 'analytics'>('expenses')
   const [showAddExpense, setShowAddExpense] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [expenseForm, setExpenseForm] = useState({
+    description: '',
+    amount: '',
+    category: 'general',
+    notes: ''
+  })
+  const [editForm, setEditForm] = useState({
     description: '',
     amount: '',
     category: 'general',
@@ -96,6 +106,83 @@ export function MoneyHub({
     }
   }
 
+  const handleEditExpense = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!editForm.description.trim() || !editForm.amount || !editingExpense) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    try {
+      const updatedExpense = {
+        description: editForm.description.trim(),
+        amount: parseFloat(editForm.amount),
+        category: editForm.category,
+        notes: editForm.notes.trim()
+      }
+
+      const response = await apiClient.updateExpense(editingExpense, updatedExpense)
+      
+      if (response.requiresApproval) {
+        toast.info('Expense update requires partner approval')
+      } else {
+        toast.success('Expense updated successfully!')
+        onUpdate() // Refresh the data
+      }
+      
+      // Reset editing state
+      setEditingExpense(null)
+      setEditForm({
+        description: '',
+        amount: '',
+        category: 'general',
+        notes: ''
+      })
+    } catch (error) {
+      console.error('Failed to update expense:', error)
+      toast.error('Failed to update expense')
+    }
+  }
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    try {
+      const response = await apiClient.deleteExpense(expenseId)
+      
+      if (response.requiresApproval) {
+        toast.info('Expense deletion requires partner approval')
+      } else {
+        toast.success('Expense deleted successfully!')
+        onUpdate() // Refresh the data
+      }
+      
+      setShowDeleteConfirm(null)
+    } catch (error) {
+      console.error('Failed to delete expense:', error)
+      toast.error('Failed to delete expense')
+    }
+  }
+
+  const startEditExpense = (expense: any) => {
+    setEditingExpense(expense.id)
+    setEditForm({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      category: expense.category,
+      notes: expense.notes || ''
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingExpense(null)
+    setEditForm({
+      description: '',
+      amount: '',
+      category: 'general',
+      notes: ''
+    })
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -137,10 +224,10 @@ export function MoneyHub({
 
       {/* Add Expense Form */}
       {showAddExpense && (
-        <div className="bg-white border rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
           <form onSubmit={handleAddExpense} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description *
               </label>
               <input
@@ -148,13 +235,13 @@ export function MoneyHub({
                 value={expenseForm.description}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="e.g., Food Shopping, Rent, Bills"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Amount * ({currencySymbol})
               </label>
               <input
@@ -164,19 +251,19 @@ export function MoneyHub({
                 value={expenseForm.amount}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
                 placeholder="0.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Category
               </label>
               <select
                 value={expenseForm.category}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
                 {categories.map(category => (
                   <option key={category.value} value={category.value}>
@@ -187,7 +274,7 @@ export function MoneyHub({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Notes (Optional)
               </label>
               <textarea
@@ -195,7 +282,7 @@ export function MoneyHub({
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Add any additional notes about this expense..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -209,7 +296,7 @@ export function MoneyHub({
               <button
                 type="button"
                 onClick={() => setShowAddExpense(false)}
-                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
               >
                 Cancel
               </button>
@@ -222,21 +309,125 @@ export function MoneyHub({
       <div className="space-y-3">
         {expenses && expenses.length > 0 ? (
           expenses.map((expense) => (
-            <div key={expense.id} className="bg-white border rounded-lg p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl">{getCategoryIcon(expense.category)}</div>
+            <div key={expense.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+              {editingExpense === expense.id ? (
+                /* Edit Form */
+                <form onSubmit={handleEditExpense} className="space-y-4">
                   <div>
-                    <h4 className="font-medium">{expense.description}</h4>
-                    <p className="text-sm text-gray-500">
-                      {getCategoryLabel(expense.category)} • {formatDate(expense.created_at)}
-                    </p>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description *
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.description}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Amount * ({currencySymbol})
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editForm.amount}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <select
+                        value={editForm.category}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {categories.map(category => (
+                          <option key={category.value} value={category.value}>
+                            {category.icon} {category.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Add any additional notes..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* Display Mode */
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl">{getCategoryIcon(expense.category)}</div>
+                    <div>
+                      <h4 className="font-medium">{expense.description}</h4>
+                      <p className="text-sm text-gray-500">
+                        {getCategoryLabel(expense.category)} • {formatDate(expense.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {currencySymbol}{expense.amount.toFixed(2)}
+                    </div>
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => startEditExpense(expense)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit expense"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(expense.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete expense"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {currencySymbol}{expense.amount.toFixed(2)}
-                </div>
-              </div>
+              )}
             </div>
           ))
         ) : (
@@ -281,6 +472,7 @@ export function MoneyHub({
       profile={profile}
       user={user}
       currencySymbol={currencySymbol}
+      goals={goals}
       onProgressUpdate={(data) => {
         console.log('Monthly progress update:', data)
         onUpdate()
@@ -369,6 +561,44 @@ export function MoneyHub({
 
   return (
     <div className="space-y-6 pb-20">
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Expense</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete this expense? This action cannot be undone.
+                {expenses.find(e => e.id === showDeleteConfirm)?.amount > 100 && (
+                  <span className="block mt-2 text-orange-600 font-medium">
+                    ⚠️ This expense is over {currencySymbol}100 and may require partner approval to delete.
+                  </span>
+                )}
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleDeleteExpense(showDeleteConfirm)}
+                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h1 className="text-2xl font-bold mb-2">Money Management</h1>

@@ -154,21 +154,21 @@ Timestamp: ${new Date().toISOString()}
               >
                 🚨
               </motion.div>
-              <h1 className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">
+              <h1 className="text-heading-1 text-red-600 dark:text-red-400 space-small">
                 Oops! Something went wrong
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-body text-gray-600 dark:text-gray-400">
                 We've encountered an unexpected error and our team has been notified.
               </p>
             </div>
 
             {/* Error Details */}
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-red-800 dark:text-red-200">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 space-card">
+              <div className="flex items-center justify-between space-small">
+                <span className="text-heading-4 text-red-800 dark:text-red-200">
                   Error Details
                 </span>
-                <span className="text-xs text-red-600 dark:text-red-400 font-mono">
+                <span className="text-caption text-red-600 dark:text-red-400 font-mono">
                   ID: {this.state.errorId}
                 </span>
               </div>
@@ -223,11 +223,11 @@ Timestamp: ${new Date().toISOString()}
             </div>
 
             {/* Helpful Tips */}
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <h3 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
+            <div className="space-card p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <h3 className="text-heading-4 text-blue-900 dark:text-blue-200 space-small">
                 💡 What you can do:
               </h3>
-              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+              <ul className="text-body-small text-blue-800 dark:text-blue-300 space-y-1">
                 <li>• Try refreshing the page</li>
                 <li>• Clear your browser cache and cookies</li>
                 <li>• Check your internet connection</li>

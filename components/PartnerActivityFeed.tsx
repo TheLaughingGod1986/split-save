@@ -196,7 +196,7 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
     return (
       <div className={`space-y-4 ${className}`}>
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg p-4 shadow-sm animate-pulse">
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm animate-pulse">
             <div className="flex items-start space-x-3">
               <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
               <div className="flex-1 space-y-2">
@@ -214,15 +214,15 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
     <div className={`space-y-6 ${className}`}>
       {/* Filter Tabs */}
       <div className="flex items-center justify-between">
-        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {(['all', 'financial', 'achievements', 'social'] as const).map((filterOption) => (
             <button
               key={filterOption}
               onClick={() => setFilter(filterOption)}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 filter === filterOption
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
@@ -233,7 +233,7 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
         >
           <span className={`${refreshing ? 'animate-spin' : ''}`}>🔄</span>
           <span>Refresh</span>
@@ -245,8 +245,8 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
         {activities.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📱</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No activity yet</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               {filter === 'all' 
                 ? "Start adding expenses and working towards goals to see activity here!"
                 : `No ${filter} activities to show yet.`
@@ -255,8 +255,8 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
           </div>
         ) : (
           activities.map((activity) => (
-            <div key={activity.id} className={`bg-white rounded-lg shadow-sm border transition-all hover:shadow-md ${
-              activity.is_milestone ? 'ring-2 ring-yellow-200 bg-gradient-to-r from-yellow-50 to-white' : ''
+            <div key={activity.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-all hover:shadow-md ${
+              activity.is_milestone ? 'ring-2 ring-yellow-200 dark:ring-yellow-800 bg-gradient-to-r from-yellow-50 to-white dark:from-yellow-900/20 dark:to-gray-800' : ''
             }`}>
               <div className="p-4">
                 {/* Activity Header */}
@@ -268,24 +268,24 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900">{activity.user_name}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{activity.user_name}</span>
                         {activity.is_milestone && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
                             Milestone
                           </span>
                         )}
                       </div>
-                      <span className="text-sm text-gray-500">{getRelativeTime(activity.created_at)}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{getRelativeTime(activity.created_at)}</span>
                     </div>
                     
-                    <h3 className="text-sm font-medium text-gray-900 mt-1">{activity.title}</h3>
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white mt-1">{activity.title}</h3>
                     
                     {activity.description && (
-                      <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{activity.description}</p>
                     )}
                     
                     {activity.amount && (
-                      <div className="text-lg font-semibold text-green-600 mt-2">
+                      <div className="text-lg font-semibold text-green-600 dark:text-green-400 mt-2">
                         £{activity.amount.toFixed(2)}
                       </div>
                     )}
@@ -293,14 +293,14 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                   <div className="flex items-center space-x-4">
                     <button
                       onClick={() => handleReaction(activity.id, 'like', !activity.user_has_reacted)}
                       className={`flex items-center space-x-1 text-sm transition-colors ${
                         activity.user_has_reacted 
-                          ? 'text-blue-600' 
-                          : 'text-gray-500 hover:text-blue-600'
+                          ? 'text-blue-600 dark:text-blue-400' 
+                          : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
                       <span>{activity.user_has_reacted ? '👍' : '👍'}</span>
@@ -309,7 +309,7 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
 
                     <button
                       onClick={() => toggleComments(activity.id)}
-                      className="flex items-center space-x-1 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+                      className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       <span>💬</span>
                       <span>{activity.comment_count || 0}</span>
@@ -323,19 +323,19 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
 
                 {/* Comments Section */}
                 {expandedComments.has(activity.id) && (
-                  <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                     {/* Existing Comments */}
                     {comments[activity.id] && comments[activity.id].length > 0 && (
                       <div className="space-y-3 mb-4">
                         {comments[activity.id].map((comment) => (
                           <div key={comment.id} className="flex items-start space-x-3">
-                            <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0"></div>
+                            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0"></div>
                             <div className="flex-1">
                               <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-gray-900">{comment.user_name}</span>
-                                <span className="text-xs text-gray-500">{getRelativeTime(comment.created_at)}</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">{comment.user_name}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{getRelativeTime(comment.created_at)}</span>
                               </div>
-                              <p className="text-sm text-gray-700 mt-1">{comment.comment}</p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{comment.comment}</p>
                             </div>
                           </div>
                         ))}
@@ -350,13 +350,13 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
                           value={newComment[activity.id] || ''}
                           onChange={(e) => setNewComment(prev => ({ ...prev, [activity.id]: e.target.value }))}
                           placeholder="Add a comment..."
-                          className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           rows={2}
                           maxLength={500}
                         />
                         {newComment[activity.id]?.trim() && (
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
                               {500 - (newComment[activity.id]?.length || 0)} characters remaining
                             </span>
                             <button

@@ -217,10 +217,10 @@ export function GoalsHub({
     <div className="space-y-4">
       {/* Add Goal Button */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Active Savings Goals</h3>
+        <h3 className="text-heading-3 text-gray-900 dark:text-white">Active Savings Goals</h3>
         <button
           onClick={() => setShowAddGoal(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+          className="btn-primary"
         >
           <span>+</span>
           <span>New Goal</span>
@@ -229,10 +229,10 @@ export function GoalsHub({
 
       {/* Add Goal Form */}
       {showAddGoal && (
-        <div className="bg-white border rounded-lg p-4 shadow-sm">
+        <div className="card space-card">
           <form onSubmit={handleAddGoal} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
                 Goal Name *
               </label>
               <input
@@ -240,13 +240,13 @@ export function GoalsHub({
                 value={goalForm.name}
                 onChange={(e) => setGoalForm(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Holiday Fund, New Car, Emergency Fund"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="input"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
                 Target Amount * ({currencySymbol})
               </label>
               <input
@@ -256,13 +256,13 @@ export function GoalsHub({
                 value={goalForm.targetAmount}
                 onChange={(e) => setGoalForm(prev => ({ ...prev, targetAmount: e.target.value }))}
                 placeholder="0.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="input"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
                 Target Date *
               </label>
               <input
@@ -270,19 +270,19 @@ export function GoalsHub({
                 value={goalForm.targetDate}
                 onChange={(e) => setGoalForm(prev => ({ ...prev, targetDate: e.target.value }))}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="input"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
                 Category
               </label>
               <select
                 value={goalForm.category}
                 onChange={(e) => setGoalForm(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="input"
               >
                 {categories.map(category => (
                   <option key={category.value} value={category.value}>
@@ -293,7 +293,7 @@ export function GoalsHub({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description (Optional)
               </label>
               <textarea
@@ -301,7 +301,7 @@ export function GoalsHub({
                 onChange={(e) => setGoalForm(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Describe what you're saving for..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -315,7 +315,7 @@ export function GoalsHub({
               <button
                 type="button"
                 onClick={() => setShowAddGoal(false)}
-                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
               >
                 Cancel
               </button>
@@ -334,7 +334,7 @@ export function GoalsHub({
             const daysRemaining = getDaysRemaining(goal.target_date)
             
             return (
-              <div key={goal.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div key={goal.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
                 {editingGoal === goal.id ? (
                   // Edit Mode
                   <div className="space-y-4">

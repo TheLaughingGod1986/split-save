@@ -288,10 +288,22 @@ export const ActivityHelpers = {
     expenseId: string, 
     amount: number, 
     description: string,
-    isApproved: boolean = false
+    isApproved: boolean = false,
+    action: string = 'created'
   ) {
-    const activityType = isApproved ? 'expense_approved' : 'expense_added'
-    const title = isApproved ? `Approved expense: ${description}` : `Added expense: ${description}`
+    let activityType = 'expense_added'
+    let title = `Added expense: ${description}`
+    
+    if (isApproved) {
+      activityType = 'expense_approved'
+      title = `Approved expense: ${description}`
+    } else if (action === 'updated') {
+      activityType = 'expense_updated'
+      title = `Updated expense: ${description}`
+    } else if (action === 'deleted') {
+      activityType = 'expense_deleted'
+      title = `Deleted expense: ${description}`
+    }
     
     return activityLogger.logActivity({
       userId,

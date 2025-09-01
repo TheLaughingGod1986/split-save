@@ -47,12 +47,12 @@ export function GamificationDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-xl p-6 text-white">
-        <div className="flex items-center space-x-3 mb-2">
+      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-lg p-6 text-white">
+        <div className="flex items-center space-x-3 space-small">
           <span className="text-3xl">🎮</span>
           <div>
-            <h1 className="text-2xl font-bold">Gamification Center</h1>
-            <p className="text-purple-100">Level up your savings journey with fun challenges and rewards!</p>
+            <h1 className="text-heading-2">Gamification Center</h1>
+            <p className="text-body text-purple-100">Level up your savings journey with fun challenges and rewards!</p>
           </div>
         </div>
       </div>
@@ -84,8 +84,8 @@ export function GamificationDashboard() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Level & Progress */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="card space-card">
+            <h2 className="text-heading-2 text-gray-900 dark:text-white space-item">
               🎯 Your Level & Progress
             </h2>
             

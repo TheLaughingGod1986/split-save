@@ -1,263 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SplitSave - Offline</title>
-  <meta name="description" content="SplitSave is currently offline. Your data will sync when connection is restored.">
-  <meta name="theme-color" content="#6366f1">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" href="/icons/icon-192x192.png">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>SplitSave - Offline</title>
+    <meta name="description" content="SplitSave is currently offline. Your data will sync when connection is restored.">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SplitSave">
     
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed">
     
-    .offline-container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 3rem 2rem;
-      text-align: center;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .offline-icon {
-      font-size: 5rem;
-      margin-bottom: 1.5rem;
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    
-    h1 {
-      color: #1f2937;
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-    }
-    
-    .subtitle {
-      color: #6b7280;
-      font-size: 1.1rem;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
-    
-    .features {
-      display: grid;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .feature {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      padding: 0.75rem;
-      background: #f3f4f6;
-      border-radius: 12px;
-      color: #374151;
-      font-size: 0.9rem;
-    }
-    
-    .feature-icon {
-      font-size: 1.2rem;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-block;
-    }
-    
-    .btn.primary {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-    }
-    
-    .btn.primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-    }
-    
-    .btn.secondary {
-      background: #f3f4f6;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-    }
-    
-    .btn.secondary:hover {
-      background: #e5e7eb;
-    }
-    
-    .status {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #f9fafb;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      color: #6b7280;
-      font-size: 0.9rem;
-    }
-    
-    .connection-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ef4444;
-      animation: blink 1.5s infinite;
-    }
-    
-    @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0.3; }
-    }
-    
-    .connection-indicator.online {
-      background: #10b981;
-      animation: none;
-    }
-    
-    @media (max-width: 480px) {
-      .offline-container {
-        padding: 2rem 1.5rem;
-      }
-      
-      h1 {
-        font-size: 1.5rem;
-      }
-      
-      .actions {
-        flex-direction: column;
-      }
-      
-      .btn {
-        width: 100%;
-      }
-    }
-  </style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 1rem;
+            line-height: 1.6;
+        }
+        
+        .offline-container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .description {
+            margin-bottom: 2rem;
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+        
+        .features {
+            background: rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .features h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .feature-list {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .feature-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.9rem;
+        }
+        
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.4);
+        }
+        
+        .btn-primary:hover {
+            background: rgba(255,255,255,0.35);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .connection-info {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="offline-container">
-    <div class="offline-icon">📱</div>
-    <h1>You're Offline</h1>
-    <p class="subtitle">
-      SplitSave is currently offline, but don't worry! Your data is safely stored and will sync automatically when your connection is restored.
-    </p>
-    
-    <div class="features">
-      <div class="feature">
-        <span class="feature-icon">💾</span>
-        <span>Your data is cached locally</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">🔄</span>
-        <span>Automatic sync when online</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">📊</span>
-        <span>View cached information</span>
-      </div>
+    <div class="offline-container">
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Offline Mode</span>
+        </div>
+        
+        <div class="offline-icon">📱</div>
+        
+        <h1>You're Offline</h1>
+        <p class="subtitle">SplitSave is currently offline</p>
+        <p class="description">
+            Don't worry! Your data is safe and will sync automatically when your connection is restored.
+        </p>
+        
+        <div class="features">
+            <h3>What you can do:</h3>
+            <ul class="feature-list">
+                <li>View cached data and recent activity</li>
+                <li>Prepare new expenses and goals</li>
+                <li>Review your financial progress</li>
+                <li>Access your safety pot information</li>
+            </ul>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-primary" onclick="window.location.reload()">
+                🔄 Try Again
+            </button>
+            <button class="btn" onclick="checkConnection()">
+                📡 Check Connection
+            </button>
+        </div>
+        
+        <div class="connection-info">
+            <p>Last synced: <span id="lastSync">Just now</span></p>
+            <p>Connection status: <span id="connectionStatus">Checking...</span></p>
+        </div>
     </div>
     
-    <div class="actions">
-      <button class="btn primary" onclick="window.location.reload()">
-        🔄 Try Again
-      </button>
-      <button class="btn secondary" onclick="checkConnection()">
-        📡 Check Connection
-      </button>
-    </div>
-    
-    <div class="status">
-      <span class="connection-indicator"></span>
-      <span>Checking for internet connection...</span>
-    </div>
-  </div>
-
-  <script>
-    // Check connection status
-    function checkConnection() {
-      const indicator = document.querySelector('.connection-indicator')
-      const statusText = document.querySelector('.status span:last-child')
-      
-      if (navigator.onLine) {
-        indicator.classList.add('online')
-        statusText.textContent = 'Connection restored! Refreshing...'
-        setTimeout(() => window.location.reload(), 1500)
-      } else {
-        indicator.classList.remove('online')
-        statusText.textContent = 'Still offline. Please check your connection.'
-      }
-    }
-    
-    // Listen for connection changes
-    window.addEventListener('online', () => {
-      const indicator = document.querySelector('.connection-indicator')
-      const statusText = document.querySelector('.status span:last-child')
-      
-      indicator.classList.add('online')
-      statusText.textContent = 'Connection restored! Refreshing...'
-      setTimeout(() => window.location.reload(), 1500)
-    })
-    
-    window.addEventListener('offline', () => {
-      const indicator = document.querySelector('.connection-indicator')
-      const statusText = document.querySelector('.status span:last-child')
-      
-      indicator.classList.remove('online')
-      statusText.textContent = 'Connection lost. You are now offline.'
-    })
-    
-    // Initial connection check
-    setTimeout(checkConnection, 1000)
-    
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('Service Worker registered:', registration)
-        })
-        .catch(error => {
-          console.log('Service Worker registration failed:', error)
-        })
-    }
-  </script>
+    <script>
+        // Check connection status
+        function checkConnection() {
+            const statusElement = document.getElementById('connectionStatus');
+            const statusDot = document.querySelector('.status-dot');
+            
+            if (navigator.onLine) {
+                statusElement.textContent = 'Online - Reloading...';
+                statusDot.style.background = '#10b981';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                statusElement.textContent = 'Still offline';
+                statusDot.style.background = '#ef4444';
+            }
+        }
+        
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            document.getElementById('connectionStatus').textContent = 'Online - Reloading...';
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+        
+        window.addEventListener('offline', () => {
+            document.getElementById('connectionStatus').textContent = 'Offline';
+        });
+        
+        // Set last sync time
+        document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+        
+        // Check connection on load
+        checkConnection();
+        
+        // Auto-retry every 30 seconds
+        setInterval(() => {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }, 30000);
+        
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        }
+    </script>
 </body>
 </html>

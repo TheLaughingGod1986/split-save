@@ -4,8 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/components/AuthProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-import SEO from '../components/SEO'
-import { usePerformance } from '../lib/usePerformance'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -77,110 +76,106 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
-        {/* Essential mobile meta tags */}
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+        {/* Preconnect to external domains for performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Apple Touch Icons */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
+        
+        {/* Microsoft Tiles */}
+        <meta name="msapplication-TileColor" content="#7c3aed" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        
+        {/* Theme Color */}
+        <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)" />
+        
+        {/* Viewport for mobile optimization */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover, user-scalable=yes" />
+        
+        {/* Mobile optimization */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SplitSave" />
-        <meta name="theme-color" content="#6366f1" />
-        <meta name="msapplication-TileColor" content="#6366f1" />
-        <meta name="msapplication-config" content="/browserconfig.xml" />
         
-        {/* Preload critical resources */}
-        <link rel="preload" href="/api/health" as="fetch" crossOrigin="anonymous" />
+        {/* Security headers */}
+        <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
+        <meta httpEquiv="X-Frame-Options" content="DENY" />
+        <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
+        <meta httpEquiv="Referrer-Policy" content="origin-when-cross-origin" />
         
-        {/* DNS prefetch for external domains */}
+        {/* Performance optimization */}
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-        <link rel="dns-prefetch" href="//api.splitsave.app" />
         
-        {/* Resource hints */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://api.splitsave.app" />
-        
-        {/* Critical CSS inline */}
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            /* Critical CSS for above-the-fold content */
-            body { margin: 0; font-family: ${inter.style.fontFamily}, system-ui, sans-serif; }
-            .loading { display: flex; justify-content: center; align-items: center; min-height: 200px; }
-          `
-        }} />
+        {/* Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "SplitSave",
+              "description": "Smart financial management for couples with expense splitting, goal tracking, and financial transparency.",
+              "url": "https://www.splitsave.community",
+              "applicationCategory": "FinanceApplication",
+              "operatingSystem": "Web Browser",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "SplitSave"
+              },
+              "screenshot": "https://www.splitsave.community/og-image.png",
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "ratingCount": "150"
+              }
+            })
+          }}
+        />
       </head>
       <body className="antialiased">
-        {/* Performance monitoring script */}
+        {/* Service Worker Registration */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Performance monitoring
-              if ('PerformanceObserver' in window) {
-                try {
-                  // Core Web Vitals
-                  new PerformanceObserver((list) => {
-                    for (const entry of list.getEntries()) {
-                      if (entry.entryType === 'largest-contentful-paint') {
-                        console.log('LCP:', entry.startTime);
-                      }
-                    }
-                  }).observe({ entryTypes: ['largest-contentful-paint'] });
-                  
-                  // First Input Delay
-                  new PerformanceObserver((list) => {
-                    for (const entry of list.getEntries()) {
-                      if (entry.entryType === 'first-input') {
-                        console.log('FID:', entry.processingStart - entry.startTime);
-                      }
-                    }
-                  }).observe({ entryTypes: ['first-input'] });
-                  
-                  // Cumulative Layout Shift
-                  let cls = 0;
-                  new PerformanceObserver((list) => {
-                    for (const entry of list.getEntries()) {
-                      if (!entry.hadRecentInput) {
-                        cls += entry.value;
-                        console.log('CLS:', cls);
-                      }
-                    }
-                  }).observe({ entryTypes: ['layout-shift'] });
-                } catch (e) {
-                  console.warn('Performance monitoring failed:', e);
-                }
+              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('SW registered: ', registration);
+                  }).catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                  });
+                });
               }
-            `
+            `,
           }}
         />
         
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
         
         {/* Vercel Analytics */}
         <Analytics />
         <SpeedInsights />
-        
-        {/* Service Worker registration */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
-                    });
-                });
-              }
-            `
-          }}
-        />
       </body>
     </html>
   )

@@ -1,30 +1,32 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from './AuthProvider'
-import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
+import { useTheme } from 'next-themes'
 import { toast } from '@/lib/toast'
+import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/api-client'
 import { useAnalytics, trackPageView, trackNavigation } from '@/lib/analytics'
+import { DarkModeToggle } from './DesignSystem'
 import dynamic from 'next/dynamic'
 
 // Lazy load heavy components for better performance
 const AIInsightsEngine = dynamic(() => import('./AIInsightsEngine').then(mod => ({ default: mod.AIInsightsEngine })), {
-  loading: () => <div className="p-4 text-center text-gray-500">Loading AI Insights...</div>,
+  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading AI Insights...</div>,
   ssr: false
 });
 
 const AdvancedAnalyticsDashboard = dynamic(() => import('./AdvancedAnalyticsDashboard').then(mod => ({ default: mod.AdvancedAnalyticsDashboard })), {
-  loading: () => <div className="p-4 text-center text-gray-500">Loading Analytics...</div>,
+  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Analytics...</div>,
   ssr: false
 });
 
 const PerformanceOptimizer = dynamic(() => import('./PerformanceOptimizer').then(mod => ({ default: mod.PerformanceOptimizer })), {
-  loading: () => <div className="p-4 text-center text-gray-500">Loading Optimizer...</div>,
+  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Optimizer...</div>,
   ssr: false
 });
 
 const GamificationDashboard = dynamic(() => import('./GamificationDashboard').then(mod => ({ default: mod.GamificationDashboard })), {
-  loading: () => <div className="p-4 text-center text-gray-500">Loading Gamification...</div>,
+  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Gamification...</div>,
   ssr: false
 });
 
@@ -34,58 +36,14 @@ const AchievementCelebration = dynamic(() => import('./AchievementCelebration').
 });
 
 const EnhancedDashboard = dynamic(() => import('./EnhancedDashboard').then(mod => ({ default: mod.EnhancedDashboard })), {
-  loading: () => <div className="p-4 text-center text-gray-500">Loading Dashboard...</div>,
+  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Dashboard...</div>,
   ssr: false
 });
 
-// Dark mode hook
-function useDarkMode() {
-  const [isDark, setIsDark] = useState(false)
-  
-  useEffect(() => {
-    // Check system preference
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDark(mediaQuery.matches)
-    
-    // Listen for changes
-    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches)
-    mediaQuery.addEventListener('change', handler)
-    
-    // Check localStorage for manual override
-    const saved = localStorage.getItem('darkMode')
-    if (saved !== null) {
-      setIsDark(saved === 'true')
-    }
-    
-    return () => mediaQuery.removeEventListener('change', handler)
-  }, [])
-  
-  const toggleDarkMode = useCallback(() => {
-    const newMode = !isDark
-    setIsDark(newMode)
-    localStorage.setItem('darkMode', newMode.toString())
-    
-    // Apply to document
-    if (newMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [isDark])
-  
-  useEffect(() => {
-    // Apply theme to document
-    if (isDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [isDark])
-  
-  return { isDark, toggleDarkMode }
-}
+
 import { ProfileManager } from './ProfileManager'
 import { PWAInstallPrompt } from './PWAInstallPrompt'
+import { ClientOnly } from './ClientOnly'
 import { EnhancedSafetyPot } from './EnhancedSafetyPot'
 import ContributionManager from './ContributionManager'
 import { PartnershipManager } from './PartnershipManager'
@@ -115,9 +73,14 @@ import { calculateGoalProgress, calculateSmartRedistribution, formatTimeRemainin
 
 export function SplitsaveApp() {
   const { user, signOut } = useAuth()
-  const { isDark, toggleDarkMode } = useDarkMode()
+  const { theme, setTheme, resolvedTheme } = useTheme()
   const [currentView, setCurrentView] = useState('overview')
   const analytics = useAnalytics()
+
+  // Dark mode toggle function
+  const toggleDarkMode = useCallback(() => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+  }, [setTheme, resolvedTheme])
 
   // Handle navigation with view mapping for backward compatibility
   const handleNavigation = (view: string) => {
@@ -739,21 +702,7 @@ export function SplitsaveApp() {
               {/* Desktop User Menu */}
             <div className="hidden md:flex items-center space-x-4">
               {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {isDark ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
+                              <DarkModeToggle variant="icon" />
               
               {/* PWA Install Button */}
               <button
@@ -811,15 +760,9 @@ export function SplitsaveApp() {
             </div>
             
             {/* Mobile Dark Mode Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2 transition-colors flex items-center"
-            >
-              <span className="mr-2">
-                {isDark ? '☀️' : '🌙'}
-              </span>
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </button>
+            <div className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2 transition-colors flex items-center">
+              <DarkModeToggle variant="button" showLabel={true} />
+            </div>
             
             {/* Mobile PWA Install Button */}
             <button
@@ -1005,6 +948,7 @@ export function SplitsaveApp() {
             profile={profile}
             user={user}
             currencySymbol={currencySymbol}
+            goals={goals}
             monthlyProgress={monthlyProgress}
             onAddExpense={addExpense}
             onUpdate={loadData}
@@ -1113,6 +1057,7 @@ export function SplitsaveApp() {
             profile={profile}
             user={user}
             currencySymbol={currencySymbol}
+            goals={goals}
             onProgressUpdate={(data) => {
               console.log('Monthly progress update:', data)
               // In real app, this would trigger a refresh of the dashboard
@@ -1243,7 +1188,9 @@ export function SplitsaveApp() {
       )}
       
       {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
+              <ClientOnly>
+          <PWAInstallPrompt />
+        </ClientOnly>
       
       {/* Achievement Celebration */}
       <AchievementCelebration

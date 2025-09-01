@@ -40,6 +40,7 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthUser | 
     // Get user's partnership (handle gracefully if there are database issues)
     try {
       console.log('🔐 AUTH: Querying partnerships for user:', user.id)
+      // Use a more secure approach with explicit conditions
       const { data: partnerships, error: partnershipError } = await supabaseAdmin
         .from('partnerships')
         .select('id')

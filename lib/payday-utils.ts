@@ -114,7 +114,9 @@ function getLastFridayOfSpecificMonth(month: number, year: number): Date {
   
   // Calculate days to subtract to get to Friday (5)
   let daysToSubtract = (lastDayOfWeek - 5 + 7) % 7
-  if (daysToSubtract === 0) daysToSubtract = 7
+  if (daysToSubtract === 0 && lastDayOfWeek !== 5) {
+    daysToSubtract = 7
+  }
   
   const lastFriday = new Date(lastDay)
   lastFriday.setDate(lastDay.getDate() - daysToSubtract)
@@ -227,4 +229,126 @@ export function getDaysUntilPayday(paydayOption: string, customDate?: string): n
   const now = new Date()
   const diffTime = nextPayday.getTime() - now.getTime()
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+
+/**
+ * Validate payday option
+ */
+export function validatePaydayOption(paydayOption: string): { isValid: boolean; error?: string } {
+  if (!paydayOption) {
+    return { isValid: false, error: 'Payday option is required' }
+  }
+
+  // Check if it's a predefined option
+  const predefinedOption = PAYDAY_OPTIONS.find(opt => opt.value === paydayOption)
+  if (predefinedOption) {
+    return { isValid: true }
+  }
+
+  // Check if it's a valid day number (1-31)
+  const dayNumber = parseInt(paydayOption)
+  if (!isNaN(dayNumber) && dayNumber >= 1 && dayNumber <= 31) {
+    return { isValid: true }
+  }
+
+  // Check if it's a valid custom date format
+  if (paydayOption.includes('-')) {
+    const parts = paydayOption.split('-')
+    if (parts.length === 2) {
+      const day = parseInt(parts[0])
+      const month = parseInt(parts[1])
+      if (!isNaN(day) && !isNaN(month) && day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+        return { isValid: true }
+      }
+    }
+  }
+
+  return { isValid: false, error: 'Invalid payday option format' }
+}
+
+/**
+ * Get a detailed explanation of a payday option
+ */
+export function getPaydayExplanation(paydayOption: string): string {
+  switch (paydayOption) {
+    case 'last-friday':
+      return 'You will be reminded on the last Friday of each month'
+    case 'last-working-day':
+      return 'You will be reminded on the last working day (Monday-Friday) of each month'
+    case '1':
+      return 'You will be reminded on the 1st of each month'
+    case '15':
+      return 'You will be reminded on the 15th of each month'
+    case 'custom':
+      return 'You will be reminded on your custom date'
+    default:
+      const dayNumber = parseInt(paydayOption)
+      if (!isNaN(dayNumber) && dayNumber >= 1 && dayNumber <= 31) {
+        const suffix = getDayNumberSuffix(dayNumber)
+        return `You will be reminded on the ${dayNumber}${suffix} of each month`
+      }
+      return 'Custom payday schedule'
+  }
+}
+
+/**
+ * Get ordinal suffix for day numbers (1st, 2nd, 3rd, etc.)
+ */
+function getDayNumberSuffix(day: number): string {
+  if (day >= 11 && day <= 13) {
+    return 'th'
+  }
+  switch (day % 10) {
+    case 1: return 'st'
+    case 2: return 'nd'
+    case 3: return 'rd'
+    default: return 'th'
+  }
+}
+
+/**
+ * Get upcoming paydays for preview (next 3 months)
+ */
+export function getUpcomingPaydays(paydayOption: string, customDate?: string): Date[] {
+  const upcomingPaydays: Date[] = []
+  const currentDate = new Date()
+  
+  for (let i = 0; i < 3; i++) {
+    const targetMonth = currentDate.getMonth() + i
+    const targetYear = currentDate.getFullYear() + Math.floor(targetMonth / 12)
+    const adjustedMonth = targetMonth % 12
+    
+    try {
+      let payday: Date
+      
+      switch (paydayOption) {
+        case 'last-friday':
+          payday = getLastFridayOfSpecificMonth(adjustedMonth, targetYear)
+          break
+        case 'last-working-day':
+          payday = getLastWorkingDayOfSpecificMonth(adjustedMonth, targetYear)
+          break
+        default:
+          const day = parseInt(paydayOption)
+          if (!isNaN(day)) {
+            payday = new Date(targetYear, adjustedMonth, day)
+            // Adjust for months with fewer days
+            while (payday.getMonth() !== adjustedMonth) {
+              payday.setDate(payday.getDate() - 1)
+            }
+          } else {
+            continue
+          }
+      }
+      
+      // Only include future paydays or today
+      if (payday >= currentDate || payday.toDateString() === currentDate.toDateString()) {
+        upcomingPaydays.push(payday)
+      }
+    } catch (error) {
+      console.warn(`Error calculating payday for month ${adjustedMonth}:`, error)
+    }
+  }
+  
+  return upcomingPaydays.slice(0, 3) // Ensure we only return 3 paydays
 }

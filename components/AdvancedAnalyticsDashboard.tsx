@@ -734,7 +734,7 @@ export function AdvancedAnalyticsDashboard({
                       goal.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200' :
                       'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200'
                     }`}>
-                      {goal.priority.toUpperCase()}
+                      {typeof goal.priority === 'string' ? goal.priority.toUpperCase() : 'MEDIUM'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">

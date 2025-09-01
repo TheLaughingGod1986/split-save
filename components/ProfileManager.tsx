@@ -47,7 +47,7 @@ const countryCodes = [
   { code: 'NZ', name: 'New Zealand', currency: 'NZD' },
 ]
 
-import { PAYDAY_OPTIONS, calculateNextPayday, getNextPaydayDescription, isTodayPayday } from '@/lib/payday-utils'
+import { PAYDAY_OPTIONS, calculateNextPayday, getNextPaydayDescription, isTodayPayday, getPaydayExplanation, getUpcomingPaydays, validatePaydayOption } from '@/lib/payday-utils'
 
 const paydayOptions = PAYDAY_OPTIONS
 
@@ -123,6 +123,16 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
     setSuccess('')
 
     try {
+      // Validate payday option if provided
+      if (formData.payday) {
+        const paydayValidation = validatePaydayOption(formData.payday)
+        if (!paydayValidation.isValid) {
+          setError(paydayValidation.error || 'Invalid payday option')
+          setSaving(false)
+          return
+        }
+      }
+
       const updates = {
         name: formData.name,
         income: formData.income ? parseFloat(formData.income) : null,
@@ -378,8 +388,8 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
           </svg>
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profile & Income</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mt-2">
+          <h1 className="text-heading-1 text-gray-900 dark:text-white">Profile & Income</h1>
+          <p className="text-body text-gray-600 dark:text-gray-300 space-small">
             Manage your personal information and financial details
           </p>
         </div>
@@ -406,13 +416,13 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="card space-card">
+          <div className="text-center space-card">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto space-item">
               <span className="text-3xl">👤</span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Personal Information</h2>
-            <p className="text-gray-600 dark:text-gray-400">Basic details about yourself</p>
+            <h2 className="text-heading-2 text-gray-900 dark:text-white space-small">Personal Information</h2>
+            <p className="text-body text-gray-600 dark:text-gray-400">Basic details about yourself</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -520,28 +530,59 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
               
               {/* Payday Preview */}
               {formData.payday && formData.payday !== 'custom' && (
-                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-blue-600 dark:text-blue-400">📅</span>
-                    <div>
-                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                        Next Payday: {getNextPaydayDescription(formData.payday)}
-                      </p>
-                      <p className="text-xs text-blue-600 dark:text-blue-400">
-                        {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      {isTodayPayday(formData.payday) && (
-                        <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                          🎉 Today is payday!
+                <div className="mt-3 space-y-3">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-blue-600 dark:text-blue-400">📅</span>
+                      <div>
+                        <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                          Next Payday: {getNextPaydayDescription(formData.payday)}
                         </p>
-                      )}
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          {calculateNextPayday(formData.payday).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        {isTodayPayday(formData.payday) && (
+                          <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                            🎉 Today is payday!
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Payday Explanation */}
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">ℹ️ Schedule:</span> {getPaydayExplanation(formData.payday)}
+                    </p>
+                  </div>
+
+                  {/* Upcoming Paydays Preview */}
+                  {(formData.payday === 'last-friday' || formData.payday === 'last-working-day') && (
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <h4 className="text-xs font-medium text-green-800 dark:text-green-200 mb-2">
+                        📋 Next 3 Paydays:
+                      </h4>
+                      <div className="space-y-1">
+                        {getUpcomingPaydays(formData.payday).map((date, index) => (
+                          <p key={index} className="text-xs text-green-700 dark:text-green-300">
+                            {date.toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                            {index === 0 && ' (Next)'}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

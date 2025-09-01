@@ -1,9 +1,8 @@
 import React from 'react'
+import { DarkModeToggle } from './DesignSystem'
 
 interface MobileHeaderProps {
   user: any
-  isDark: boolean
-  toggleDarkMode: () => void
   onSignOut: () => void
   onPWAInstall: () => void
   isOnline: boolean
@@ -13,8 +12,6 @@ interface MobileHeaderProps {
 
 export function MobileHeader({
   user,
-  isDark,
-  toggleDarkMode,
   onSignOut,
   onPWAInstall,
   isOnline,
@@ -31,10 +28,10 @@ export function MobileHeader({
             <span className="text-xl text-white font-bold">S</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">SplitSave</h1>
+            <h1 className="text-heading-3 text-gray-900 dark:text-white">SplitSave</h1>
             <div className="flex items-center space-x-2">
               <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-caption text-gray-500 dark:text-gray-400">
                 {isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
@@ -54,13 +51,7 @@ export function MobileHeader({
           )}
 
           {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
-          </button>
+          <DarkModeToggle variant="icon" />
 
           {/* PWA Install */}
           <button
@@ -84,15 +75,15 @@ export function MobileHeader({
       <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Welcome,</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-32">
+            <span className="text-body-small text-gray-600 dark:text-gray-400">Welcome,</span>
+            <span className="text-body-small font-medium text-gray-900 dark:text-white truncate max-w-32">
               {user?.email}
             </span>
           </div>
           
           <button
             onClick={onSignOut}
-            className="text-sm text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300 transition-colors px-2 py-1 rounded"
+            className="text-body-small text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300 transition-colors px-2 py-1 rounded"
           >
             Sign out
           </button>

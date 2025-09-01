@@ -132,25 +132,25 @@ export function MonthlySalaryTracker({
     const daysUntilPartnerPayday = getDaysUntilPayday(partnerPayday)
 
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-        <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+        <h4 className="font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
           <span className="mr-2">📅</span>
           Next Payday Tracker
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Your Next Payday */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h5 className="font-semibold text-blue-800 mb-2 flex items-center">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h5 className="font-semibold text-blue-800 dark:text-blue-100 mb-2 flex items-center">
               <span className="mr-2">👤</span>
               Your Next Payday
             </h5>
             <div className="text-center">
               <div className="text-3xl mb-2">💰</div>
-              <div className="text-2xl font-bold text-blue-600 mb-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                 {daysUntilYourPayday === 0 ? 'Today!' : `In ${daysUntilYourPayday} days`}
               </div>
-              <div className="text-sm text-gray-600 mb-3">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 {yourNextPayday.toLocaleDateString('en-GB', { 
                   weekday: 'long', 
                   day: 'numeric', 
@@ -158,24 +158,24 @@ export function MonthlySalaryTracker({
                   year: 'numeric' 
                 })}
               </div>
-              <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+              <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-full">
                 {daysUntilYourPayday === 0 ? '🎉 Payday!' : '⏰ Coming soon'}
               </div>
             </div>
           </div>
           
           {/* Partner's Next Payday */}
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h5 className="font-semibold text-green-800 mb-2 flex items-center">
+          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+            <h5 className="font-semibold text-green-800 dark:text-green-100 mb-2 flex items-center">
               <span className="mr-2">👥</span>
               Partner's Next Payday
             </h5>
             <div className="text-center">
               <div className="text-3xl mb-2">💰</div>
-              <div className="text-2xl font-bold text-green-600 mb-1">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
                 {daysUntilPartnerPayday === 0 ? 'Today!' : `In ${daysUntilPartnerPayday} days`}
               </div>
-              <div className="text-sm text-gray-600 mb-3">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 {partnerNextPayday.toLocaleDateString('en-GB', { 
                   weekday: 'long', 
                   day: 'numeric', 
@@ -183,7 +183,7 @@ export function MonthlySalaryTracker({
                   year: 'numeric' 
                 })}
               </div>
-              <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+              <div className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
                 {daysUntilPartnerPayday === 0 ? '🎉 Payday!' : '⏰ Coming soon'}
               </div>
             </div>
@@ -191,10 +191,10 @@ export function MonthlySalaryTracker({
         </div>
         
         {/* Coordination Reminder */}
-        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
           <div className="flex items-center space-x-2">
-            <span className="text-yellow-600">💡</span>
-            <div className="text-sm text-yellow-800">
+            <span className="text-yellow-600 dark:text-yellow-400">💡</span>
+            <div className="text-sm text-yellow-800 dark:text-yellow-200">
               <p className="font-medium">Coordination Reminder:</p>
               <p>Plan your contributions together! When both partners get paid, complete your monthly tracking to stay accountable.</p>
             </div>
@@ -209,22 +209,22 @@ export function MonthlySalaryTracker({
     if (!monthlyData) return null
 
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h4 className="font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
           <span className="mr-2">📊</span>
           Monthly Accountability Summary
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* Your Status */}
-          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <h5 className="font-semibold text-blue-800 mb-2">You ✅</h5>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h5 className="font-semibold text-blue-800 dark:text-blue-100 mb-2">You ✅</h5>
             <div className="text-sm space-y-1">
               <p><strong>Salary:</strong> {currencySymbol}{monthlyData.actualSalary}</p>
               {monthlyData.extraIncome > 0 && (
                 <p><strong>Extra:</strong> {currencySymbol}{monthlyData.extraIncome}</p>
               )}
-              <p><strong>Status:</strong> <span className="text-green-600">All buckets: On target</span></p>
+              <p><strong>Status:</strong> <span className="text-green-600 dark:text-green-400">All buckets: On target</span></p>
             </div>
           </div>
           
@@ -239,7 +239,7 @@ export function MonthlySalaryTracker({
         </div>
 
         {/* Partner Performance Summary */}
-        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
           <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
             <span className="mr-2">🤝</span>
             Partner Performance Summary
@@ -414,7 +414,7 @@ export function MonthlySalaryTracker({
   if (!activePartnership || !profile) return null
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-700 flex items-center">
           <span className="mr-2">💰</span>
@@ -591,7 +591,7 @@ export function MonthlySalaryTracker({
             )}
 
                     {/* Comprehensive Partner Income Breakdown */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
           <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
             <span className="mr-2">🤝</span>
             Partner Income Breakdown & Proportional Split
@@ -771,8 +771,8 @@ export function MonthlySalaryTracker({
 
         {/* Integrated Financial Overview & Contributions */}
         {expectedContributions && (
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                          <h4 className="font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
               <span className="mr-2">📊</span>
               Complete Financial Overview & Monthly Contributions
             </h4>
@@ -894,7 +894,7 @@ export function MonthlySalaryTracker({
             
             {/* Combined Summary & Smart Allocation */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
+              <h5 className="font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
                 <span className="mr-2">🤝</span>
                 Combined Monthly Summary
               </h5>

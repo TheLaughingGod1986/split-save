@@ -33,7 +33,7 @@ export function ActivityFeed({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading activity feed...</p>
@@ -82,34 +82,34 @@ export function ActivityFeed({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+    <div className="card space-card">
+      <h2 className="text-heading-2 text-gray-800 space-card flex items-center">
         <span className="mr-2">📊</span>
         Activity Feed
       </h2>
 
       {/* Monthly Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 space-card">
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <h3 className="text-sm font-semibold text-blue-800 mb-2">This Month</h3>
+          <h3 className="text-heading-4 text-blue-800 space-small">This Month</h3>
           <p className="text-2xl font-bold text-blue-600">£400</p>
-          <p className="text-xs text-blue-600">Total Contributions</p>
+          <p className="text-caption text-blue-600">Total Contributions</p>
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-          <h3 className="text-sm font-semibold text-green-800 mb-2">On Target</h3>
+          <h3 className="text-heading-4 text-green-800 space-small">On Target</h3>
           <p className="text-2xl font-bold text-green-600">4/6</p>
-          <p className="text-xs text-green-600">Categories Met</p>
+          <p className="text-caption text-green-600">Categories Met</p>
         </div>
         <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-          <h3 className="text-sm font-semibold text-red-800 mb-2">Under Target</h3>
+          <h3 className="text-heading-4 text-red-800 space-small">Under Target</h3>
           <p className="text-2xl font-bold text-red-600">1/6</p>
-          <p className="text-xs text-red-600">Categories Below</p>
+          <p className="text-caption text-red-600">Categories Below</p>
         </div>
       </div>
 
       {/* Activity List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-700 mb-3">Recent Contributions</h3>
+        <h3 className="text-heading-3 text-gray-700 space-item">Recent Contributions</h3>
         
         {activities.map((activity) => (
           <div key={activity.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">

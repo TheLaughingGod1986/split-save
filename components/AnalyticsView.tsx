@@ -187,14 +187,14 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
 
       {/* Financial Health Score */}
       {financialHealth && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
-          <div className="flex items-center space-x-3 mb-4">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
+          <div className="flex items-center space-x-3 space-item">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
               <span className="text-2xl">🏥</span>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-blue-900 dark:text-blue-100">Financial Health Score</h2>
-              <p className="text-blue-700 dark:text-blue-300">Your overall financial wellness rating</p>
+              <h2 className="text-heading-2 text-blue-900 dark:text-blue-100">Financial Health Score</h2>
+              <p className="text-body text-blue-700 dark:text-blue-300">Your overall financial wellness rating</p>
             </div>
           </div>
           
@@ -244,8 +244,8 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
           </div>
           
           {/* Recommendations */}
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">💡 Recommendations</h3>
+          <div className="space-card">
+            <h3 className="text-heading-3 text-blue-900 dark:text-blue-100 space-item">💡 Recommendations</h3>
             <div className="space-y-2">
               {financialHealth.recommendations.map((rec, index) => (
                 <div key={index} className="flex items-start space-x-2">
@@ -259,8 +259,8 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
       )}
 
       {/* Monthly Trends */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">📈 Monthly Trends</h2>
+      <div className="card space-card">
+        <h2 className="text-heading-2 text-gray-900 dark:text-white space-card">📈 Monthly Trends</h2>
         
         <div className="space-y-6">
           {monthlyData.map((month, index) => (

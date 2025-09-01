@@ -9,6 +9,7 @@ interface MonthlyProgressProps {
   profile: any
   user: any
   currencySymbol: string
+  goals?: any[]
   onProgressUpdate?: (data: any) => void
 }
 
@@ -30,6 +31,7 @@ export function MonthlyProgress({
   profile,
   user,
   currencySymbol,
+  goals = [],
   onProgressUpdate
 }: MonthlyProgressProps) {
   const [currentMonth, setCurrentMonth] = useState('')
@@ -47,8 +49,7 @@ export function MonthlyProgress({
   const [actualSalary, setActualSalary] = useState(0)
   const [extraIncome, setExtraIncome] = useState(0)
   const [sharedExpensesContributed, setSharedExpensesContributed] = useState(0)
-  const [goal1Saved, setGoal1Saved] = useState(0)
-  const [goal2Saved, setGoal2Saved] = useState(0)
+  const [goalContributions, setGoalContributions] = useState<{ [key: string]: number }>({})
   const [safetyPotSaved, setSafetyPotSaved] = useState(0)
   const [notes, setNotes] = useState('')
 
@@ -63,13 +64,22 @@ export function MonthlyProgress({
       
       // Initial contributions from base salary
       const requiredSharedExpenses = disposableIncome * 0.7
-      const requiredSavings = disposableIncome * 0.2
       const requiredSafetyNet = disposableIncome * 0.1
       
       setSharedExpensesContributed(requiredSharedExpenses)
-      setGoal1Saved(requiredSavings * 0.6) // 60% of savings to goal 1
-      setGoal2Saved(requiredSavings * 0.4) // 40% of savings to goal 2
       setSafetyPotSaved(requiredSafetyNet)
+      
+      // Initialize goal contributions based on actual goals
+      const recommendations = getDynamicRecommendations(profile.income)
+      if (recommendations) {
+        const initialGoalContributions: { [key: string]: number } = {}
+        Object.keys(recommendations).forEach(key => {
+          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
+            initialGoalContributions[key] = (recommendations as any)[key]
+          }
+        })
+        setGoalContributions(initialGoalContributions)
+      }
     }
     
     const now = new Date()
@@ -89,9 +99,16 @@ export function MonthlyProgress({
       const recommendations = getDynamicRecommendations(actualSalary)
       if (recommendations) {
         setSharedExpensesContributed(recommendations.sharedExpenses)
-        setGoal1Saved(recommendations.goal1)
-        setGoal2Saved(recommendations.goal2)
         setSafetyPotSaved(recommendations.safetyPot)
+        
+        // Update goal contributions
+        const newGoalContributions: { [key: string]: number } = {}
+        Object.keys(recommendations).forEach(key => {
+          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
+            newGoalContributions[key] = (recommendations as any)[key]
+          }
+        })
+        setGoalContributions(newGoalContributions)
       }
     }
   }, [expectedSalary]) // Only run when expected salary changes, not actual salary
@@ -177,9 +194,18 @@ export function MonthlyProgress({
       const extraToSavings = extra * 0.8 // 80% to savings
       const extraToSafety = extra * 0.2 // 20% to safety net
       
-      // Add to existing amounts
-      setGoal1Saved(prev => prev + (extraToSavings * 0.6)) // 60% of extra savings to goal 1
-      setGoal2Saved(prev => prev + (extraToSavings * 0.4)) // 40% of extra savings to goal 2
+      // Add to existing amounts - distribute extra income among active goals
+      const activeGoals = goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date())
+      if (activeGoals.length > 0) {
+        const extraToGoals = extraToSavings
+        const goalAmount = extraToGoals / activeGoals.length // Distribute equally among goals
+        
+        const newGoalContributions = { ...goalContributions }
+        activeGoals.forEach(goal => {
+          newGoalContributions[goal.id] = (newGoalContributions[goal.id] || 0) + goalAmount
+        })
+        setGoalContributions(newGoalContributions)
+      }
       setSafetyPotSaved(prev => prev + extraToSafety)
     }
   }
@@ -209,15 +235,26 @@ export function MonthlyProgress({
     // FIXED: Shared expenses are based on BASE salary (profile.income), not actual salary
     const baseDisposableIncome = profile.income - (profile.personal_allowance || 0)
     
+    // Use actual goals from database instead of dummy goals
+    const activeGoals = goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date())
+    const totalGoalTarget = activeGoals.reduce((sum, goal) => sum + (goal.target_amount - goal.current_amount), 0)
+    
+    // Calculate monthly contributions needed for each goal
+    const goalContributions: { [key: string]: number } = {}
+    activeGoals.forEach(goal => {
+      const remainingAmount = goal.target_amount - goal.current_amount
+      const monthsUntilTarget = Math.max(1, Math.ceil((new Date(goal.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30)))
+      goalContributions[goal.id] = Math.round(remainingAmount / monthsUntilTarget)
+    })
+    
     // Base recommendations from BASE salary (fixed) - these are your MANUAL savings targets
-    const baseRecommendations = {
+    const baseRecommendation = {
       sharedExpenses: Math.round(baseDisposableIncome * 0.7), // FIXED: Always based on base salary
-      goal1: Math.round(baseDisposableIncome * 0.2 * 0.6),   // FIXED: Always based on base salary
-      goal2: Math.round(baseDisposableIncome * 0.2 * 0.4),   // FIXED: Always based on base salary
-      safetyPot: Math.round(baseDisposableIncome * 0.1)       // FIXED: Always based on base salary
+      safetyPot: Math.round(baseDisposableIncome * 0.1),      // FIXED: Always based on base salary
+      ...goalContributions // Add actual goal contributions
     }
     
-    return baseRecommendations
+    return baseRecommendation
   }
 
   // NEW: Get recommended savings amounts that include extra income distribution
@@ -235,9 +272,20 @@ export function MonthlyProgress({
       const extraIncome = actualSalary - profile.income
       const extraDisposable = extraIncome * 0.8 // 80% of extra goes to savings
       
-      // Add extra income distribution to savings goals and safety net
-      recommendedSavings.goal1 += Math.round(extraDisposable * 0.6)
-      recommendedSavings.goal2 += Math.round(extraDisposable * 0.4)
+      // Distribute extra income among active goals and safety pot
+      const activeGoals = goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date())
+      const totalGoalContributions = Object.entries(baseRecommendations).filter(([key]) => key !== 'sharedExpenses' && key !== 'safetyPot').reduce((sum, [, val]) => sum + val, 0)
+      
+      if (totalGoalContributions > 0) {
+        // Distribute extra income proportionally among goals
+        activeGoals.forEach(goal => {
+          const goalContribution = (baseRecommendations as any)[goal.id] || 0
+          const proportion = goalContribution / totalGoalContributions
+          const extraAmount = Math.round(extraDisposable * proportion)
+          ;(recommendedSavings as any)[goal.id] = goalContribution + extraAmount
+        })
+      }
+      
       recommendedSavings.safetyPot += Math.round(extraIncome * 0.2)
     }
     
@@ -249,22 +297,35 @@ export function MonthlyProgress({
     if (!recommendations) return null
     
     // Clear, simple targets - no confusing aspirational numbers
-    return {
-      sharedExpenses: recommendations.sharedExpenses,
-      goal1: recommendations.goal1,
-      goal2: recommendations.goal2,
-      safetyPot: recommendations.safetyPot
-    }
+    return recommendations
   }
 
   const getExtraIncomeBreakdown = (extraAmount: number) => {
     if (extraAmount <= 0) return null
     
-    return {
-      goal1: Math.round(extraAmount * 0.48), // 48% of extra to goal 1
-      goal2: Math.round(extraAmount * 0.32), // 32% of extra to goal 2
-      safetyPot: Math.round(extraAmount * 0.20) // 20% of extra to safety pot
+    const activeGoals = goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date())
+    const breakdown: { [key: string]: number } = {}
+    
+    if (activeGoals.length > 0) {
+      // Distribute 80% of extra income among goals proportionally
+      const goalAmount = extraAmount * 0.8
+      const totalGoalContributions = activeGoals.reduce((sum, goal) => {
+        const baseRecommendations = getDynamicRecommendations(profile?.income || 0)
+        return sum + ((baseRecommendations as any)?.[goal.id] || 0)
+      }, 0)
+      
+      activeGoals.forEach(goal => {
+        const baseRecommendations = getDynamicRecommendations(profile?.income || 0)
+        const goalContribution = (baseRecommendations as any)?.[goal.id] || 0
+        const proportion = totalGoalContributions > 0 ? goalContribution / totalGoalContributions : 1 / activeGoals.length
+        breakdown[goal.id] = Math.round(goalAmount * proportion)
+      })
     }
+    
+    // 20% to safety pot
+    breakdown.safetyPot = Math.round(extraAmount * 0.2)
+    
+    return breakdown
   }
 
   const getContributionStatus = (actual: number, target: number) => {
@@ -341,9 +402,16 @@ export function MonthlyProgress({
       const recommendations = getRecommendedSavings(newSalary)
       if (recommendations) {
         setSharedExpensesContributed(recommendations.sharedExpenses)
-        setGoal1Saved(recommendations.goal1)
-        setGoal2Saved(recommendations.goal2)
         setSafetyPotSaved(recommendations.safetyPot)
+        
+        // Update goal contributions with new recommendations
+        const newGoalContributions: { [key: string]: number } = {}
+        Object.keys(recommendations).forEach(key => {
+          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
+            newGoalContributions[key] = (recommendations as any)[key]
+          }
+        })
+        setGoalContributions(newGoalContributions)
       }
       
       // Show success message for extra income
@@ -365,8 +433,8 @@ export function MonthlyProgress({
         actualSalary,
         extraIncome,
         sharedExpensesContributed,
-        goal1Saved,
-        goal2Saved,
+        goal1Saved: 0, // Legacy field - will be removed
+        goal2Saved: 0, // Legacy field - will be removed
         safetyPotSaved,
         notes,
         submittedAt: new Date().toISOString()
@@ -387,8 +455,7 @@ export function MonthlyProgress({
               actualSalary,
               extraIncome,
               sharedExpensesContributed,
-              goal1Saved,
-              goal2Saved,
+              goalContributions,
               safetyPotSaved
             }
           })
@@ -436,11 +503,17 @@ export function MonthlyProgress({
     if (!recommendations) return 'pending'
     
     const sharedExpensesMet = monthlyData.sharedExpensesContributed >= recommendations.sharedExpenses
-    const goal1Met = monthlyData.goal1Saved >= recommendations.goal1
-    const goal2Met = monthlyData.goal2Saved >= recommendations.goal2
     const safetyPotMet = monthlyData.safetyPotSaved >= recommendations.safetyPot
     
-    if (sharedExpensesMet && goal1Met && goal2Met && safetyPotMet) {
+    // Check if all active goals are met
+    const activeGoals = goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date())
+    const allGoalsMet = activeGoals.every(goal => {
+      const goalContribution = goalContributions[goal.id] || 0
+      const goalTarget = (recommendations as any)[goal.id] || 0
+      return goalContribution >= goalTarget
+    })
+    
+    if (sharedExpensesMet && allGoalsMet && safetyPotMet) {
       return 'completed'
     } else if (sharedExpensesMet) {
       return 'partial'
@@ -610,11 +683,11 @@ export function MonthlyProgress({
           
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Income Section */}
-            <div id="income-reality-section" className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-              <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">💰 Income Reality</h4>
+            <div id="income-reality-section" className="card space-card">
+              <h4 className="text-heading-3 text-blue-900 dark:text-blue-100 space-item">💰 Income Reality</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  <label className="text-heading-4 text-blue-800 dark:text-blue-200 space-small">
                     Expected Salary (from profile)
                   </label>
                   <div className="px-3 py-2 bg-blue-100 dark:bg-blue-800 rounded-lg text-blue-900 dark:text-blue-100 font-medium">
@@ -622,7 +695,7 @@ export function MonthlyProgress({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  <label className="text-heading-4 text-blue-800 dark:text-blue-200 space-small">
                     Actual Salary Received
                   </label>
                   <input
@@ -639,27 +712,27 @@ export function MonthlyProgress({
                     }}
                     min={profile?.income || 0}
                     step="1"
-                    className="w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-blue-800 dark:text-white cursor-text"
+                    className="input"
                     placeholder="Enter actual salary"
                     required
                   />
-                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  <div className="text-caption text-blue-600 dark:text-blue-400 space-small">
                     Minimum: {currencySymbol}{profile?.income || 0}
                   </div>
                 </div>
               </div>
               
               {extraIncome > 0 && (
-                <div className="mt-3 p-3 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
-                  <div className="text-sm text-green-800 dark:text-green-200">
+                <div className="space-item p-3 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="text-body-small text-green-800 dark:text-green-200">
                     🎉 Extra Income: {currencySymbol}{extraIncome} (automatically distributed to savings & safety net)
                   </div>
                 </div>
               )}
               
               {actualSalary === expectedSalary && (
-                <div className="mt-3 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                <div className="space-item p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <div className="text-body-small text-blue-800 dark:text-blue-200">
                     ℹ️ Salary matches expected amount - using standard contribution targets
                   </div>
                 </div>
@@ -667,11 +740,11 @@ export function MonthlyProgress({
             </div>
 
             {/* Shared Expenses Section */}
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-              <h4 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-3">🏠 Shared Expenses</h4>
+            <div className="card space-card">
+              <h4 className="text-heading-3 text-purple-900 dark:text-purple-100 space-item">🏠 Shared Expenses</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
+                  <label className="text-heading-4 text-purple-800 dark:text-purple-200 space-small">
                     What You Need to Contribute
                   </label>
                   {getClearTargets(actualSalary) ? (
@@ -683,26 +756,26 @@ export function MonthlyProgress({
                       Enter valid salary first
                     </div>
                   )}
-                  <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                  <div className="text-caption text-purple-600 dark:text-purple-400 space-small">
                     70% of your base salary disposable income (fixed)
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
+                  <label className="text-heading-4 text-purple-800 dark:text-purple-200 space-small">
                     What You Actually Contributed
                   </label>
                   <input
                     type="number"
                     value={sharedExpensesContributed}
                     onChange={(e) => setSharedExpensesContributed(Number(e.target.value))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    className={`input ${
                       getContributionColor(getContributionStatus(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0))
                     }`}
                     placeholder="Enter amount contributed"
                     required
                   />
                   {getContributionMessage(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0, 'Shared Expenses') && (
-                    <div className={`text-xs mt-1 ${
+                    <div className={`text-caption space-small ${
                       getContributionStatus(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0) === 'close'
                         ? 'text-yellow-600 dark:text-yellow-400'
                         : 'text-red-600 dark:text-red-400'
@@ -715,87 +788,53 @@ export function MonthlyProgress({
             </div>
 
             {/* Savings Reality Section */}
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
-              <h4 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-3">🎯 What You Need to Save</h4>
+            <div className="card space-card">
+              <h4 className="text-heading-3 text-green-900 dark:text-green-100 space-item">🎯 What You Need to Save</h4>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-green-800 dark:text-green-200 mb-2">
-                      Goal 1 (Holiday)
-                    </label>
-                    {getClearTargets(actualSalary) ? (
-                      <div className="text-sm text-green-600 dark:text-green-400 mb-2">
-                        <span className="font-medium">Base Target:</span> {currencySymbol}{getClearTargets(actualSalary)?.goal1.toFixed(0) || '0'}
-                        {getRecommendedSavings(actualSalary) && getRecommendedSavings(actualSalary)!.goal1 > getClearTargets(actualSalary)!.goal1 && (
-                          <span className="ml-2 text-blue-600 dark:text-blue-400">
-                            + {currencySymbol}{getRecommendedSavings(actualSalary)!.goal1 - getClearTargets(actualSalary)!.goal1} extra income
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-red-600 dark:text-red-400 mb-2">
-                        <span className="font-medium">Target:</span> Enter valid salary first
-                      </div>
-                    )}
-                    <input
-                      type="number"
-                      value={goal1Saved}
-                      onChange={(e) => setGoal1Saved(Number(e.target.value))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        getContributionColor(getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0))
-                      }`}
-                      placeholder={`Recommended: ${currencySymbol}${getRecommendedSavings(actualSalary)?.goal1.toFixed(0) || getClearTargets(actualSalary)?.goal1.toFixed(0) || '0'}`}
-                      required
-                    />
-                    {getContributionMessage(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0, 'Goal 1') && (
-                      <div className={`text-xs mt-1 ${
-                        getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'close'
-                          ? 'text-yellow-600 dark:text-yellow-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {getContributionMessage(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0, 'Goal 1')}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-green-800 dark:text-green-200 mb-2">
-                      Goal 2 (House)
-                    </label>
-                    {getClearTargets(actualSalary) ? (
-                      <div className="text-sm text-green-600 dark:text-green-400 mb-2">
-                        <span className="font-medium">Base Target:</span> {currencySymbol}{getClearTargets(actualSalary)?.goal2.toFixed(0) || '0'}
-                        {getRecommendedSavings(actualSalary) && getRecommendedSavings(actualSalary)!.goal2 > getClearTargets(actualSalary)!.goal2 && (
-                          <span className="ml-2 text-blue-600 dark:text-blue-400">
-                            + {currencySymbol}{getRecommendedSavings(actualSalary)!.goal2 - getClearTargets(actualSalary)!.goal2} extra income
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-red-600 dark:text-red-400 mb-2">
-                        <span className="font-medium">Target:</span> Enter valid salary first
-                      </div>
-                    )}
-                    <input
-                      type="number"
-                      value={goal2Saved}
-                      onChange={(e) => setGoal2Saved(Number(e.target.value))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        getContributionColor(getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0))
-                      }`}
-                      placeholder={`Recommended: ${currencySymbol}${getRecommendedSavings(actualSalary)?.goal2.toFixed(0) || getClearTargets(actualSalary)?.goal2.toFixed(0) || '0'}`}
-                      required
-                    />
-                    {getContributionMessage(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0, 'Goal 2') && (
-                      <div className={`text-xs mt-1 ${
-                        getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'close'
-                          ? 'text-yellow-600 dark:text-yellow-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {getContributionMessage(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0, 'Goal 2')}
-                      </div>
-                    )}
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date()).map((goal) => (
+                    <div key={goal.id}>
+                      <label className="text-heading-4 text-green-800 dark:text-green-200 space-small">
+                        {goal.name}
+                      </label>
+                      {getClearTargets(actualSalary) ? (
+                        <div className="text-body-small text-green-600 dark:text-green-400 space-small">
+                          <span className="font-medium">Base Target:</span> {currencySymbol}{(getClearTargets(actualSalary) as any)?.[goal.id]?.toFixed(0) || '0'}
+                                                      {getRecommendedSavings(actualSalary) && (getRecommendedSavings(actualSalary) as any)![goal.id] > (getClearTargets(actualSalary) as any)![goal.id] && (
+                            <span className="ml-2 text-blue-600 dark:text-blue-400">
+                              + {currencySymbol}{(getRecommendedSavings(actualSalary) as any)![goal.id] - (getClearTargets(actualSalary) as any)![goal.id]} extra income
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-body-small text-red-600 dark:text-red-400 space-small">
+                          <span className="font-medium">Target:</span> Enter valid salary first
+                        </div>
+                      )}
+                      <input
+                        type="number"
+                        value={goalContributions[goal.id] || 0}
+                        onChange={(e) => setGoalContributions(prev => ({
+                          ...prev,
+                          [goal.id]: Number(e.target.value)
+                        }))}
+                        className={`input ${
+                          getContributionColor(getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0))
+                        }`}
+                        placeholder={`Recommended: ${currencySymbol}${(getRecommendedSavings(actualSalary) as any)?.[goal.id]?.toFixed(0) || (getClearTargets(actualSalary) as any)?.[goal.id]?.toFixed(0) || '0'}`}
+                        required
+                      />
+                      {getContributionMessage(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0, goal.name) && (
+                        <div className={`text-caption space-small ${
+                          getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'close'
+                            ? 'text-yellow-600 dark:text-yellow-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {getContributionMessage(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0, goal.name)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                   
                   <div>
                     <label className="block text-sm font-medium text-green-800 dark:text-green-200 mb-2">
@@ -839,23 +878,24 @@ export function MonthlyProgress({
                 
                 {/* Clear Extra Income Distribution */}
                 {extraIncome > 0 && (
-                  <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <div className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                  <div className="space-item p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <div className="text-body-small text-blue-800 dark:text-blue-200 space-small">
                       💰 <strong>Extra Income Distribution:</strong> Your extra {currencySymbol}{extraIncome} is automatically added to your savings:
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-xs">
-                      <div className="text-center">
-                        <div className="font-medium text-blue-900 dark:text-blue-100">
-                          +{currencySymbol}{getExtraIncomeBreakdown(extraIncome)?.goal1.toFixed(0) || '0'}
-                        </div>
-                        <div className="text-blue-700 dark:text-blue-300">Goal 1 (48%)</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium text-blue-900 dark:text-blue-100">
-                          +{currencySymbol}{getExtraIncomeBreakdown(extraIncome)?.goal2.toFixed(0) || '0'}
-                        </div>
-                        <div className="text-blue-700 dark:text-blue-300">Goal 2 (32%)</div>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-caption">
+                      {goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date()).map((goal) => {
+                        const breakdown = getExtraIncomeBreakdown(extraIncome)
+                        const goalAmount = breakdown?.[goal.id] || 0
+                        const percentage = extraIncome > 0 ? Math.round((goalAmount / extraIncome) * 100) : 0
+                        return (
+                          <div key={goal.id} className="text-center">
+                            <div className="font-medium text-blue-900 dark:text-blue-100">
+                              +{currencySymbol}{goalAmount.toFixed(0)}
+                            </div>
+                            <div className="text-blue-700 dark:text-blue-300">{goal.name} ({percentage}%)</div>
+                          </div>
+                        )
+                      })}
                       <div className="text-center">
                         <div className="font-medium text-blue-900 dark:text-blue-100">
                           +{currencySymbol}{getExtraIncomeBreakdown(extraIncome)?.safetyPot.toFixed(0) || '0'}
@@ -863,18 +903,18 @@ export function MonthlyProgress({
                         <div className="text-blue-700 dark:text-blue-300">Safety Pot (20%)</div>
                       </div>
                     </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
+                    <div className="text-caption text-blue-600 dark:text-blue-400 space-small text-center">
                       💡 <strong>Note:</strong> You only need to manually save the base amounts above. Extra income is automatically distributed!
                     </div>
                   </div>
                 )}
 
                 {/* Accountability Summary */}
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <div className="space-item p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <h5 className="text-heading-4 text-gray-900 dark:text-white space-item flex items-center">
                     📊 <span className="ml-2">Monthly Accountability Summary</span>
                   </h5>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  <div className="text-caption text-gray-500 dark:text-gray-400 space-item">
                     💡 Status is based on your base targets only. Extra income is automatically distributed as a bonus!
                   </div>
                   
@@ -899,45 +939,27 @@ export function MonthlyProgress({
                       </div>
                     </div>
 
-                    {/* Goal 1 Status */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Goal 1 (Holiday):</span>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'over-achieved'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-                            : getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'on-track'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                            : getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'close'
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-                        }`}>
-                          {getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'over-achieved' ? '🏆 Over-Achieved!' : 
-                           getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'on-track' ? '✅ On Track' : 
-                           getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0) === 'close' ? '⚠️ Close' : '❌ Under Target'}
-                        </span>
+                    {/* Dynamic Goal Status */}
+                    {goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date()).map((goal) => (
+                      <div key={goal.id} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{goal.name}:</span>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'over-achieved'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
+                              : getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'on-track'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                                                              : getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'close'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                          }`}>
+                            {getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'over-achieved' ? '🏆 Over-Achieved!' : 
+                             getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'on-track' ? '✅ On Track' : 
+                             getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'close' ? '⚠️ Close' : '❌ Under Target'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Goal 2 Status */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Goal 2 (House):</span>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'over-achieved'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-                            : getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'on-track'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                            : getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'close'
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-                        }`}>
-                          {getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'over-achieved' ? '🏆 Over-Achieved!' : 
-                           getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'on-track' ? '✅ On Track' : 
-                           getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0) === 'close' ? '⚠️ Close' : '❌ Under Target'}
-                        </span>
-                      </div>
-                    </div>
+                    ))}
 
                     {/* Safety Pot Status */}
                     <div className="flex items-center justify-between">
@@ -962,10 +984,12 @@ export function MonthlyProgress({
 
                   {/* Over-Achievement Celebration */}
                   {(() => {
+                    const activeGoals = goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date())
                     const overAchievedCount = [
                       getContributionStatus(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0),
-                      getContributionStatus(goal1Saved, getClearTargets(actualSalary)?.goal1 || 0),
-                      getContributionStatus(goal2Saved, getClearTargets(actualSalary)?.goal2 || 0),
+                      ...activeGoals.map(goal => 
+                        getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0)
+                      ),
                       getContributionStatus(safetyPotSaved, getClearTargets(actualSalary)?.safetyPot || 0)
                     ].filter(status => status === 'over-achieved').length
                     

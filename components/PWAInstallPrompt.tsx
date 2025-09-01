@@ -19,6 +19,11 @@ export function PWAInstallPrompt() {
   const [hasBeenDismissed, setHasBeenDismissed] = useState(false)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return
+    }
+
     // Check if already installed
     const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
                        (window.navigator as any).standalone === true
@@ -62,7 +67,7 @@ export function PWAInstallPrompt() {
       window.removeEventListener('appinstalled', handleAppInstalled)
       clearTimeout(timer)
     }
-  }, [deferredPrompt])
+  }, []) // Remove deferredPrompt from dependencies to prevent infinite loop
 
   const handleInstall = async () => {
     if (!deferredPrompt) {

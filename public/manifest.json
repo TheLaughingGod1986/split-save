@@ -1,15 +1,16 @@
 {
-  "name": "SplitSave - Partner Financial Management",
+  "name": "SplitSave - Smart Financial Management for Couples",
   "short_name": "SplitSave",
-  "description": "Manage shared finances with your partner - track expenses, set goals, and achieve financial success together",
+  "description": "SplitSave helps couples manage shared finances with smart expense splitting, goal tracking, and financial transparency.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "theme_color": "#7c3aed",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["finance", "productivity", "lifestyle"],
+  "dir": "ltr",
+  "categories": ["finance", "productivity", "utilities"],
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -22,6 +23,28 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile view of SplitSave dashboard"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop view of SplitSave dashboard"
     }
   ],
   "shortcuts": [
@@ -29,43 +52,80 @@
       "name": "Add Expense",
       "short_name": "Expense",
       "description": "Quickly add a new expense",
-      "url": "/?view=expenses&action=add",
+      "url": "/?action=add-expense",
       "icons": [
         {
-          "src": "/icons/expense-shortcut.png",
-          "sizes": "96x96"
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
         }
       ]
     },
     {
-      "name": "Track Progress",
-      "short_name": "Progress",
-      "description": "Check your financial progress",
-      "url": "/?view=monthly-progress",
+      "name": "View Goals",
+      "short_name": "Goals",
+      "description": "Check your savings goals",
+      "url": "/?action=goals",
       "icons": [
         {
-          "src": "/icons/progress-shortcut.png",
-          "sizes": "96x96"
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
         }
       ]
     },
     {
-      "name": "Partner Chat",
-      "short_name": "Chat",
-      "description": "Message your partner",
-      "url": "/?view=partner-collaboration&tab=communication",
+      "name": "Partner Activity",
+      "short_name": "Activity",
+      "description": "See recent partner activity",
+      "url": "/?action=activity",
       "icons": [
         {
-          "src": "/icons/chat-shortcut.png",
-          "sizes": "96x96"
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
         }
       ]
     }
   ],
-
   "related_applications": [],
   "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400
-  }
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+split",
+      "url": "/?action=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/json": [".json"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "permissions": [
+    "notifications"
+  ],
+  "features": [
+    "Cross Platform",
+    "fast",
+    "simple",
+    "secure"
+  ]
 }
