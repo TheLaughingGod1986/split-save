@@ -135,7 +135,7 @@ function getLastWorkingDayOfMonth(date: Date): Date {
   const month = date.getMonth()
   const lastDay = new Date(year, month + 1, 0)
   
-  let workingDay = new Date(lastDay)
+  const workingDay = new Date(lastDay)
   while (workingDay.getDay() === 0 || workingDay.getDay() === 6) {
     workingDay.setDate(workingDay.getDate() - 1)
   }
@@ -151,7 +151,7 @@ function getLastFridayOfMonth(date: Date): Date {
   const month = date.getMonth()
   const lastDay = new Date(year, month + 1, 0)
   
-  let friday = new Date(lastDay)
+  const friday = new Date(lastDay)
   while (friday.getDay() !== 5) {
     friday.setDate(friday.getDate() - 1)
   }

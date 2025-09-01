@@ -315,7 +315,7 @@ export function EnhancedDashboard() {
                   Excellent
                 </div>
                 <div className="text-sm text-green-700 dark:text-green-300">
-                  You're on track with your financial goals
+                  You&apos;re on track with your financial goals
                 </div>
               </div>
               
@@ -356,7 +356,7 @@ export function EnhancedDashboard() {
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <span className="text-4xl block mb-2">🎉</span>
                   <p>No recommendations needed!</p>
-                  <p className="text-sm">You're doing great with your finances.</p>
+                  <p className="text-sm">You&apos;re doing great with your finances.</p>
                 </div>
               )}
             </div>

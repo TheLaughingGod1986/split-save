@@ -57,6 +57,7 @@ export function AccountHub({
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'onboarding', label: 'Onboarding', icon: '🚀' },
     { id: 'security', label: 'Security', icon: '🔒' },
     { id: 'data', label: 'Data & Export', icon: '📊' },
     { id: 'preferences', label: 'Notifications', icon: '🔔' }
@@ -69,6 +70,85 @@ export function AccountHub({
         onUpdate()
       }}
     />
+  )
+
+  const renderOnboarding = () => (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-4">
+          🚀 Complete Your SplitSave Setup
+        </h3>
+        <p className="text-blue-800 dark:text-blue-200 mb-4">
+          Get the most out of SplitSave by completing your profile and setting up your first goals.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+            <div className="text-2xl mb-2">👤</div>
+            <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Profile Setup</h4>
+            <p className="text-sm text-blue-600 dark:text-blue-300">
+              {profile?.income && profile?.payday ? '✅ Complete' : '⚠️ Incomplete'}
+            </p>
+            {profile?.income && profile?.payday ? (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                Your profile is set up and ready to go!
+              </p>
+            ) : (
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                Add your income and payday to get started
+              </p>
+            )}
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+            <div className="text-2xl mb-2">🎯</div>
+            <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">First Goal</h4>
+            <p className="text-sm text-blue-600 dark:text-blue-300">
+              {goals && goals.length > 0 ? '✅ Complete' : '⚠️ Incomplete'}
+            </p>
+            {goals && goals.length > 0 ? (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                You have {goals.length} goal(s) set up!
+              </p>
+            ) : (
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                Create your first savings goal
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3">Quick Actions</h4>
+          <div className="flex flex-wrap gap-3">
+            {(!profile?.income || !profile?.payday) && (
+              <button
+                onClick={() => setActiveTab('profile')}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                Complete Profile
+              </button>
+            )}
+            {(!goals || goals.length === 0) && (
+              <button
+                onClick={() => {
+                  // This would navigate to goals hub
+                  toast.info('Navigate to Goals tab to create your first goal')
+                }}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+              >
+                Create First Goal
+              </button>
+            )}
+            {profile?.income && profile?.payday && goals && goals.length > 0 && (
+              <div className="text-green-600 dark:text-green-400 text-sm">
+                🎉 You're all set up! Start using SplitSave to track your finances.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 
   const renderSecurity = () => (

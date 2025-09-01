@@ -202,7 +202,7 @@ export function DashboardContributionSummary({
                 <h6 className="font-medium text-green-800 mb-2">Personal Allowance</h6>
                 <div className="text-center">
                   <p className="text-red-600 font-medium text-lg">-{currencySymbol}400</p>
-                  <p className="text-xs text-green-600">Partner's monthly personal spending money</p>
+                  <p className="text-xs text-green-600">Partner&apos;s monthly personal spending money</p>
                 </div>
               </div>
               
@@ -308,7 +308,7 @@ export function DashboardContributionSummary({
 
               {/* Combined Summary */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">💡 This month's total:</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">💡 This month&apos;s total:</p>
                       <div className="grid grid-cols-3 gap-2 text-xs text-gray-700 dark:text-gray-300">
             <div className="text-center">
               <p className="font-semibold">{currencySymbol}{totalMonthlyExpenses.toFixed(0)}</p>

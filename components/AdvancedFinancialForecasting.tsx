@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   FinancialForecast, 
@@ -26,11 +26,26 @@ export default function AdvancedFinancialForecasting({ userId }: AdvancedFinanci
     modifications: [] as ScenarioModification[]
   })
 
-  useEffect(() => {
-    loadData()
-  }, [userId])
 
-  const loadData = async () => {
+
+  const loadForecast = useCallback(async () => {
+    try {
+      const response = await fetch('/api/forecasting/generate-forecast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeframe: selectedTimeframe })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setForecast(data.forecast)
+      }
+    } catch (error) {
+      console.error('Error loading forecast:', error)
+    }
+  }, [selectedTimeframe])
+
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       // Load forecast
@@ -46,24 +61,7 @@ export default function AdvancedFinancialForecasting({ userId }: AdvancedFinanci
     } finally {
       setLoading(false)
     }
-  }
-
-  const loadForecast = async () => {
-    try {
-      const response = await fetch('/api/forecasting/generate-forecast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timeframe: selectedTimeframe })
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setForecast(data.forecast)
-      }
-    } catch (error) {
-      console.error('Error loading forecast:', error)
-    }
-  }
+  }, [loadForecast])
 
   const loadScenarios = async () => {
     try {
@@ -174,6 +172,11 @@ export default function AdvancedFinancialForecasting({ userId }: AdvancedFinanci
       day: 'numeric'
     })
   }
+
+  // Load data when component mounts or dependencies change
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   if (loading && !forecast) {
     return (

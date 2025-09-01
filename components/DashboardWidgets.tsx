@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/lib/toast'
 
@@ -37,120 +37,7 @@ export function DashboardWidgets({
   const [selectedWidget, setSelectedWidget] = useState<WidgetData | null>(null)
   const [widgetLayout, setWidgetLayout] = useState<'grid' | 'list'>('grid')
 
-  useEffect(() => {
-    generateWidgets()
-  }, [goals, expenses, monthlyProgress, partnerships, profile, achievements])
 
-  const generateWidgets = () => {
-    const newWidgets: WidgetData[] = []
-
-    // Goal Progress Widget
-    if (goals.length > 0) {
-      newWidgets.push({
-        id: 'goal-progress',
-        type: 'goal-progress',
-        title: '🎯 Goal Progress',
-        description: 'Track your savings goals',
-        data: {
-          goals: goals.filter(g => !g.completed),
-          totalProgress: calculateTotalGoalProgress(goals),
-          nextMilestone: findNextMilestone(goals)
-        },
-        priority: 1,
-        size: 'large'
-      })
-    }
-
-    // Safety Pot Widget
-    if (monthlyProgress) {
-      newWidgets.push({
-        id: 'safety-pot',
-        type: 'safety-pot',
-        title: '🛡️ Safety Pot',
-        description: 'Emergency fund status',
-        data: {
-          currentAmount: monthlyProgress.safetyPotAmount || 0,
-          targetAmount: calculateSafetyPotTarget(expenses, profile),
-          monthsCovered: calculateMonthsCovered(monthlyProgress.safetyPotAmount, expenses),
-          status: getSafetyPotStatus(monthlyProgress.safetyPotAmount, expenses)
-        },
-        priority: 2,
-        size: 'medium'
-      })
-    }
-
-    // Partner Activity Widget
-    if (partnerships.length > 0) {
-      newWidgets.push({
-        id: 'partner-activity',
-        type: 'partner-activity',
-        title: '👥 Partner Activity',
-        description: 'Recent partner actions',
-        data: {
-          recentActivities: generatePartnerActivities(expenses, goals),
-          partnerName: 'Your Partner', // In real app, get from partnership data
-          lastContribution: getLastPartnerContribution(expenses)
-        },
-        priority: 3,
-        size: 'medium'
-      })
-    }
-
-    // Expense Chart Widget
-    if (expenses.length > 0) {
-      newWidgets.push({
-        id: 'expense-chart',
-        type: 'expense-chart',
-        title: '📊 Expense Overview',
-        description: 'Monthly expense breakdown',
-        data: {
-          monthlyExpenses: calculateMonthlyExpenses(expenses),
-          categoryBreakdown: calculateCategoryBreakdown(expenses),
-          trend: calculateExpenseTrend(expenses)
-        },
-        priority: 4,
-        size: 'large'
-      })
-    }
-
-    // Savings Forecast Widget
-    if (goals.length > 0 && monthlyProgress) {
-      newWidgets.push({
-        id: 'savings-forecast',
-        type: 'savings-forecast',
-        title: '🔮 Savings Forecast',
-        description: 'Predict your savings trajectory',
-        data: {
-          forecast: generateSavingsForecast(goals, monthlyProgress, profile),
-          projectedCompletion: calculateProjectedCompletion(goals, monthlyProgress)
-        },
-        priority: 5,
-        size: 'medium'
-      })
-    }
-
-    // Quick Stats Widget
-    newWidgets.push({
-      id: 'quick-stats',
-      type: 'quick-stats',
-      title: '⚡ Quick Stats',
-      description: 'Key financial metrics',
-      data: {
-        totalSaved: monthlyProgress?.totalContributed || 0,
-        monthlyAverage: calculateMonthlyAverage(expenses),
-        goalCount: goals.length,
-        achievementCount: achievements.length,
-        streakDays: calculateStreakDays(monthlyProgress)
-      },
-      priority: 6,
-      size: 'small'
-    })
-
-    // Sort by priority
-    newWidgets.sort((a, b) => a.priority - b.priority)
-    setWidgets(newWidgets)
-    setLoading(false)
-  }
 
   const calculateTotalGoalProgress = (goals: any[]): number => {
     if (goals.length === 0) return 0
@@ -186,15 +73,15 @@ export function DashboardWidgets({
     return monthlyExpenses > 0 ? Math.round(safetyPotAmount / monthlyExpenses) : 0
   }
 
-  const getSafetyPotStatus = (safetyPotAmount: number, expenses: any[]): 'excellent' | 'good' | 'warning' | 'critical' => {
+  const getSafetyPotStatus = useCallback((safetyPotAmount: number, expenses: any[]): 'excellent' | 'good' | 'warning' | 'critical' => {
     const monthsCovered = calculateMonthsCovered(safetyPotAmount, expenses)
     if (monthsCovered >= 6) return 'excellent'
     if (monthsCovered >= 3) return 'good'
     if (monthsCovered >= 1) return 'warning'
     return 'critical'
-  }
+  }, [])
 
-  const generatePartnerActivities = (expenses: any[], goals: any[]): any[] => {
+  const generatePartnerActivities = useCallback((expenses: any[], goals: any[]): any[] => {
     const activities = []
     
     // Recent expenses
@@ -222,13 +109,13 @@ export function DashboardWidgets({
     return [...recentExpenses, ...recentGoals]
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, 5)
-  }
+  }, [profile?.user_id])
 
-  const getLastPartnerContribution = (expenses: any[]): any => {
+  const getLastPartnerContribution = useCallback((expenses: any[]): any => {
     return expenses
       .filter(e => e.added_by_user_id !== profile?.user_id)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-  }
+  }, [profile?.user_id])
 
   const calculateMonthlyExpenses = (expenses: any[]): any[] => {
     const monthlyData: { [key: string]: number } = {}
@@ -248,7 +135,7 @@ export function DashboardWidgets({
     return Object.entries(categories).map(([category, amount]) => ({ category, amount }))
   }
 
-  const calculateExpenseTrend = (expenses: any[]): 'increasing' | 'decreasing' | 'stable' => {
+  const calculateExpenseTrend = useCallback((expenses: any[]): 'increasing' | 'decreasing' | 'stable' => {
     const monthlyData = calculateMonthlyExpenses(expenses)
     if (monthlyData.length < 2) return 'stable'
     
@@ -259,7 +146,7 @@ export function DashboardWidgets({
     if (percentageChange > 10) return 'increasing'
     if (percentageChange < -10) return 'decreasing'
     return 'stable'
-  }
+  }, [])
 
   const generateSavingsForecast = (goals: any[], monthlyProgress: any, profile: any): any => {
     const averageMonthlyContribution = monthlyProgress?.totalContributed / 12 || profile?.income * 0.1
@@ -297,6 +184,126 @@ export function DashboardWidgets({
     // This would be calculated from actual contribution data
     return monthlyProgress?.streakDays || 0
   }
+
+  const generateWidgets = useCallback(() => {
+    if (!profile || !goals || !expenses || !monthlyProgress) return
+
+    const widgets: WidgetData[] = []
+
+    // Goal Progress Widget
+    const totalProgress = calculateTotalGoalProgress(goals)
+    const nextMilestone = findNextMilestone(goals)
+    widgets.push({
+      id: 'goal-progress',
+      type: 'goal-progress',
+      title: 'Goal Progress',
+      description: 'Track your savings goals',
+      data: {
+        totalProgress,
+        nextMilestone,
+        activeGoals: goals.filter(g => !g.completed).length,
+        completedGoals: goals.filter(g => g.completed).length
+      },
+      priority: 1,
+      size: 'medium'
+    })
+
+    // Safety Pot Widget
+    const safetyPotTarget = calculateSafetyPotTarget(expenses, profile)
+    const safetyPotStatus = getSafetyPotStatus(profile.safety_pot_amount || 0, expenses)
+    const monthsCovered = calculateMonthsCovered(profile.safety_pot_amount || 0, expenses)
+    widgets.push({
+      id: 'safety-pot',
+      type: 'safety-pot',
+      title: 'Safety Pot',
+      description: 'Emergency fund status',
+      data: {
+        currentAmount: profile.safety_pot_amount || 0,
+        targetAmount: safetyPotTarget,
+        status: safetyPotStatus,
+        monthsCovered
+      },
+      priority: 2,
+      size: 'medium'
+    })
+
+    // Partner Activity Widget
+    const partnerActivities = generatePartnerActivities(expenses, goals)
+    const lastPartnerContribution = getLastPartnerContribution(expenses)
+    widgets.push({
+      id: 'partner-activity',
+      type: 'partner-activity',
+      title: 'Partner Activity',
+      description: 'Recent partner contributions',
+      data: {
+        activities: partnerActivities,
+        lastContribution: lastPartnerContribution,
+        partnerName: profile.partner_name || 'Partner'
+      },
+      priority: 3,
+      size: 'large'
+    })
+
+    // Expense Chart Widget
+    const monthlyExpenses = calculateMonthlyExpenses(expenses)
+    const categoryBreakdown = calculateCategoryBreakdown(expenses)
+    const expenseTrend = calculateExpenseTrend(expenses)
+    widgets.push({
+      id: 'expense-chart',
+      type: 'expense-chart',
+      title: 'Expense Trends',
+      description: 'Monthly spending analysis',
+      data: {
+        monthlyData: monthlyExpenses,
+        categoryData: categoryBreakdown,
+        trend: expenseTrend,
+        averageMonthly: calculateMonthlyAverage(expenses)
+      },
+      priority: 4,
+      size: 'large'
+    })
+
+    // Savings Forecast Widget
+    const savingsForecast = generateSavingsForecast(goals, monthlyProgress, profile)
+    const projectedCompletion = calculateProjectedCompletion(goals, monthlyProgress)
+    widgets.push({
+      id: 'savings-forecast',
+      type: 'savings-forecast',
+      title: 'Savings Forecast',
+      description: 'Projected goal completion',
+      data: {
+        forecast: savingsForecast,
+        projectedCompletion,
+        monthlyContribution: monthlyProgress?.totalContributed || 0
+      },
+      priority: 5,
+      size: 'medium'
+    })
+
+    // Quick Stats Widget
+    const streakDays = calculateStreakDays(monthlyProgress)
+    widgets.push({
+      id: 'quick-stats',
+      type: 'quick-stats',
+      title: 'Quick Stats',
+      description: 'Key financial metrics',
+      data: {
+        totalSavings: goals.reduce((sum, goal) => sum + goal.current_amount, 0),
+        monthlyContribution: monthlyProgress?.totalContributed || 0,
+        streakDays,
+        totalExpenses: expenses.reduce((sum, expense) => sum + expense.amount, 0)
+      },
+      priority: 6,
+      size: 'small'
+    })
+
+    setWidgets(widgets)
+  }, [profile, goals, expenses, monthlyProgress, getSafetyPotStatus, generatePartnerActivities, getLastPartnerContribution, calculateExpenseTrend])
+
+  // Load widgets when component mounts or dependencies change
+  useEffect(() => {
+    generateWidgets()
+  }, [generateWidgets])
 
   const renderWidget = (widget: WidgetData) => {
     switch (widget.type) {
@@ -606,30 +613,30 @@ function QuickStatsWidget({ data }: { data: any }) {
       <div className="grid grid-cols-2 gap-4">
         <div className="text-center">
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            £{data.totalSaved.toFixed(0)}
+            £{data.totalSavings.toFixed(0)}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Total Saved</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Savings</p>
         </div>
         
         <div className="text-center">
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            £{data.monthlyAverage.toFixed(0)}
+            £{data.monthlyContribution.toFixed(0)}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Monthly Avg</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Monthly Contribution</p>
         </div>
         
         <div className="text-center">
           <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {data.goalCount}
+            {data.streakDays}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Active Goals</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Streak Days</p>
         </div>
         
         <div className="text-center">
           <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-            {data.streakDays}
+            £{data.totalExpenses.toFixed(0)}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Streak Days</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Expenses</p>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { notificationSystem, type Notification, type NotificationPreferences } from '@/lib/notification-system'
 import { toast } from '@/lib/toast'
@@ -18,14 +18,7 @@ export function NotificationCenter({ userId, isOpen, onClose }: NotificationCent
   const [activeTab, setActiveTab] = useState<'notifications' | 'preferences'>('notifications')
   const [unreadCount, setUnreadCount] = useState(0)
 
-  useEffect(() => {
-    if (isOpen && userId) {
-      loadNotifications()
-      loadPreferences()
-    }
-  }, [isOpen, userId])
-
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true)
       const userNotifications = await notificationSystem.getNotifications(userId)
@@ -37,9 +30,9 @@ export function NotificationCenter({ userId, isOpen, onClose }: NotificationCent
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
 
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     // In a real app, this would load from database
     // For now, we'll use default preferences
     const defaultPreferences: NotificationPreferences = {
@@ -64,7 +57,15 @@ export function NotificationCenter({ userId, isOpen, onClose }: NotificationCent
       updatedAt: new Date()
     }
     setPreferences(defaultPreferences)
-  }
+  }, [userId])
+
+  // Load notifications and preferences when component opens
+  useEffect(() => {
+    if (isOpen && userId) {
+      loadNotifications()
+      loadPreferences()
+    }
+  }, [isOpen, userId, loadNotifications, loadPreferences])
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

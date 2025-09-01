@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { notificationSystem } from '@/lib/notification-system'
 import { NotificationCenter } from './NotificationCenter'
@@ -16,28 +16,7 @@ export function NotificationBell({ userId, className = '' }: NotificationBellPro
   const [isInitialized, setIsInitialized] = useState(false)
   const [isClicked, setIsClicked] = useState(false)
 
-  useEffect(() => {
-    if (userId && !isInitialized) {
-      initializeNotifications()
-    }
-  }, [userId, isInitialized])
-
-  const initializeNotifications = async () => {
-    try {
-      await notificationSystem.initialize(userId)
-      setIsInitialized(true)
-      updateUnreadCount()
-      
-      // Set up periodic updates
-      const interval = setInterval(updateUnreadCount, 30000) // Check every 30 seconds
-      
-      return () => clearInterval(interval)
-    } catch (error) {
-      console.error('Failed to initialize notifications:', error)
-    }
-  }
-
-  const updateUnreadCount = () => {
+  const updateUnreadCount = useCallback(() => {
     if (userId) {
       const count = notificationSystem.getUnreadCount(userId)
       console.log('🔔 Notification count updated:', count, 'for user:', userId)
@@ -63,7 +42,29 @@ export function NotificationBell({ userId, className = '' }: NotificationBellPro
         setUnreadCount(count)
       }
     }
-  }
+  }, [userId, isInitialized])
+
+  const initializeNotifications = useCallback(async () => {
+    try {
+      await notificationSystem.initialize(userId)
+      setIsInitialized(true)
+      updateUnreadCount()
+      
+      // Set up periodic updates
+      const interval = setInterval(updateUnreadCount, 30000) // Check every 30 seconds
+      
+      return () => clearInterval(interval)
+    } catch (error) {
+      console.error('Failed to initialize notifications:', error)
+    }
+  }, [userId, updateUnreadCount])
+
+  // Initialize notifications when component mounts
+  useEffect(() => {
+    if (userId && !isInitialized) {
+      initializeNotifications()
+    }
+  }, [userId, isInitialized, initializeNotifications])
 
   const handleBellClick = (e: React.MouseEvent) => {
     e.preventDefault()

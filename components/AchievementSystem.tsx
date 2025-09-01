@@ -366,7 +366,7 @@ export function AchievementSystem() {
             Keep Going!
           </h3>
           <p className="text-blue-700 dark:text-blue-300">
-            You're making great progress! {summary.totalAchievements - summary.unlockedAchievements} more achievements to unlock.
+            You&apos;re making great progress! {summary.totalAchievements - summary.unlockedAchievements} more achievements to unlock.
           </p>
         </div>
       )}

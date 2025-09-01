@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 
@@ -717,20 +717,20 @@ export function OverviewHub({
 
       {/* Partnership Status */}
       {partnerships.length === 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
                 👥 Connect with Your Partner
               </h3>
-              <p className="text-blue-700 text-sm mb-3">
+              <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
                 Invite your partner to start sharing expenses and saving together.
               </p>
             </div>
           </div>
           <button
             onClick={onNavigateToPartnerships}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
             Send Invitation
           </button>

@@ -115,7 +115,7 @@ export function GoalContributionForm({
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-green-800 dark:text-green-200 font-medium">
-              <strong>Add Contribution to "{goal.name}"</strong>
+              <strong>Add Contribution to &quot;{goal.name}&quot;</strong>
             </h4>
             <button
               onClick={handleCancel}

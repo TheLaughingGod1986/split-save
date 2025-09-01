@@ -93,7 +93,7 @@ export function MonthlyContributionSummary({
                 <div className="text-center py-8">
                   <div className="text-4xl mb-4">⚠️</div>
                   <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Insufficient Disposable Income</h3>
-                  <p className="text-gray-500 dark:text-gray-400">After personal allowances, there's not enough income for shared expenses</p>
+                  <p className="text-gray-500 dark:text-gray-400">After personal allowances, there&apos;s not enough income for shared expenses</p>
                 </div>
               </div>
             )
@@ -135,7 +135,7 @@ export function MonthlyContributionSummary({
                     <p className="text-xs text-gray-500">({(userShare * 100).toFixed(1)}% of disposable)</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-gray-600">Partner's Monthly Income</p>
+                    <p className="text-sm text-gray-600">Partner&apos;s Monthly Income</p>
                     <p className="text-xl font-bold text-green-600">{currencySymbol}{partnerIncome.toFixed(2)}</p>
                     <p className="text-xs text-gray-500">Personal Allowance: {currencySymbol}{partnerPersonalAllowance.toFixed(2)}</p>
                     <p className="text-sm font-semibold text-green-700">Disposable: {currencySymbol}{partnerDisposableIncome.toFixed(2)}</p>

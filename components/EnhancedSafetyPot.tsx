@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 
@@ -62,59 +62,9 @@ export function EnhancedSafetyPot({
   const [showContributeForm, setShowContributeForm] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'recommendations'>('overview')
 
-  useEffect(() => {
-    calculateSafetyPotData()
-  }, [expenses, profile])
 
-  const calculateSafetyPotData = async () => {
-    try {
-      setLoading(true)
 
-      // Calculate essential monthly expenses
-      const monthlyExpenses = calculateMonthlyExpenses()
-      const essentialExpenses = monthlyExpenses.filter(exp => 
-        ['rent', 'groceries', 'utilities', 'insurance', 'transport'].includes(exp.category.toLowerCase())
-      )
-      
-      const totalEssentialMonthly = essentialExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-      
-      // Get current safety pot amount (mock for demo)
-      const currentAmount = profile?.safety_pot_amount || 1250
-      const recommendedTarget = totalEssentialMonthly * 6 // 6 months coverage
-      const monthsCovered = totalEssentialMonthly > 0 ? currentAmount / totalEssentialMonthly : 0
-
-      setSafetyPotData({
-        currentAmount,
-        targetAmount: recommendedTarget,
-        monthsCovered,
-        lastContribution: '2024-11-15', // Mock data
-        autoContributeEnabled: profile?.auto_contribute_safety_pot || false,
-        monthlyTarget: totalEssentialMonthly
-      })
-
-      // Generate expense analysis
-      const analysis = generateExpenseAnalysis(monthlyExpenses)
-      setExpenseAnalysis(analysis)
-
-      // Generate ML recommendations
-      const recommendations = generateMLRecommendations(
-        currentAmount, 
-        recommendedTarget, 
-        monthsCovered, 
-        analysis,
-        profile
-      )
-      setMLRecommendations(recommendations)
-
-    } catch (error) {
-      console.error('Error calculating safety pot data:', error)
-      toast.error('Failed to load safety pot data')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const calculateMonthlyExpenses = () => {
+  const calculateMonthlyExpenses = useCallback(() => {
     // Group expenses by category and calculate monthly averages
     const now = new Date()
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
@@ -140,7 +90,7 @@ export function EnhancedSafetyPot({
       count: data.count,
       volatility: calculateVolatility(data.amounts)
     }))
-  }
+  }, [expenses])
 
   const calculateVolatility = (amounts: number[]): 'low' | 'medium' | 'high' => {
     if (amounts.length < 2) return 'low'
@@ -211,71 +161,110 @@ export function EnhancedSafetyPot({
       })
     }
 
-    // Recommendation 2: Expense optimization
+    // Recommendation 2: Auto-contribution optimization
+    if (profile?.auto_contribute_safety_pot && monthsCovered < 6) {
+      const monthlyContribution = profile.income * 0.1 // Assume 10% of income
+      const monthsToTarget = (targetAmount - currentAmount) / monthlyContribution
+      
+      recommendations.push({
+        type: 'increase',
+        confidence: 0.8,
+        title: 'Optimize Auto-Contribution',
+        description: `Adjust your auto-contribution to reach 6 months coverage in ${Math.ceil(monthsToTarget)} months.`,
+        suggestedAmount: monthlyContribution,
+        reasoning: [
+          'Current auto-contribution may not be sufficient for your target',
+          'Gradual increase is more sustainable than large lump sums',
+          'Automated contributions ensure consistent progress'
+        ],
+        impactAnalysis: {
+          risk: 'low',
+          benefit: 'Faster progress toward financial security',
+          timeframe: 'Immediate implementation'
+        }
+      })
+    }
+
+    // Recommendation 3: Expense volatility management
     const highVolatilityExpenses = analysis.filter(exp => exp.volatility === 'high')
     if (highVolatilityExpenses.length > 0) {
       recommendations.push({
         type: 'maintain',
-        confidence: 0.78,
-        title: 'Monitor Volatile Expenses',
-        description: `Your ${highVolatilityExpenses.map(e => e.category).join(', ')} expenses show high volatility.`,
+        confidence: 0.75,
+        title: 'Manage High Volatility Expenses',
+        description: `Consider increasing safety pot to account for ${highVolatilityExpenses.length} high-volatility expense categories.`,
+        suggestedAmount: highVolatilityExpenses.reduce((sum, exp) => sum + exp.averageMonthly, 0) * 2,
         reasoning: [
-          'Volatile expenses increase emergency fund requirements',
-          'Consider budgeting tools to smooth out spending',
-          'High volatility categories may need closer monitoring'
+          'High volatility expenses can create unexpected financial pressure',
+          'Additional buffer provides stability during expense spikes',
+          'Reduces need to dip into other savings during emergencies'
         ],
         impactAnalysis: {
           risk: 'medium',
-          benefit: 'Better expense predictability',
-          timeframe: 'Ongoing monitoring recommended'
+          benefit: 'Better expense predictability and stability',
+          timeframe: '3-6 months to build additional buffer'
         }
       })
     }
 
-    // Recommendation 3: Auto-contribution
-    if (!profile?.auto_contribute_safety_pot) {
-      recommendations.push({
-        type: 'increase',
-        confidence: 0.92,
-        title: 'Enable Auto-Contribution',
-        description: 'Set up automatic monthly contributions to build your safety pot consistently.',
-        suggestedAmount: Math.max(50, (targetAmount - currentAmount) / 12),
-        reasoning: [
-          'Automation ensures consistent progress toward your goal',
-          'Small, regular contributions are easier to manage',
-          'Reduces the mental load of manual contributions'
-        ],
-        impactAnalysis: {
-          risk: 'low',
-          benefit: 'Steady progress without effort',
-          timeframe: '1 year to reach target with auto-contribute'
-        }
-      })
-    }
-
-    // Recommendation 4: Surplus redistribution
-    if (monthsCovered > 8) {
-      recommendations.push({
-        type: 'redistribute',
-        confidence: 0.72,
-        title: 'Consider Redistributing Excess',
-        description: `You have ${monthsCovered.toFixed(1)} months covered. Consider moving some funds to higher-yield investments.`,
-        suggestedAmount: currentAmount - (targetAmount * 0.75),
-        reasoning: [
-          'Excess emergency funds earn minimal interest',
-          'Conservative investments could provide better returns',
-          'Maintain 6-month minimum while investing surplus'
-        ],
-        impactAnalysis: {
-          risk: 'low',
-          benefit: 'Potential for higher returns on surplus funds',
-          timeframe: 'Long-term wealth building opportunity'
-        }
-      })
-    }
-
-    return recommendations.sort((a, b) => b.confidence - a.confidence)
+    return recommendations
   }
+
+  const calculateSafetyPotData = useCallback(async () => {
+    try {
+      setLoading(true)
+
+      // Calculate essential monthly expenses
+      const monthlyExpenses = calculateMonthlyExpenses()
+      const essentialExpenses = monthlyExpenses.filter(exp => 
+        ['rent', 'groceries', 'utilities', 'insurance', 'transport'].includes(exp.category.toLowerCase())
+      )
+      
+      const totalEssentialMonthly = essentialExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+      
+      // Get current safety pot amount (mock for demo)
+      const currentAmount = profile?.safety_pot_amount || 1250
+      const recommendedTarget = totalEssentialMonthly * 6 // 6 months coverage
+      const monthsCovered = totalEssentialMonthly > 0 ? currentAmount / totalEssentialMonthly : 0
+
+      setSafetyPotData({
+        currentAmount,
+        targetAmount: recommendedTarget,
+        monthsCovered,
+        lastContribution: '2024-11-15', // Mock data
+        autoContributeEnabled: profile?.auto_contribute_safety_pot || false,
+        monthlyTarget: totalEssentialMonthly
+      })
+
+      // Generate expense analysis
+      const analysis = generateExpenseAnalysis(monthlyExpenses)
+      setExpenseAnalysis(analysis)
+
+      // Generate ML recommendations
+      const recommendations = generateMLRecommendations(
+        currentAmount, 
+        recommendedTarget, 
+        monthsCovered, 
+        analysis,
+        profile
+      )
+      setMLRecommendations(recommendations)
+
+    } catch (error) {
+      console.error('Error calculating safety pot data:', error)
+      toast.error('Failed to load safety pot data')
+    } finally {
+      setLoading(false)
+    }
+  }, [profile, calculateMonthlyExpenses])
+
+  // Load safety pot data when component mounts or dependencies change
+  useEffect(() => {
+    calculateSafetyPotData()
+  }, [calculateSafetyPotData])
+
+
+
 
   const handleContribute = async () => {
     if (!contributionAmount || parseFloat(contributionAmount) <= 0) {

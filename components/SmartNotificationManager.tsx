@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { 
   NotificationConfig, 
@@ -49,20 +49,10 @@ export function SmartNotificationManager({
   const notificationRef = useRef<HTMLDivElement>(null)
   const intervalRef = useRef<NodeJS.Timeout>()
 
-  // Initialize notifications
-  useEffect(() => {
-    generateInitialNotifications()
-    startNotificationChecks()
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [userId, userProfile, goals, contributions, achievements])
+
 
   // Generate initial notifications
-  const generateInitialNotifications = () => {
+  const generateInitialNotifications = useCallback(() => {
     const newNotifications: NotificationConfig[] = []
     
     // Payday reminders
@@ -140,14 +130,28 @@ export function SmartNotificationManager({
     
     setNotifications(prev => [...prev, ...newNotifications])
     setUnreadCount(prev => prev + newNotifications.length)
-  }
+  }, [userId, userProfile, goals, contributions, achievements, preferences])
 
   // Start periodic notification checks
-  const startNotificationChecks = () => {
+  const startNotificationChecks = useCallback(() => {
     intervalRef.current = setInterval(() => {
       checkForNewNotifications()
     }, 5 * 60 * 1000) // Check every 5 minutes
-  }
+  }, [])
+
+  // Initialize notifications
+  useEffect(() => {
+    if (userId && userProfile) {
+      generateInitialNotifications()
+      startNotificationChecks()
+    
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current)
+        }
+      }
+    }
+  }, [userId, userProfile, goals, contributions, achievements, generateInitialNotifications, startNotificationChecks])
 
   // Check for new notifications
   const checkForNewNotifications = () => {

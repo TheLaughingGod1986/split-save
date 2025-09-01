@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
@@ -59,42 +59,9 @@ export function AIInsightsEngine({
     actionable: null
   })
 
-  useEffect(() => {
-    analyzeUserBehavior()
-      generateInsights()
-  }, [goals, contributions, expenses, partnerships, achievements])
 
-  const analyzeUserBehavior = async () => {
-    try {
-      setLoading(true)
-      
-      // Analyze contribution patterns
-      const contributionPattern = analyzeContributionPattern(contributions)
-      const goalCompletionRate = calculateGoalCompletionRate(goals)
-      const partnerReliability = calculatePartnerReliability(partnerships)
-      const riskTolerance = assessRiskTolerance(contributions, expenses, goals)
-      const savingsEfficiency = calculateSavingsEfficiency(contributions, expenses)
-      const spendingHabits = analyzeSpendingHabits(expenses, contributions)
 
-      const behavior: UserBehavior = {
-        contributionPattern,
-        goalCompletionRate,
-        partnerReliability,
-        riskTolerance,
-        savingsEfficiency,
-        spendingHabits
-      }
-
-      setUserBehavior(behavior)
-    } catch (error) {
-      console.error('Error analyzing user behavior:', error)
-      toast.error('Failed to analyze user behavior')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const analyzeContributionPattern = (contributions: any[]): 'consistent' | 'increasing' | 'decreasing' | 'irregular' => {
+  const analyzeContributionPattern = useCallback((contributions: any[]): 'consistent' | 'increasing' | 'decreasing' | 'irregular' => {
     if (contributions.length < 3) return 'irregular'
     
     const monthlyTotals = contributions.reduce((acc: any, contribution: any) => {
@@ -113,7 +80,7 @@ export function AIInsightsEngine({
     if (trend < -0.1) return 'decreasing'
     if (Math.abs(trend) <= 0.1) return 'consistent'
     return 'irregular'
-  }
+  }, [])
 
   const calculateTrend = (values: number[]): number => {
     if (values.length < 2) return 0
@@ -161,14 +128,11 @@ export function AIInsightsEngine({
       ? expenses.reduce((sum, e) => sum + e.amount, 0) / expenses.length 
       : 0
     
-    const emergencyGoals = goals.filter(g => g.category === 'emergency' || g.priority === 'high')
-    const emergencyRatio = emergencyGoals.length / Math.max(goals.length, 1)
+    const savingsRatio = avgContribution / (avgExpense + avgContribution)
     
-    const riskScore = (avgContribution / Math.max(avgExpense, 1)) * (1 + emergencyRatio)
-    
-    if (riskScore > 2) return 'aggressive'
-    if (riskScore > 1) return 'moderate'
-    return 'conservative'
+    if (savingsRatio >= 0.3) return 'conservative'
+    if (savingsRatio >= 0.15) return 'moderate'
+    return 'aggressive'
   }
 
   const calculateSavingsEfficiency = (contributions: any[], expenses: any[]): number => {
@@ -177,8 +141,7 @@ export function AIInsightsEngine({
     
     if (totalExpenses === 0) return 100
     
-    const savingsRate = totalContributions / (totalContributions + totalExpenses)
-    return Math.min(100, savingsRate * 100)
+    return (totalContributions / (totalContributions + totalExpenses)) * 100
   }
 
   const analyzeSpendingHabits = (expenses: any[], contributions: any[]): 'frugal' | 'balanced' | 'generous' => {
@@ -189,12 +152,44 @@ export function AIInsightsEngine({
     
     const spendingRatio = totalExpenses / (totalExpenses + totalContributions)
     
-    if (spendingRatio < 0.3) return 'frugal'
-    if (spendingRatio < 0.6) return 'balanced'
+    if (spendingRatio <= 0.3) return 'frugal'
+    if (spendingRatio <= 0.6) return 'balanced'
     return 'generous'
   }
 
-  const generateInsights = async () => {
+  const analyzeUserBehavior = useCallback(async () => {
+    try {
+      setLoading(true)
+      
+      // Analyze contribution patterns
+      const contributionPattern = analyzeContributionPattern(contributions)
+      const goalCompletionRate = calculateGoalCompletionRate(goals)
+      const partnerReliability = calculatePartnerReliability(partnerships)
+      const riskTolerance = assessRiskTolerance(contributions, expenses, goals)
+      const savingsEfficiency = calculateSavingsEfficiency(contributions, expenses)
+      const spendingHabits = analyzeSpendingHabits(expenses, contributions)
+
+      const behavior: UserBehavior = {
+        contributionPattern,
+        goalCompletionRate,
+        partnerReliability,
+        riskTolerance,
+        savingsEfficiency,
+        spendingHabits
+      }
+
+      setUserBehavior(behavior)
+    } catch (error) {
+      console.error('Error analyzing user behavior:', error)
+      toast.error('Failed to analyze user behavior')
+    } finally {
+      setLoading(false)
+    }
+  }, [goals, contributions, expenses, partnerships])
+
+
+
+  const generateInsights = useCallback(async () => {
     try {
       const newInsights: InsightData[] = []
       
@@ -354,7 +349,7 @@ export function AIInsightsEngine({
       console.error('Error generating insights:', error)
       toast.error('Failed to generate insights')
     }
-  }
+  }, [userBehavior])
 
   const handleInsightAction = (insight: InsightData) => {
     toast.success(`Action taken: ${insight.action}`)
@@ -395,6 +390,12 @@ export function AIInsightsEngine({
     if (insightFilters.actionable !== null && insight.actionable !== insightFilters.actionable) return false
     return true
   })
+
+  // Load data when component mounts or dependencies change
+  useEffect(() => {
+    analyzeUserBehavior()
+    generateInsights()
+  }, [goals, contributions, expenses, partnerships, achievements, analyzeUserBehavior, generateInsights])
 
   if (loading) {
     return (

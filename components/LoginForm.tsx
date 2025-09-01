@@ -351,7 +351,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? 'Already have an account?' : "Don&apos;t have an account?"}{' '}
               <button
                 onClick={() => {
                   setIsSignUp(!isSignUp)
@@ -369,7 +369,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
           {/* Additional CRO elements */}
           {isSignUp && (
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">✨ What you'll get:</h3>
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">✨ What you&apos;ll get:</h3>
               <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
                 <li>• Free shared expense tracking</li>
                 <li>• Collaborative savings goals</li>

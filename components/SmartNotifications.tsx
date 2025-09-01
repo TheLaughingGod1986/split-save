@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { useAuth } from './AuthProvider'
@@ -100,11 +100,7 @@ export function SmartNotifications() {
     }
   ]
 
-  useEffect(() => {
-    loadNotificationData()
-  }, [])
-
-  const loadNotificationData = async () => {
+  const loadNotificationData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -164,7 +160,12 @@ export function SmartNotifications() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id])
+
+  // Load notification data when component mounts
+  useEffect(() => {
+    loadNotificationData()
+  }, [loadNotificationData])
 
   const getNextPayday = () => {
     // Calculate next payday (assuming monthly on the 1st for demo)

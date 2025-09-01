@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get current safety pot
-    let { data: safetyPot, error: fetchError } = await supabaseAdmin
+    let { data: safetyPot } = await supabaseAdmin
       .from('safety_pot')
       .select('*')
       .eq('partnership_id', user.partnershipId)

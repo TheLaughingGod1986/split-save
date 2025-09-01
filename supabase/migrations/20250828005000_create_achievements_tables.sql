@@ -116,8 +116,8 @@ ADD COLUMN IF NOT EXISTS unlocked BOOLEAN NOT NULL DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS points_earned INTEGER NOT NULL DEFAULT 0;
 
 -- Update the unique constraint for user_progress to be user_id only
-DROP INDEX IF EXISTS user_progress_user_id_partnership_id_key;
 ALTER TABLE public.user_progress DROP CONSTRAINT IF EXISTS user_progress_user_id_partnership_id_key;
+DROP INDEX IF EXISTS user_progress_user_id_partnership_id_key;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_progress_user_id_unique ON public.user_progress(user_id);
 
 -- Add achievements_unlocked column if missing

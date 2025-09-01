@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { MLInsightsPanel } from './MLInsightsPanel'
 
@@ -35,43 +35,33 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
   const [selectedTimeframe, setSelectedTimeframe] = useState<'3months' | '6months' | '12months'>('6months')
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    loadAnalyticsData()
-  }, [selectedTimeframe, monthlyProgress])
-
-  const loadAnalyticsData = async () => {
-    setIsLoading(true)
+  const generateRecommendations = useCallback((overall: number, savings: number, expenses: number, safety: number): string[] => {
+    const recommendations = []
     
-    try {
-      if (monthlyProgress?.monthlyProgress) {
-        // Use the pre-loaded monthly progress data
-        const processedData = monthlyProgress.monthlyProgress.map((month: any) => ({
-          month: month.month,
-          actualSalary: month.actualContributions?.salary || 0,
-          sharedExpensesContributed: month.actualContributions?.sharedExpenses || 0,
-          goal1Saved: month.actualContributions?.goal1 || 0,
-          goal2Saved: month.actualContributions?.goal2 || 0,
-          safetyPotSaved: month.actualContributions?.safetyPot || 0,
-          extraIncome: month.actualContributions?.extraIncome || 0
-        }))
-        
-        setMonthlyData(processedData)
-        setFinancialHealth(calculateFinancialHealthScore(processedData))
-      } else {
-        setMonthlyData([])
-        setFinancialHealth(null)
-      }
-    } catch (error) {
-      console.error('Failed to process analytics data:', error)
-      toast.error('Failed to load analytics data')
-    } finally {
-      setIsLoading(false)
+    if (overall < 70) {
+      recommendations.push("Focus on building consistent savings habits")
     }
-  }
+    
+    if (savings < 80) {
+      recommendations.push("Consider increasing your monthly savings allocation")
+    }
+    
+    if (expenses < 80) {
+      recommendations.push("Review your shared expenses to ensure adequate coverage")
+    }
+    
+    if (safety < 80) {
+      recommendations.push("Build your safety net to cover 3-6 months of expenses")
+    }
+    
+    if (overall >= 90) {
+      recommendations.push("Excellent progress! Consider setting more ambitious goals")
+    }
+    
+    return recommendations.length > 0 ? recommendations : ["Keep up the great work! You're on track."]
+  }, [])
 
-
-
-  const calculateFinancialHealthScore = (data: MonthlyData[]): FinancialHealthScore | null => {
+  const calculateFinancialHealthScore = useCallback((data: MonthlyData[]): FinancialHealthScore | null => {
     if (data.length === 0) return null
     
     // Calculate averages and trends
@@ -99,33 +89,41 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
       safety: safetyScore,
       recommendations
     }
-  }
+  }, [profile?.income, generateRecommendations])
 
-  const generateRecommendations = (overall: number, savings: number, expenses: number, safety: number): string[] => {
-    const recommendations = []
+  const loadAnalyticsData = useCallback(async () => {
+    setIsLoading(true)
     
-    if (overall < 70) {
-      recommendations.push("Focus on building consistent savings habits")
+    try {
+      if (monthlyProgress?.monthlyProgress) {
+        // Use the pre-loaded monthly progress data
+        const processedData = monthlyProgress.monthlyProgress.map((month: any) => ({
+          month: month.month,
+          actualSalary: month.actualContributions?.salary || 0,
+          sharedExpensesContributed: month.actualContributions?.sharedExpenses || 0,
+          goal1Saved: month.actualContributions?.goal1 || 0,
+          goal2Saved: month.actualContributions?.goal2 || 0,
+          safetyPotSaved: month.actualContributions?.safetyPot || 0,
+          extraIncome: month.actualContributions?.extraIncome || 0
+        }))
+        
+        setMonthlyData(processedData)
+        setFinancialHealth(calculateFinancialHealthScore(processedData))
+      } else {
+        setMonthlyData([])
+        setFinancialHealth(null)
+      }
+    } catch (error) {
+      console.error('Failed to process analytics data:', error)
+      toast.error('Failed to load analytics data')
+    } finally {
+      setIsLoading(false)
     }
-    
-    if (savings < 80) {
-      recommendations.push("Consider increasing your monthly savings allocation")
-    }
-    
-    if (expenses < 80) {
-      recommendations.push("Review your shared expenses to ensure adequate coverage")
-    }
-    
-    if (safety < 80) {
-      recommendations.push("Build your safety net to cover 3-6 months of expenses")
-    }
-    
-    if (overall >= 90) {
-      recommendations.push("Excellent progress! Consider setting more ambitious goals")
-    }
-    
-    return recommendations.length > 0 ? recommendations : ["Keep up the great work! You're on track."]
-  }
+  }, [monthlyProgress, calculateFinancialHealthScore])
+
+  useEffect(() => {
+    loadAnalyticsData()
+  }, [selectedTimeframe, monthlyProgress, loadAnalyticsData])
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-emerald-600 dark:text-emerald-400'

@@ -158,7 +158,7 @@ Timestamp: ${new Date().toISOString()}
                 Oops! Something went wrong
               </h1>
               <p className="text-body text-gray-600 dark:text-gray-400">
-                We've encountered an unexpected error and our team has been notified.
+                We&apos;ve encountered an unexpected error and our team has been notified.
               </p>
             </div>
 

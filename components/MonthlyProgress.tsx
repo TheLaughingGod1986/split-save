@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
 
@@ -53,67 +53,11 @@ export function MonthlyProgress({
   const [safetyPotSaved, setSafetyPotSaved] = useState(0)
   const [notes, setNotes] = useState('')
 
-  useEffect(() => {
-    if (profile?.income) {
-      setExpectedSalary(profile.income)
-      setActualSalary(profile.income)
-      
-      // Calculate initial contributions based on base salary
-      const baseSalary = profile.income
-      const disposableIncome = baseSalary - (profile.personal_allowance || 0)
-      
-      // Initial contributions from base salary
-      const requiredSharedExpenses = disposableIncome * 0.7
-      const requiredSafetyNet = disposableIncome * 0.1
-      
-      setSharedExpensesContributed(requiredSharedExpenses)
-      setSafetyPotSaved(requiredSafetyNet)
-      
-      // Initialize goal contributions based on actual goals
-      const recommendations = getDynamicRecommendations(profile.income)
-      if (recommendations) {
-        const initialGoalContributions: { [key: string]: number } = {}
-        Object.keys(recommendations).forEach(key => {
-          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
-            initialGoalContributions[key] = (recommendations as any)[key]
-          }
-        })
-        setGoalContributions(initialGoalContributions)
-      }
-    }
-    
-    const now = new Date()
-    const monthYear = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
-    setCurrentMonth(monthYear)
-    
-    // Check if it's payday
-    checkIfPayday()
-    
-    // Load existing monthly data
-    loadMonthlyProgress()
-  }, [profile])
 
-  // Update form fields when actual salary changes (only on initial load)
-  useEffect(() => {
-    if (actualSalary > 0 && actualSalary === expectedSalary) {
-      const recommendations = getDynamicRecommendations(actualSalary)
-      if (recommendations) {
-        setSharedExpensesContributed(recommendations.sharedExpenses)
-        setSafetyPotSaved(recommendations.safetyPot)
-        
-        // Update goal contributions
-        const newGoalContributions: { [key: string]: number } = {}
-        Object.keys(recommendations).forEach(key => {
-          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
-            newGoalContributions[key] = (recommendations as any)[key]
-          }
-        })
-        setGoalContributions(newGoalContributions)
-      }
-    }
-  }, [expectedSalary]) // Only run when expected salary changes, not actual salary
 
-  const checkIfPayday = () => {
+
+
+  const checkIfPayday = useCallback(() => {
     if (!profile?.payday) return
     
     const today = new Date()
@@ -137,9 +81,9 @@ export function MonthlyProgress({
       // Show gentle reminder a week before
       setPaydayReminder(`💡 Payday reminder: ${diffDays} days to go`)
     }
-  }
+  }, [profile?.payday])
 
-  const loadMonthlyProgress = async () => {
+  const loadMonthlyProgress = useCallback(async () => {
     try {
       // In a real app, this would fetch from monthly progress API
       // For now, check if we have data for current month
@@ -159,7 +103,7 @@ export function MonthlyProgress({
     } catch (error) {
       console.error('Failed to load monthly progress:', error)
     }
-  }
+  }, [currentMonth])
 
   const loadStreak = async () => {
     try {
@@ -224,7 +168,7 @@ export function MonthlyProgress({
     }
   }
 
-  const getDynamicRecommendations = (actualSalary: number) => {
+  const getDynamicRecommendations = useCallback((actualSalary: number) => {
     if (!profile?.income) return null
     
     // Prevent negative calculations - salary cannot be less than expected
@@ -255,7 +199,7 @@ export function MonthlyProgress({
     }
     
     return baseRecommendation
-  }
+  }, [profile?.income, profile?.personal_allowance, goals])
 
   // NEW: Get recommended savings amounts that include extra income distribution
   const getRecommendedSavings = (actualSalary: number) => {
@@ -389,6 +333,67 @@ export function MonthlyProgress({
     
     return { isValid: true, message: '' }
   }
+
+  // Load initial data when component mounts
+  useEffect(() => {
+    if (profile?.income) {
+      setExpectedSalary(profile.income)
+      setActualSalary(profile.income)
+      
+      // Calculate initial contributions based on base salary
+      const baseSalary = profile.income
+      const disposableIncome = baseSalary - (profile.personal_allowance || 0)
+      
+      // Initial contributions from base salary
+      const requiredSharedExpenses = disposableIncome * 0.7
+      const requiredSafetyNet = disposableIncome * 0.1
+      
+      setSharedExpensesContributed(requiredSharedExpenses)
+      setSafetyPotSaved(requiredSafetyNet)
+      
+      // Initialize goal contributions based on actual goals
+      const recommendations = getDynamicRecommendations(profile.income)
+      if (recommendations) {
+        const initialGoalContributions: { [key: string]: number } = {}
+        Object.keys(recommendations).forEach(key => {
+          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
+            initialGoalContributions[key] = (recommendations as any)[key]
+          }
+        })
+        setGoalContributions(initialGoalContributions)
+      }
+    }
+    
+    const now = new Date()
+    const monthYear = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+    setCurrentMonth(monthYear)
+    
+    // Check if it's payday
+    checkIfPayday()
+    
+    // Load existing monthly data
+    loadMonthlyProgress()
+  }, [profile, checkIfPayday, loadMonthlyProgress, getDynamicRecommendations])
+
+  // Update form fields when actual salary changes (only on initial load)
+  useEffect(() => {
+    if (actualSalary > 0 && actualSalary === expectedSalary) {
+      const recommendations = getDynamicRecommendations(actualSalary)
+      if (recommendations) {
+        setSharedExpensesContributed(recommendations.sharedExpenses)
+        setSafetyPotSaved(recommendations.safetyPot)
+        
+        // Update goal contributions
+        const newGoalContributions: { [key: string]: number } = {}
+        Object.keys(recommendations).forEach(key => {
+          if (key !== 'sharedExpenses' && key !== 'safetyPot') {
+            newGoalContributions[key] = (recommendations as any)[key]
+          }
+        })
+        setGoalContributions(newGoalContributions)
+      }
+    }
+  }, [expectedSalary, actualSalary, getDynamicRecommendations]) // Only run when expected salary changes, not actual salary
 
   const handleSalaryChange = (newSalary: number) => {
     // Allow typing by setting the value immediately
@@ -997,7 +1002,7 @@ export function MonthlyProgress({
                       return (
                         <div className="mt-3 p-3 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 rounded-lg border border-emerald-200 dark:border-emerald-700">
                           <div className="text-sm text-emerald-800 dark:text-emerald-200 text-center">
-                            🎉 <strong>Fantastic Work!</strong> You've over-achieved in {overAchievedCount} categories this month! 
+                            🎉 <strong>Fantastic Work!</strong> You&apos;ve over-achieved in {overAchievedCount} categories this month! 
                             Your financial discipline is inspiring! 🌟
                           </div>
                         </div>

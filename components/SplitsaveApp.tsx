@@ -12,6 +12,7 @@ import { DarkModeToggle } from './DesignSystem'
 // import { NotificationBell } from './NotificationBell' // Removed - using NotificationManager instead
 import { NotificationTester } from './NotificationTester'
 import { DashboardWidgets } from './DashboardWidgets'
+import AdvancedFinancialForecasting from './AdvancedFinancialForecasting'
 import dynamic from 'next/dynamic'
 
 // Lazy load heavy components for better performance
@@ -47,6 +48,7 @@ const EnhancedDashboard = dynamic(() => import('./EnhancedDashboard').then(mod =
 
 
 import { ProfileManager } from './ProfileManager'
+import { OnboardingFlow } from './OnboardingFlow'
 import { PWAInstallPrompt } from './PWAInstallPrompt'
 import { ClientOnly } from './ClientOnly'
 import { EnhancedSafetyPot } from './EnhancedSafetyPot'
@@ -111,7 +113,8 @@ export function SplitsaveApp() {
       'approvals': 'partner',
       'security': 'account',
       'data-export': 'analytics',
-      'advanced-analytics': 'analytics'
+      'advanced-analytics': 'analytics',
+      'forecasting': 'forecasting'
     }
     
     const mappedView = viewMapping[view] || view
@@ -341,7 +344,7 @@ export function SplitsaveApp() {
   const currencyEmoji = profile?.currency ? getCurrencyEmoji(profile.currency) : '💰'
 
     // Load data from backend - SIMPLIFIED VERSION
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       console.log('🔄 loadData called - starting data load...')
       setLoading(true)
@@ -442,7 +445,7 @@ export function SplitsaveApp() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id])
 
   const loadPartnerProfile = async (partnership: any) => {
     try {
@@ -486,7 +489,7 @@ export function SplitsaveApp() {
       // Track unauthenticated page view
       trackPageView('main_app', false)
     }
-  }, [user?.id]) // Only depend on user ID, not the entire loadData function
+  }, [user?.id, loadData]) // Include loadData in dependencies
 
   // Online/offline, mobile detection, and PWA install setup
   useEffect(() => {
@@ -769,6 +772,10 @@ export function SplitsaveApp() {
 
 
 
+  // Check if profile is complete and show onboarding if needed
+  const isProfileComplete = profile && profile.income && profile.payday && profile.name && profile.country_code
+  const [showOnboarding, setShowOnboarding] = useState(!isProfileComplete)
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center safe-area-inset-top safe-area-inset-bottom">
@@ -783,6 +790,20 @@ export function SplitsaveApp() {
           <p className="text-gray-600 dark:text-gray-300">Setting up your financial dashboard...</p>
         </div>
       </div>
+    )
+  }
+
+  // Show onboarding if profile is incomplete
+  if (showOnboarding) {
+    return (
+      <OnboardingFlow
+        user={user}
+        onComplete={() => {
+          setShowOnboarding(false)
+          // Refresh profile data after onboarding completion
+          loadData()
+        }}
+      />
     )
   }
 
@@ -967,6 +988,7 @@ export function SplitsaveApp() {
               { id: 'goals', label: 'Goals', icon: '🎯', description: 'Savings Targets & AI Insights' },
               { id: 'partners', label: 'Partners', icon: '🤝', description: 'Partnership & Approvals', badge: approvals.length },
               { id: 'analytics', label: 'Analytics', icon: '📈', description: 'Reports & Data Export' },
+              { id: 'forecasting', label: 'Forecasting', icon: '🔮', description: 'AI Financial Predictions & Scenarios' },
               { id: 'profile', label: 'Profile', icon: '👤', description: 'Settings, Security & Activity' }
             ].map((item) => (
               <button
@@ -1178,6 +1200,13 @@ export function SplitsaveApp() {
             user={user}
             currencySymbol={currencySymbol}
             monthlyProgress={monthlyProgress}
+          />
+        )}
+
+        {/* Advanced Financial Forecasting */}
+        {currentView === 'forecasting' && user && (
+          <AdvancedFinancialForecasting
+            userId={user.id}
           />
         )}
 

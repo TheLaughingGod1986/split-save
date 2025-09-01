@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { SafetyPotFundManager } from './SafetyPotFundManager'
 import {
@@ -42,11 +42,7 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
   const [goals, setGoals] = useState<any[]>([])
   const [optimalContribution, setOptimalContribution] = useState(0)
 
-  useEffect(() => {
-    loadSafetyPotData()
-  }, [monthlyExpenses])
-
-  const loadSafetyPotData = async () => {
+  const loadSafetyPotData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -81,7 +77,12 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
     } finally {
       setLoading(false)
     }
-  }
+  }, [monthlyExpenses, safetyPotAmount])
+
+  // Load safety pot data when component mounts or dependencies change
+  useEffect(() => {
+    loadSafetyPotData()
+  }, [monthlyExpenses, loadSafetyPotData])
 
   const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -254,7 +254,7 @@ export function LandingPage() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Connect with Your Partner</h4>
-                      <p className="text-gray-600 dark:text-gray-300">Invite your partner via email or link. They'll join your shared financial space instantly.</p>
+                      <p className="text-gray-600 dark:text-gray-300">Invite your partner via email or link. They&apos;ll join your shared financial space instantly.</p>
                     </div>
                   </div>
 
@@ -304,7 +304,7 @@ export function LandingPage() {
             Ready to transform your financial relationship?
           </h2>
           <p className="text-xl text-purple-100 mb-8">
-            Join thousands of couples who've found financial harmony with SplitSave
+            Join thousands of couples who&apos;ve found financial harmony with SplitSave
           </p>
           <button
             onClick={handleGetStarted}

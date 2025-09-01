@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface NotificationManagerProps {
@@ -50,18 +50,10 @@ export function NotificationManager({
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    initializeAchievements()
-    checkForNewAchievements()
-    checkPaydayReminders()
-    checkGoalMilestones()
-    checkApprovalRequests()
-  }, [profile, goals, partnerships, approvals])
-
-  useEffect(() => {
     setUnreadCount(notifications.filter(n => !n.read).length)
   }, [notifications])
 
-  const initializeAchievements = () => {
+  const initializeAchievements = useCallback(() => {
     const baseAchievements: Achievement[] = [
       {
         id: 'first-goal',
@@ -172,9 +164,42 @@ export function NotificationManager({
     ]
 
     setAchievements(baseAchievements)
-  }
+  }, [goals, partnerships, profile])
 
-  const checkForNewAchievements = () => {
+  const addNotification = useCallback((notification: Notification) => {
+    setNotifications(prev => [notification, ...prev])
+  }, [])
+
+  const unlockAchievement = useCallback((achievement: Achievement) => {
+    // Show achievement notification
+    const notification: Notification = {
+      id: `achievement-${achievement.id}`,
+      type: 'achievement',
+      title: `🏆 Achievement Unlocked: ${achievement.title}`,
+      message: achievement.description,
+      icon: achievement.icon,
+      priority: 'medium',
+      read: false,
+      createdAt: new Date(),
+      actionRequired: false
+    }
+
+    addNotification(notification)
+    
+    // Show toast celebration
+    toast.success(`🎉 Achievement Unlocked: ${achievement.title}!`, {
+      duration: 4000,
+      icon: achievement.icon,
+      style: {
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        fontSize: '16px',
+        padding: '16px'
+      }
+    })
+  }, [addNotification])
+
+  const checkForNewAchievements = useCallback(() => {
     if (!goals || !profile) return
 
     const updatedAchievements = achievements.map(achievement => {
@@ -214,38 +239,9 @@ export function NotificationManager({
     })
 
     setAchievements(updatedAchievements)
-  }
+  }, [goals, profile, partnerships, achievements, unlockAchievement])
 
-  const unlockAchievement = (achievement: Achievement) => {
-    // Show achievement notification
-    const notification: Notification = {
-      id: `achievement-${achievement.id}`,
-      type: 'achievement',
-      title: `🏆 Achievement Unlocked: ${achievement.title}`,
-      message: achievement.description,
-      icon: achievement.icon,
-      priority: 'medium',
-      read: false,
-      createdAt: new Date(),
-      actionRequired: false
-    }
-
-    addNotification(notification)
-    
-    // Show toast celebration
-    toast.success(`🎉 Achievement Unlocked: ${achievement.title}!`, {
-      duration: 4000,
-      icon: achievement.icon,
-      style: {
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        fontSize: '16px',
-        padding: '16px'
-      }
-    })
-  }
-
-  const checkPaydayReminders = () => {
+  const checkPaydayReminders = useCallback(() => {
     if (!profile?.payday) return
 
     const today = new Date()
@@ -278,9 +274,9 @@ export function NotificationManager({
         addNotification(notification)
       }
     }
-  }
+  }, [profile?.payday, notifications, addNotification])
 
-  const checkGoalMilestones = () => {
+  const checkGoalMilestones = useCallback(() => {
     if (!goals) return
 
     goals.forEach(goal => {
@@ -310,9 +306,9 @@ export function NotificationManager({
         }
       })
     })
-  }
+  }, [goals, notifications, addNotification])
 
-  const checkApprovalRequests = () => {
+  const checkApprovalRequests = useCallback(() => {
     if (!approvals) return
 
     const pendingApprovals = approvals.filter(approval => approval.status === 'pending')
@@ -339,11 +335,7 @@ export function NotificationManager({
         addNotification(notification)
       }
     })
-  }
-
-  const addNotification = (notification: Notification) => {
-    setNotifications(prev => [notification, ...prev])
-  }
+  }, [approvals, notifications, addNotification])
 
   const markAsRead = (notificationId: string) => {
     setNotifications(prev => 
@@ -383,6 +375,15 @@ export function NotificationManager({
       default: return '⚪'
     }
   }
+
+  // Initialize achievements and check for notifications when component mounts or dependencies change
+  useEffect(() => {
+    initializeAchievements()
+    checkForNewAchievements()
+    checkPaydayReminders()
+    checkGoalMilestones()
+    checkApprovalRequests()
+  }, [profile, goals, partnerships, approvals, initializeAchievements, checkForNewAchievements, checkPaydayReminders, checkGoalMilestones, checkApprovalRequests])
 
   return (
     <div className="relative">
@@ -431,7 +432,7 @@ export function NotificationManager({
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <div className="text-4xl mb-2">🔕</div>
                 <div>No notifications yet</div>
-                <div className="text-sm">We'll notify you about important updates</div>
+                <div className="text-sm">We&apos;ll notify you about important updates</div>
               </div>
             ) : (
               notifications.map((notification) => (

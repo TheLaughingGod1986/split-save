@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface DataExportViewProps {
@@ -53,11 +53,7 @@ export function DataExportView({
   const [financialReports, setFinancialReports] = useState<FinancialReport[]>([])
   const [selectedReport, setSelectedReport] = useState<string>('')
 
-  useEffect(() => {
-    generateFinancialReports()
-  }, [goals, expenses, profile, partnerProfile])
-
-  const generateFinancialReports = () => {
+  const generateFinancialReports = useCallback(() => {
     const today = new Date()
     const reports: FinancialReport[] = []
     
@@ -92,7 +88,12 @@ export function DataExportView({
     }
     
     setFinancialReports(reports)
-  }
+  }, [goals, expenses, profile, partnerProfile])
+
+  // Load financial reports when component mounts or dependencies change
+  useEffect(() => {
+    generateFinancialReports()
+  }, [generateFinancialReports])
 
   const handleExport = async () => {
     setIsExporting(true)

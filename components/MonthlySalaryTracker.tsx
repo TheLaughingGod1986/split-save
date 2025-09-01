@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface MonthlySalaryTrackerProps {
   partnerships: any[]
@@ -103,7 +103,7 @@ export function MonthlySalaryTracker({
           <div className="flex items-center space-x-3">
             <div className="text-2xl">💰</div>
             <div>
-              <h4 className="font-semibold text-green-800">It's Payday Week!</h4>
+              <h4 className="font-semibold text-green-800">It&apos;s Payday Week!</h4>
               <p className="text-sm text-green-700">
                 Time to track your monthly salary and contributions for accountability.
               </p>
@@ -168,7 +168,7 @@ export function MonthlySalaryTracker({
           <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
             <h5 className="font-semibold text-green-800 dark:text-green-100 mb-2 flex items-center">
               <span className="mr-2">👥</span>
-              Partner's Next Payday
+              Partner&apos;s Next Payday
             </h5>
             <div className="text-center">
               <div className="text-3xl mb-2">💰</div>
@@ -264,7 +264,7 @@ export function MonthlySalaryTracker({
   }
 
   // Calculate expected contributions based on profile and form data
-  const calculateExpectedContributions = () => {
+  const calculateExpectedContributions = useCallback(() => {
     if (!profile || !activePartnership) return null
 
     // Use actual salary from form, or fall back to profile
@@ -337,7 +337,7 @@ export function MonthlySalaryTracker({
       extraIncomeSavings,
       extraIncomeSafetyNet
     }
-  }
+  }, [profile, activePartnership, formData.actualSalary, formData.extraIncome])
 
   const [expectedContributions, setExpectedContributions] = useState<any>(null)
 
@@ -345,7 +345,7 @@ export function MonthlySalaryTracker({
   useEffect(() => {
     const newExpectedContributions = calculateExpectedContributions()
     setExpectedContributions(newExpectedContributions)
-  }, [formData.actualSalary, formData.extraIncome])
+  }, [formData.actualSalary, formData.extraIncome, calculateExpectedContributions])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -708,7 +708,7 @@ export function MonthlySalaryTracker({
                 {/* Proportional Share */}
                 {expectedContributions && (
                   <div className="bg-green-50 p-3 rounded-lg">
-                    <h6 className="font-medium text-green-800 mb-2">Partner's Proportional Share</h6>
+                    <h6 className="font-medium text-green-800 mb-2">Partner&apos;s Proportional Share</h6>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-green-800">
                         {((1 - expectedContributions.userShare) * 100).toFixed(1)}%
@@ -763,7 +763,7 @@ export function MonthlySalaryTracker({
             <div className="text-sm text-yellow-700 space-y-1">
               <p>• <strong>Fairness:</strong> Both partners can see exactly how contributions are calculated</p>
               <p>• <strong>Accountability:</strong> Clear visibility of income and personal allowances</p>
-              <p>• <strong>Collaboration:</strong> Understanding each other's financial situation builds trust</p>
+              <p>• <strong>Collaboration:</strong> Understanding each other&apos;s financial situation builds trust</p>
               <p>• <strong>Motivation:</strong> Seeing the proportional split encourages honest sharing</p>
             </div>
           </div>
@@ -839,7 +839,7 @@ export function MonthlySalaryTracker({
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h5 className="font-semibold text-green-800 mb-3 flex items-center">
                   <span className="mr-2">👥</span>
-                  Partner's Financial Picture
+                  Partner&apos;s Financial Picture
                 </h5>
                 
                 <div className="space-y-3">
@@ -866,7 +866,7 @@ export function MonthlySalaryTracker({
                   </div>
                   
                   <div className="bg-white p-3 rounded-lg border border-green-200">
-                    <h6 className="font-medium text-green-800 mb-2">Partner's Monthly Contributions</h6>
+                    <h6 className="font-medium text-green-800 mb-2">Partner&apos;s Monthly Contributions</h6>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Expenses:</span>

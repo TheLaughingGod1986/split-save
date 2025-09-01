@@ -151,7 +151,7 @@ function getLastWorkingDayOfMonth(currentMonth: number, currentYear: number): Da
 function getLastWorkingDayOfSpecificMonth(month: number, year: number): Date {
   // Get the last day of the month
   const lastDay = new Date(year, month + 1, 0)
-  let currentDay = new Date(lastDay)
+  const currentDay = new Date(lastDay)
   
   // Go backwards until we find a working day (Monday-Friday)
   while (currentDay.getDay() === 0 || currentDay.getDay() === 6) { // Sunday = 0, Saturday = 6

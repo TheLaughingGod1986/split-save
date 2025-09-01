@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 import { calculateMonthlyContribution, getCurrentMonth, getMonthName, getPreviousMonth, getNextMonth } from '@/lib/contribution-utils'
@@ -42,13 +42,7 @@ export function MonthlyContributionRecorder({
 
   const hasPartnership = partnerships.length > 0
 
-  useEffect(() => {
-    if (hasPartnership) {
-      loadData()
-    }
-  }, [hasPartnership, currentMonth])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -88,7 +82,15 @@ export function MonthlyContributionRecorder({
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentMonth, profile?.income, partnerProfile?.income])
+
+  useEffect(() => {
+    if (hasPartnership) {
+      loadData()
+    }
+  }, [hasPartnership, currentMonth, loadData])
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -284,7 +286,7 @@ export function MonthlyContributionRecorder({
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-blue-700 dark:text-blue-300">Partner's Share ({partnerProfile?.name || 'Partner'}):</span>
+                    <span className="text-blue-700 dark:text-blue-300">Partner&apos;s Share ({partnerProfile?.name || 'Partner'}):</span>
                     <span className="font-medium text-blue-900 dark:text-blue-100">
                       {currencySymbol}{contributionData.partnerShare.toFixed(2)}
                     </span>
@@ -318,7 +320,7 @@ export function MonthlyContributionRecorder({
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Partner's Actual Contribution ({partnerProfile?.name || 'Partner'})
+                  Partner&apos;s Actual Contribution ({partnerProfile?.name || 'Partner'})
                 </label>
                 <input
                   type="number"

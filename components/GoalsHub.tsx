@@ -203,7 +203,7 @@ export function GoalsHub({
       const goal = goals.find(g => g.id === goalId)
       if (!goal || !onUpdateGoal) return
 
-      let updates: any = {}
+      const updates: any = {}
       
       switch (type) {
         case 'amount':

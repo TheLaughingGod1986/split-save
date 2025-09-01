@@ -59,6 +59,12 @@ export function MobileNavigation({
       description: 'Collaboration Hub'
     },
     {
+      id: 'forecasting',
+      label: 'Forecast',
+      icon: '🔮',
+      description: 'AI Predictions'
+    },
+    {
       id: 'account',
       label: 'Account',
       icon: '👤',

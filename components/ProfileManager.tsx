@@ -123,6 +123,31 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
     setSuccess('')
 
     try {
+      // Validate required fields
+      if (!formData.name.trim()) {
+        setError('Full name is required')
+        setSaving(false)
+        return
+      }
+
+      if (!formData.income || parseFloat(formData.income) <= 0) {
+        setError('Monthly income is required and must be greater than 0')
+        setSaving(false)
+        return
+      }
+
+      if (!formData.payday) {
+        setError('Please select your payday')
+        setSaving(false)
+        return
+      }
+
+      if (!formData.countryCode) {
+        setError('Please select your country')
+        setSaving(false)
+        return
+      }
+
       // Validate payday option if provided
       if (formData.payday) {
         const paydayValidation = validatePaydayOption(formData.payday)
@@ -134,10 +159,10 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
       }
 
       const updates = {
-        name: formData.name,
-        income: formData.income ? parseFloat(formData.income) : null,
+        name: formData.name.trim(),
+        income: parseFloat(formData.income),
         payday: formData.payday,
-        personal_allowance: formData.personalAllowance ? parseFloat(formData.personalAllowance) : null,
+        personal_allowance: formData.personalAllowance ? parseFloat(formData.personalAllowance) : 0,
         currency: formData.currency,
         country_code: formData.countryCode
       }
@@ -170,6 +195,27 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
   const handlePaydayChange = (value: string) => {
     setFormData({ ...formData, payday: value })
     setShowCustomPayday(value === 'custom')
+  }
+
+  const calculateProfileCompletion = () => {
+    let completed = 0
+    const total = 4 // name, income, payday, country
+    
+    if (formData.name.trim()) completed++
+    if (formData.income && parseFloat(formData.income) > 0) completed++
+    if (formData.payday) completed++
+    if (formData.countryCode) completed++
+    
+    return (completed / total) * 100
+  }
+
+  const getProfileCompletionMessage = () => {
+    const completion = calculateProfileCompletion()
+    if (completion === 100) return '🎉 Profile complete! You can now continue.'
+    if (completion >= 75) return 'Almost there! Just a few more details needed.'
+    if (completion >= 50) return 'Good progress! Keep going to complete your profile.'
+    if (completion >= 25) return 'Getting started! Fill in the required fields to continue.'
+    return 'Let\'s begin! Start by filling in your basic information.'
   }
 
   // Get currency symbol from currency code
@@ -415,6 +461,32 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Required Fields Note */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            <span className="text-red-500 font-semibold">*</span> Required fields must be completed to continue
+          </p>
+        </div>
+
+        {/* Profile Completion Progress */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Profile Completion</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {Math.round(calculateProfileCompletion())}% Complete
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${calculateProfileCompletion()}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {getProfileCompletionMessage()}
+          </p>
+        </div>
+
         {/* Personal Information Section */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8">
           <div className="text-center mb-8">
@@ -425,7 +497,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Full Name
+                Full Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -439,7 +511,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Country
+                Country <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.countryCode}
@@ -452,6 +524,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                   })
                 }}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                required
               >
                 <option value="">Select country</option>
                 {countryCodes.map(country => (
@@ -488,7 +561,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Monthly Income ({getCurrencySymbol(formData.currency)})
+                Monthly Income ({getCurrencySymbol(formData.currency)}) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -510,11 +583,12 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payday</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payday <span className="text-red-500">*</span></label>
               <select
                 value={formData.payday}
                 onChange={(e) => handlePaydayChange(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                required
               >
                 <option value="">Select payday</option>
                 {paydayOptions.map(option => (

@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
@@ -62,26 +62,9 @@ export function AdvancedAnalyticsDashboard({
     end: new Date()
   })
 
-  useEffect(() => {
-    loadAnalyticsData()
-  }, [goals, contributions, expenses, partnerships, achievements, dateRange])
 
-  const loadAnalyticsData = async () => {
-    try {
-      setLoading(true)
-      
-      // Generate comprehensive analytics data
-      const data = await generateAnalyticsData()
-      setAnalyticsData(data)
-    } catch (error) {
-      console.error('Error loading analytics data:', error)
-      toast.error('Failed to load analytics data')
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  const generateAnalyticsData = async (): Promise<AnalyticsData> => {
+  const generateAnalyticsData = useCallback(async (): Promise<AnalyticsData> => {
     // Calculate summary metrics
     const totalNetWorth = calculateNetWorth()
     const monthlySavingsRate = calculateMonthlySavingsRate()
@@ -116,15 +99,15 @@ export function AdvancedAnalyticsDashboard({
       insights,
       forecasts
     }
-  }
+  }, [])
 
-  const calculateNetWorth = (): number => {
+  const calculateNetWorth = useCallback((): number => {
     const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0)
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
     return totalContributions - totalExpenses
-  }
+  }, [contributions, expenses])
 
-  const calculateMonthlySavingsRate = (): number => {
+  const calculateMonthlySavingsRate = useCallback((): number => {
     const monthlyIncome: number = 5000 // Mock income - would come from user profile
     const monthlyExpenses = expenses
       .filter(e => new Date(e.created_at) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1))
@@ -132,9 +115,9 @@ export function AdvancedAnalyticsDashboard({
     
     if (monthlyIncome === 0) return 0
     return ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100
-  }
+  }, [expenses])
 
-  const calculateGoalProgressRate = (): number => {
+  const calculateGoalProgressRate = useCallback((): number => {
     if (goals.length === 0) return 0
     
     const totalProgress = goals.reduce((sum, goal) => {
@@ -143,9 +126,24 @@ export function AdvancedAnalyticsDashboard({
     }, 0)
     
     return (totalProgress / goals.length) * 100
-  }
+  }, [goals])
 
-  const calculatePartnerContributionRatio = (): number => {
+  const loadAnalyticsData = useCallback(async () => {
+    try {
+      setLoading(true)
+      
+      // Generate comprehensive analytics data
+      const data = await generateAnalyticsData()
+      setAnalyticsData(data)
+    } catch (error) {
+      console.error('Error loading analytics data:', error)
+      toast.error('Failed to load analytics data')
+    } finally {
+      setLoading(false)
+    }
+  }, [generateAnalyticsData])
+
+  const calculatePartnerContributionRatio = useCallback((): number => {
     if (partnerships.length === 0) return 0
     
     const totalPartnerContributions = partnerships.reduce((sum, partnership) => {
@@ -156,9 +154,9 @@ export function AdvancedAnalyticsDashboard({
     
     if (totalMyContributions === 0) return 0
     return (totalPartnerContributions / totalMyContributions) * 100
-  }
+  }, [partnerships, contributions])
 
-  const calculateFinancialHealthScore = (monthlySavingsRate: number, goalProgressRate: number): number => {
+  const calculateFinancialHealthScore = useCallback((monthlySavingsRate: number, goalProgressRate: number): number => {
     let score = 100
     
     // Deduct for low savings rate
@@ -179,9 +177,9 @@ export function AdvancedAnalyticsDashboard({
     score += achievementBonus
     
     return Math.max(0, Math.min(100, score))
-  }
+  }, [expenses, contributions, achievements])
 
-  const assessRiskLevel = (monthlySavingsRate: number, goalProgressRate: number, financialHealthScore: number): 'low' | 'medium' | 'high' => {
+  const assessRiskLevel = useCallback((monthlySavingsRate: number, goalProgressRate: number, financialHealthScore: number): 'low' | 'medium' | 'high' => {
     const savingsRate = monthlySavingsRate
     const goalProgress = goalProgressRate
     const healthScore = financialHealthScore
@@ -189,9 +187,9 @@ export function AdvancedAnalyticsDashboard({
     if (savingsRate >= 30 && goalProgress >= 75 && healthScore >= 80) return 'low'
     if (savingsRate >= 20 && goalProgress >= 50 && healthScore >= 60) return 'medium'
     return 'high'
-  }
+  }, [])
 
-  const generateTrendData = () => {
+  const generateTrendData = useCallback(() => {
     const monthly = []
     const quarterly = []
     const yearly = []
@@ -244,9 +242,9 @@ export function AdvancedAnalyticsDashboard({
     }
     
     return { monthly, quarterly, yearly }
-  }
+  }, [expenses, contributions])
 
-  const generateCategoryData = () => {
+  const generateCategoryData = useCallback(() => {
     // Expense categories
     const expenseCategories = ['Housing', 'Transportation', 'Food', 'Entertainment', 'Utilities', 'Healthcare']
     const expenses = expenseCategories.map(category => ({
@@ -273,9 +271,9 @@ export function AdvancedAnalyticsDashboard({
     ]
     
     return { expenses, savings, income }
-  }
+  }, [goals])
 
-  const generateInsights = () => {
+  const generateInsights = useCallback(() => {
     // Top performing goals
     const topPerformingGoals = goals
       .filter(g => g.current_amount > 0)
@@ -309,9 +307,9 @@ export function AdvancedAnalyticsDashboard({
     ]
     
     return { topPerformingGoals, spendingOptimization, partnerPerformance }
-  }
+  }, [goals])
 
-  const generateForecasts = () => {
+  const generateForecasts = useCallback(() => {
     return {
       nextMonth: {
         expenses: Math.random() * 3000 + 2000,
@@ -327,7 +325,7 @@ export function AdvancedAnalyticsDashboard({
         goalAchievementRate: Math.random() * 40 + 60
       }
     }
-  }
+  }, [])
 
   const getRiskColor = (risk: 'low' | 'medium' | 'high') => {
     const colors = {
@@ -364,6 +362,11 @@ export function AdvancedAnalyticsDashboard({
     }
     return colors[trend] || 'text-gray-600 dark:text-gray-400'
   }
+
+  // Load analytics data when component mounts or dependencies change
+  useEffect(() => {
+    loadAnalyticsData()
+  }, [loadAnalyticsData])
 
   if (loading) {
     return (

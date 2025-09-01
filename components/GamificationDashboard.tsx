@@ -304,7 +304,7 @@ export function GamificationDashboard() {
                 <div className="text-3xl mb-2">🚀</div>
                 <h3 className="text-lg font-semibold mb-2">Keep Up the Great Work!</h3>
                 <p className="text-green-100">
-                  You're making excellent progress on your financial journey. 
+                  You&apos;re making excellent progress on your financial journey. 
                   {stats.currentStreak > 0 && ` Your ${stats.currentStreak}-month streak is impressive!`}
                 </p>
               </div>
