@@ -28,9 +28,64 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch approvals' }, { status: 500 })
     }
 
-    return NextResponse.json(approvals)
+    // Transform the data to match what the PartnerHub component expects
+    const formattedApprovals = approvals.map(approval => {
+      const requestData = approval.request_data || {}
+      
+      return {
+        id: approval.id,
+        type: approval.request_type,
+        title: getApprovalTitle(approval.request_type, requestData),
+        amount: getApprovalAmount(approval.request_type, requestData),
+        description: getApprovalDescription(approval.request_type, requestData),
+        requester_name: approval.requested_by_user?.name || 'Unknown User',
+        requester_id: approval.requested_by_user_id,
+        created_at: approval.created_at,
+        status: approval.status,
+        category: requestData.category,
+        target_date: requestData.target_date,
+        request_data: approval.request_data,
+        message: approval.message
+      }
+    })
+
+    return NextResponse.json(formattedApprovals)
   } catch (error) {
     console.error('Get approvals error:', error)
     return NextResponse.json({ error: 'Failed to fetch approvals' }, { status: 500 })
+  }
+}
+
+// Helper functions to format approval data
+function getApprovalTitle(requestType: string, requestData: any): string {
+  switch (requestType) {
+    case 'expense':
+      return requestData.description || 'Expense Request'
+    case 'goal':
+      return requestData.name || 'Goal Request'
+    default:
+      return 'Approval Request'
+  }
+}
+
+function getApprovalAmount(requestType: string, requestData: any): number {
+  switch (requestType) {
+    case 'expense':
+      return requestData.amount || 0
+    case 'goal':
+      return requestData.target_amount || 0
+    default:
+      return 0
+  }
+}
+
+function getApprovalDescription(requestType: string, requestData: any): string {
+  switch (requestType) {
+    case 'expense':
+      return requestData.description || 'No description provided'
+    case 'goal':
+      return requestData.description || requestData.name || 'No description provided'
+    default:
+      return 'No description provided'
   }
 }

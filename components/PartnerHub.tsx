@@ -297,6 +297,14 @@ export function PartnerHub({
             const needsMyApproval = !isRequester
             const approvalStatus = needsMyApproval ? 'Awaiting your approval' : 'Awaiting partner approval'
             
+            // Ensure we have valid data with fallbacks
+            const title = approval.title || 'Untitled Request'
+            const amount = approval.amount || 0
+            const description = approval.description || 'No description provided'
+            const requesterName = approval.requester_name || 'Unknown User'
+            const category = approval.category || null
+            const targetDate = approval.target_date || null
+            
             return (
               <div key={approval.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
                 {/* Header with approval status */}
@@ -304,10 +312,10 @@ export function PartnerHub({
                   <div className="flex items-center space-x-3">
                     <div className="text-2xl">{getApprovalIcon(approval.type)}</div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">{approval.title}</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{title}</h4>
                       <div className="flex items-center space-x-2 mt-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {isRequester ? 'You requested' : `${approval.requester_name} requested`}
+                          {isRequester ? 'You requested' : `${requesterName} requested`}
                         </span>
                         <span className="text-gray-400">•</span>
                         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -318,7 +326,7 @@ export function PartnerHub({
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {currencySymbol}{approval.amount ? approval.amount.toFixed(2) : '0.00'}
+                      {currencySymbol}{amount.toFixed(2)}
                     </p>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       needsMyApproval 
@@ -363,36 +371,36 @@ export function PartnerHub({
                          {getApprovalTypeLabel(approval.type)}
                        </span>
                      </div>
-                    {approval.category && (
+                    {category && (
                       <div>
                         <span className="text-gray-500 dark:text-gray-400">Category:</span>
                         <span className="ml-2 font-medium text-gray-900 dark:text-white capitalize">
-                          {approval.category}
+                          {category}
                         </span>
                       </div>
                     )}
-                    {approval.target_date && (
+                    {targetDate && (
                       <div>
                         <span className="text-gray-500 dark:text-gray-400">Target Date:</span>
                         <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                          {new Date(approval.target_date).toLocaleDateString()}
+                          {new Date(targetDate).toLocaleDateString()}
                         </span>
                       </div>
                     )}
                     <div>
                       <span className="text-gray-500 dark:text-gray-400">Requested by:</span>
                       <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                        {approval.requester_name}
+                        {requesterName}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
-                {approval.description && (
+                {description && (
                   <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">Description:</span> {approval.description}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Description:</span> {description}
                     </p>
                   </div>
                 )}
