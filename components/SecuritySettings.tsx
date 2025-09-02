@@ -292,7 +292,7 @@ export function SecuritySettings() {
         
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-400">
-            If you've forgotten your password, we can send you a reset link.
+            If you&apos;ve forgotten your password, we can send you a reset link.
           </p>
           <button
             onClick={() => resetPassword(user?.email || '')}
@@ -312,7 +312,7 @@ export function SecuritySettings() {
         <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
           <li>• Use a strong, unique password for your account</li>
           <li>• Enable multi-factor authentication for extra security</li>
-          <li>• Keep your device's biometric settings up to date</li>
+          <li>• Keep your device&apos;s biometric settings up to date</li>
           <li>• Never share your authentication codes with anyone</li>
           <li>• Log out from shared devices when finished</li>
           <li>• Regularly review your account activity</li>

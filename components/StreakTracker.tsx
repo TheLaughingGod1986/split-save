@@ -270,7 +270,7 @@ export function StreakTracker() {
           transition={{ duration: 0.5, delay: 0.6 }}
         >
           <div className="text-lg font-semibold mb-1">
-            🎉 Amazing! You're on a {streakData.currentStreak}-month streak!
+            🎉 Amazing! You&apos;re on a {streakData.currentStreak}-month streak!
           </div>
           <p className="text-green-100 text-sm">
             Keep up the great work! Your next contribution will extend your streak to {streakData.currentStreak + 1} months.
@@ -290,7 +290,7 @@ export function StreakTracker() {
             ⚠️ Streak at Risk!
           </div>
           <p className="text-red-100 text-sm">
-            It's been {daysSinceMonthly} days since your last contribution. Make a contribution today to keep your streak alive!
+            It&apos;s been {daysSinceMonthly} days since your last contribution. Make a contribution today to keep your streak alive!
           </p>
         </motion.div>
       )}

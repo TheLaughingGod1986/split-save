@@ -142,7 +142,7 @@ export function AccountHub({
             )}
             {profile?.income && profile?.payday && goals && goals.length > 0 && (
               <div className="text-green-600 dark:text-green-400 text-sm">
-                🎉 You're all set up! Start using SplitSave to track your finances.
+                🎉 You&apos;re all set up! Start using SplitSave to track your finances.
               </div>
             )}
           </div>

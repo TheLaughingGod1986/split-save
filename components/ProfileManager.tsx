@@ -215,7 +215,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
     if (completion >= 75) return 'Almost there! Just a few more details needed.'
     if (completion >= 50) return 'Good progress! Keep going to complete your profile.'
     if (completion >= 25) return 'Getting started! Fill in the required fields to continue.'
-    return 'Let\'s begin! Start by filling in your basic information.'
+    return 'Let&apos;s begin! Start by filling in your basic information.'
   }
 
   // Get currency symbol from currency code

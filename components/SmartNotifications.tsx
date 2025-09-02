@@ -474,7 +474,7 @@ export function SmartNotifications() {
                   No alerts right now
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
-                  You're on track with all your financial goals!
+                  You&apos;re on track with all your financial goals!
                 </p>
               </div>
             ) : (

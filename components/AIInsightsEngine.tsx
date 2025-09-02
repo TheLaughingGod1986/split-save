@@ -185,7 +185,7 @@ export function AIInsightsEngine({
     } finally {
       setLoading(false)
     }
-  }, [goals, contributions, expenses, partnerships])
+  }, [goals, contributions, expenses, partnerships, analyzeContributionPattern])
 
 
 

@@ -299,7 +299,7 @@ export function PartnerCollaborationView({
                   <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-2">
                     <span className="text-white text-sm font-bold">{partnerProfile?.name?.charAt(0)?.toUpperCase() || 'P'}</span>
                   </div>
-                  {partnerProfile?.name || 'Partner'}'s Profile
+                  {partnerProfile?.name || 'Partner'}&apos;s Profile
                 </h3>
                 
                 <div className="space-y-3">
@@ -521,7 +521,7 @@ export function PartnerCollaborationView({
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                   <div className="text-center">
                     <div className="text-2xl mb-2">🤝</div>
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100">{partnerProfile?.name || 'Partner'}'s Payday</h4>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">{partnerProfile?.name || 'Partner'}&apos;s Payday</h4>
                     <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
                       {(() => {
                         const nextPayday = getNextPayday(partnerProfile)

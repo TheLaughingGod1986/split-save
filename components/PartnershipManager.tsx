@@ -252,7 +252,7 @@ export function PartnershipManager() {
           <form onSubmit={sendInvitation} className="space-y-4">
             <div>
               <label htmlFor="inviteEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Partner's Email Address
+                Partner&apos;s Email Address
               </label>
               <input
                 type="email"

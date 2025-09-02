@@ -182,7 +182,7 @@ export function PartnerHub({
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Partner's Income</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Partner&apos;s Income</p>
                   <p className="text-xl font-bold text-gray-900 dark:text-white">
                     {currencySymbol}{partnerProfile?.income?.toFixed(0) || '0'}
                   </p>

@@ -80,7 +80,7 @@ export function OverviewHub({
       safetyPotAmount,
       monthsOfExpensesCovered
     }
-  }, [expenses, goals, profile, partnerProfile])
+  }, [expenses, goals, profile, partnerProfile, monthlyProgress.trends.consistencyScore])
 
   // Quick actions for main tasks
   const quickActions: QuickAction[] = useMemo(() => [
@@ -118,13 +118,9 @@ export function OverviewHub({
     }
   ], [onNavigate])
 
-  // Load recent activity
-  useEffect(() => {
-    loadRecentActivity()
-    loadMonthlyProgress()
-  }, [])
 
-  const loadRecentActivity = async () => {
+
+  const loadRecentActivity = useCallback(async () => {
     try {
       // In a real app, this would fetch from activity API
       // For now, generate activity from existing data
@@ -168,7 +164,7 @@ export function OverviewHub({
     } catch (error) {
       console.error('Failed to load recent activity:', error)
     }
-  }
+  }, [expenses, goals])
 
   const loadMonthlyProgress = async () => {
     try {
@@ -178,6 +174,12 @@ export function OverviewHub({
       console.error('Failed to load monthly progress:', error)
     }
   }
+
+  // Load recent activity
+  useEffect(() => {
+    loadRecentActivity()
+    loadMonthlyProgress()
+  }, [loadRecentActivity])
 
   const getProgressPercentage = () => {
     if (stats.totalTarget === 0) return 0
@@ -461,7 +463,7 @@ export function OverviewHub({
                 <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">
                   {(partnerProfile?.name || 'Partner').charAt(0).toUpperCase()}
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">{partnerProfile?.name || 'Partner'}'s Breakdown</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{partnerProfile?.name || 'Partner'}&apos;s Breakdown</h3>
               </div>
 
               {/* Total Income */}
@@ -479,7 +481,7 @@ export function OverviewHub({
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-green-700 dark:text-green-300">Personal Allowance</span>
-                  <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-800 px-2 py-1 rounded">Partner's Money</span>
+                  <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-800 px-2 py-1 rounded">Partner&apos;s Money</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900 dark:text-green-100">
                   {partnerProfile?.personal_allowance ? `${currencySymbol}${partnerProfile.personal_allowance.toLocaleString()}` : '--'}
@@ -502,7 +504,7 @@ export function OverviewHub({
 
               {/* Partner's Monthly Contributions */}
               <div className="mt-6">
-                <h4 className="font-medium text-gray-900 mb-3">{partnerProfile?.name || 'Partner'}'s Monthly Contributions</h4>
+                <h4 className="font-medium text-gray-900 mb-3">{partnerProfile?.name || 'Partner'}&apos;s Monthly Contributions</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">

@@ -64,42 +64,7 @@ export function AdvancedAnalyticsDashboard({
 
 
 
-  const generateAnalyticsData = useCallback(async (): Promise<AnalyticsData> => {
-    // Calculate summary metrics
-    const totalNetWorth = calculateNetWorth()
-    const monthlySavingsRate = calculateMonthlySavingsRate()
-    const goalProgressRate = calculateGoalProgressRate()
-    const partnerContributionRatio = calculatePartnerContributionRatio()
-    const financialHealthScore = calculateFinancialHealthScore(monthlySavingsRate, goalProgressRate)
-    const riskAssessment = assessRiskLevel(monthlySavingsRate, goalProgressRate, financialHealthScore)
 
-    // Generate trend data
-    const trends = generateTrendData()
-
-    // Generate category breakdowns
-    const categories = generateCategoryData()
-
-    // Generate insights
-    const insights = generateInsights()
-
-    // Generate forecasts
-    const forecasts = generateForecasts()
-
-    return {
-      summary: {
-        totalNetWorth,
-        monthlySavingsRate,
-        goalProgressRate,
-        partnerContributionRatio,
-        financialHealthScore,
-        riskAssessment
-      },
-      trends,
-      categories,
-      insights,
-      forecasts
-    }
-  }, [])
 
   const calculateNetWorth = useCallback((): number => {
     const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0)
@@ -128,20 +93,7 @@ export function AdvancedAnalyticsDashboard({
     return (totalProgress / goals.length) * 100
   }, [goals])
 
-  const loadAnalyticsData = useCallback(async () => {
-    try {
-      setLoading(true)
-      
-      // Generate comprehensive analytics data
-      const data = await generateAnalyticsData()
-      setAnalyticsData(data)
-    } catch (error) {
-      console.error('Error loading analytics data:', error)
-      toast.error('Failed to load analytics data')
-    } finally {
-      setLoading(false)
-    }
-  }, [generateAnalyticsData])
+
 
   const calculatePartnerContributionRatio = useCallback((): number => {
     if (partnerships.length === 0) return 0
@@ -326,6 +278,58 @@ export function AdvancedAnalyticsDashboard({
       }
     }
   }, [])
+
+  const generateAnalyticsData = useCallback(async (): Promise<AnalyticsData> => {
+    // Calculate summary metrics
+    const totalNetWorth = calculateNetWorth()
+    const monthlySavingsRate = calculateMonthlySavingsRate()
+    const goalProgressRate = calculateGoalProgressRate()
+    const partnerContributionRatio = calculatePartnerContributionRatio()
+    const financialHealthScore = calculateFinancialHealthScore(monthlySavingsRate, goalProgressRate)
+    const riskAssessment = assessRiskLevel(monthlySavingsRate, goalProgressRate, financialHealthScore)
+
+    // Generate trend data
+    const trends = generateTrendData()
+
+    // Generate category breakdowns
+    const categories = generateCategoryData()
+
+    // Generate insights
+    const insights = generateInsights()
+
+    // Generate forecasts
+    const forecasts = generateForecasts()
+
+    return {
+      summary: {
+        totalNetWorth,
+        monthlySavingsRate,
+        goalProgressRate,
+        partnerContributionRatio,
+        financialHealthScore,
+        riskAssessment
+      },
+      trends,
+      categories,
+      insights,
+      forecasts
+    }
+  }, [assessRiskLevel, calculateFinancialHealthScore, calculateGoalProgressRate, calculateMonthlySavingsRate, calculateNetWorth, calculatePartnerContributionRatio, generateCategoryData, generateForecasts, generateInsights, generateTrendData])
+
+  const loadAnalyticsData = useCallback(async () => {
+    try {
+      setLoading(true)
+      
+      // Generate comprehensive analytics data
+      const data = await generateAnalyticsData()
+      setAnalyticsData(data)
+    } catch (error) {
+      console.error('Error loading analytics data:', error)
+      toast.error('Failed to load analytics data')
+    } finally {
+      setLoading(false)
+    }
+  }, [generateAnalyticsData])
 
   const getRiskColor = (risk: 'low' | 'medium' | 'high') => {
     const colors = {

@@ -147,7 +147,7 @@ export function PrivacySettings() {
         </h2>
         
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          You have full control over your data and privacy settings. We're committed to protecting your information and ensuring transparency.
+          You have full control over your data and privacy settings. We&apos;re committed to protecting your information and ensuring transparency.
         </p>
         
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">

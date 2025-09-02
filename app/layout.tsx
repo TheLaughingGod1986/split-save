@@ -95,7 +95,7 @@ export const metadata: Metadata = {
     creator: '@splitsave',
     site: '@splitsave',
   },
-  robots: {
+    robots: {
     index: true,
     follow: true,
     googleBot: {
@@ -108,23 +108,8 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'your-google-verification-code',
-    yandex: 'your-yandex-verification-code',
+    yandex: 'your-yahoo-verification-code',
     yahoo: 'your-yahoo-verification-code',
-  },
-  category: 'Finance',
-  classification: 'Financial Management Application',
-  other: {
-    'application-name': 'SplitSave',
-    'apple-mobile-web-app-title': 'SplitSave',
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'default',
-    'mobile-web-app-capable': 'yes',
-    'msapplication-TileColor': '#7c3aed',
-    'msapplication-config': '/browserconfig.xml',
-    'theme-color': '#7c3aed',
-    'color-scheme': 'light dark',
-    'supported-color-schemes': 'light dark',
-    'viewport-fit': 'cover',
   },
 }
 

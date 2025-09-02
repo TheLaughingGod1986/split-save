@@ -304,7 +304,7 @@ export function SmartNotificationManager({
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <span className="text-4xl block mb-2">🔕</span>
                 <p>No notifications</p>
-                <p className="text-sm">You're all caught up!</p>
+                <p className="text-sm">You&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="space-y-3">
