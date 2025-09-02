@@ -2376,7 +2376,7 @@ function DashboardView({
             </div>
           ) : (
             <div className="space-y-4">
-              {expenses?.slice(0, 5).map((expense, index) => (
+              {Array.isArray(expenses) ? expenses.slice(0, 5).map((expense, index) => (
                 <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
@@ -2420,7 +2420,7 @@ function DashboardView({
             </div>
           ) : (
             <div className="space-y-4">
-              {goals?.slice(0, 5).map((goal, index) => (
+              {Array.isArray(goals) ? goals.slice(0, 5).map((goal, index) => (
                 <div key={goal.id} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center space-x-3">
@@ -2444,7 +2444,7 @@ function DashboardView({
                     <span className="font-medium">{Math.round((goal.current_amount / goal.target_amount) * 100)}%</span>
                   </div>
                 </div>
-              ))}
+              )) : null}
             </div>
           )}
         </div>
@@ -2891,7 +2891,7 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
           </div>
           
           <div className="space-y-4">
-            {expenses.map((expense, index) => (
+            {Array.isArray(expenses) ? expenses.map((expense, index) => (
               <div key={expense.id} className="p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4">
@@ -2964,7 +2964,7 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
                   </div>
                 </div>
               </div>
-            ))}
+            )) : null}
           </div>
         </div>
       ) : (
@@ -3523,7 +3523,7 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {goals.map((goal, index) => {
+              {Array.isArray(goals) ? goals.map((goal, index) => {
                 const progress = calculateGoalProgress(goal)
                 const timeRemaining = formatTimeRemaining(progress.daysRemaining, progress.monthsRemaining, progress.isOverdue)
                 const contributionRecommendation = getContributionRecommendation(progress.weeklyContribution, progress.monthlyContribution)
@@ -3681,7 +3681,7 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                     </div>
                   </div>
                 )
-              })}
+              }) : null}
             </div>
             
             {/* Goal Optimization Suggestions */}
@@ -3843,7 +3843,7 @@ function ApprovalsView({
       </div>
       
       <div className="space-y-4">
-        {approvals.map((approval) => (
+        {Array.isArray(approvals) ? approvals.map((approval) => (
           <div key={approval.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6">
             <div className="flex justify-between items-start">
               <div className="flex-1">
@@ -3958,7 +3958,7 @@ function ApprovalsView({
               </div>
             </div>
           </div>
-        ))}
+        )) : null}
       </div>
     </div>
   )
