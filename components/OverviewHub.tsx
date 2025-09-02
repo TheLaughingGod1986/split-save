@@ -58,12 +58,12 @@ export function OverviewHub({
 
   // Calculate dashboard statistics
   const stats: DashboardStats = useMemo(() => {
-    const totalExpenses = expenses?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0
-    const totalSaved = goals?.reduce((sum, goal) => sum + (goal.current_amount || 0), 0) || 0
-    const totalTarget = goals?.reduce((sum, goal) => sum + (goal.target_amount || 0), 0) || 0
-    const completedGoals = goals?.filter(goal => 
+    const totalExpenses = Array.isArray(expenses) ? expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0) : 0
+    const totalSaved = Array.isArray(goals) ? goals.reduce((sum, goal) => sum + (goal.current_amount || 0), 0) : 0
+    const totalTarget = Array.isArray(goals) ? goals.reduce((sum, goal) => sum + (goal.target_amount || 0), 0) : 0
+    const completedGoals = Array.isArray(goals) ? goals.filter(goal => 
       goal.current_amount >= goal.target_amount
-    ).length || 0
+    ).length : 0
     
     // Calculate safety pot (10% of monthly income)
     const monthlyIncome = (profile?.income || 0) + (partnerProfile?.income || 0)
@@ -598,7 +598,7 @@ export function OverviewHub({
               {/* Individual Goals */}
               {goals && goals.length > 0 ? (
                 <div className="space-y-3">
-                  {goals.slice(0, 4).map((goal, index) => {
+                  {Array.isArray(goals) ? goals.slice(0, 4).map((goal, index) => {
                     // Calculate contribution percentages based on goal priority/target
                     const goalPercentages = [0.12, 0.08, 0.05, 0.03]; // Decreasing percentages for goals
                     const percentage = goalPercentages[index] || 0.02;
@@ -658,7 +658,7 @@ export function OverviewHub({
                         </div>
                       </div>
                     );
-                  })}
+                  }) : null}
                 </div>
               ) : (
                 <div className="text-center py-4 text-gray-500 dark:text-gray-400">
