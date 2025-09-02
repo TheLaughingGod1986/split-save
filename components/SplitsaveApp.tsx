@@ -17,36 +17,13 @@ import { DashboardWidgets } from './DashboardWidgets'
 import AdvancedFinancialForecasting from './AdvancedFinancialForecasting'
 import dynamic from 'next/dynamic'
 
-// Lazy load heavy components for better performance
-const AIInsightsEngine = dynamic(() => import('./AIInsightsEngine').then(mod => ({ default: mod.AIInsightsEngine })), {
-  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading AI Insights...</div>,
-  ssr: false
-});
-
-const AdvancedAnalyticsDashboard = dynamic(() => import('./AdvancedAnalyticsDashboard').then(mod => ({ default: mod.AdvancedAnalyticsDashboard })), {
-  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Analytics...</div>,
-  ssr: false
-});
-
-const PerformanceOptimizer = dynamic(() => import('./PerformanceOptimizer').then(mod => ({ default: mod.PerformanceOptimizer })), {
-  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Optimizer...</div>,
-  ssr: false
-});
-
-const GamificationDashboard = dynamic(() => import('./GamificationDashboard').then(mod => ({ default: mod.GamificationDashboard })), {
-  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Gamification...</div>,
-  ssr: false
-});
-
-const AchievementCelebration = dynamic(() => import('./AchievementCelebration').then(mod => ({ default: mod.AchievementCelebration })), {
-  loading: () => null,
-  ssr: false
-});
-
-const EnhancedDashboard = dynamic(() => import('./EnhancedDashboard').then(mod => ({ default: mod.EnhancedDashboard })), {
-  loading: () => <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading Dashboard...</div>,
-  ssr: false
-});
+// Import components directly to avoid dynamic import issues
+import { AIInsightsEngine } from './AIInsightsEngine'
+import { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard'
+import { PerformanceOptimizer } from './PerformanceOptimizer'
+import { GamificationDashboard } from './GamificationDashboard'
+import { AchievementCelebration } from './AchievementCelebration'
+import { EnhancedDashboard } from './EnhancedDashboard'
 
 
 import { ProfileManager } from './ProfileManager'
