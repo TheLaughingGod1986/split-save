@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!user.partnershipId) {
-    return NextResponse.json({ approvals: [] }, { status: 200 })
+    return NextResponse.json([], { status: 200 })
   }
 
   try {
