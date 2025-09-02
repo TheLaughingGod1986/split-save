@@ -80,7 +80,7 @@ export function OverviewHub({
       safetyPotAmount,
       monthsOfExpensesCovered
     }
-  }, [expenses, goals, profile, partnerProfile, monthlyProgress.trends.consistencyScore])
+  }, [expenses, goals, profile, partnerProfile, monthlyProgress?.trends?.consistencyScore])
 
   // Quick actions for main tasks
   const quickActions: QuickAction[] = useMemo(() => [
