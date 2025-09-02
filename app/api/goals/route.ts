@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+    return NextResponse.json({ goals: [] }, { status: 200 })
   }
 
   try {

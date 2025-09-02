@@ -14,6 +14,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  if (!user.partnershipId) {
+    return NextResponse.json({ 
+      progress: {
+        currentMonth: {
+          totalIncome: 0,
+          totalExpenses: 0,
+          totalSavings: 0,
+          savingsRate: 0,
+          goalProgress: 0
+        },
+        trends: {
+          monthlyGrowth: 0,
+          consistencyScore: 0,
+          partnerReliability: 0
+        },
+        insights: []
+      }
+    }, { status: 200 })
+  }
+
   try {
     // Get user's active partnership
     const { data: partnerships } = await supabaseAdmin

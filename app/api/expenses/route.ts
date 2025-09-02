@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+    return NextResponse.json({ expenses: [] }, { status: 200 })
   }
 
   try {

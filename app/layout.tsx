@@ -185,8 +185,7 @@ export default function RootLayout({
         <meta name="twitter:app:name:googleplay" content="SplitSave" />
         
         {/* Additional Performance Optimizations */}
-        <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/api/health" as="fetch" crossOrigin="anonymous" />
+        {/* Font preloading is handled automatically by Next.js */}
         
         {/* Security Headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
