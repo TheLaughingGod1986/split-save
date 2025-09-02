@@ -34,6 +34,7 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
   const [financialHealth, setFinancialHealth] = useState<FinancialHealthScore | null>(null)
   const [selectedTimeframe, setSelectedTimeframe] = useState<'3months' | '6months' | '12months'>('6months')
   const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
 
   const generateRecommendations = useCallback((overall: number, savings: number, expenses: number, safety: number): string[] => {
     const recommendations = []
@@ -92,7 +93,9 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
   }, [profile?.income, generateRecommendations])
 
   const loadAnalyticsData = useCallback(async () => {
+    if (hasError) return // Prevent infinite loops
     setIsLoading(true)
+    setHasError(false)
     
     try {
       if (monthlyProgress?.monthlyProgress) {
@@ -115,15 +118,18 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
       }
     } catch (error) {
       console.error('Failed to process analytics data:', error)
+      setHasError(true)
       toast.error('Failed to load analytics data')
     } finally {
       setIsLoading(false)
     }
-  }, [monthlyProgress, calculateFinancialHealthScore])
+  }, [monthlyProgress, hasError])
 
   useEffect(() => {
-    loadAnalyticsData()
-  }, [selectedTimeframe, monthlyProgress, loadAnalyticsData])
+    if (!hasError) {
+      loadAnalyticsData()
+    }
+  }, [selectedTimeframe, monthlyProgress, hasError])
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-emerald-600 dark:text-emerald-400'
