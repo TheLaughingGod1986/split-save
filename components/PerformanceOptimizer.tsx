@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
@@ -59,12 +59,9 @@ export function PerformanceOptimizer({
   const [selectedEffort, setSelectedEffort] = useState<string>('all')
   const [showCompleted, setShowCompleted] = useState(false)
 
-  useEffect(() => {
-    analyzePerformance()
-    generateRecommendations()
-  }, [goals, contributions, expenses, partnerships, achievements, profile])
 
-  const analyzePerformance = async () => {
+
+  const analyzePerformance = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -91,7 +88,7 @@ export function PerformanceOptimizer({
     } finally {
       setLoading(false)
     }
-  }
+  }, [goals, contributions, expenses, partnerships, achievements, profile])
 
   const calculateCurrentSavingsRate = (): number => {
     const monthlyIncome = profile?.income || 5000 // Mock income
@@ -187,7 +184,7 @@ export function PerformanceOptimizer({
     return Math.min(100, potential)
   }
 
-  const generateRecommendations = async () => {
+  const generateRecommendations = useCallback(async () => {
     try {
       const newRecommendations: OptimizationRecommendation[] = []
       
@@ -358,7 +355,12 @@ export function PerformanceOptimizer({
       console.error('Error generating recommendations:', error)
       toast.error('Failed to generate recommendations')
     }
-  }
+  }, [metrics, goals, contributions, expenses, partnerships, achievements, profile])
+
+  useEffect(() => {
+    analyzePerformance()
+    generateRecommendations()
+  }, [goals, contributions, expenses, partnerships, achievements, profile, analyzePerformance, generateRecommendations])
 
   const handleRecommendationAction = (recommendation: OptimizationRecommendation) => {
     toast.success(`Action taken: ${recommendation.action}`)

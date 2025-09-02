@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface PartnerCollaborationViewProps {
@@ -55,11 +55,6 @@ export function PartnerCollaborationView({
   const [showNewSessionModal, setShowNewSessionModal] = useState(false)
   const [showNewNoteModal, setShowNewNoteModal] = useState(false)
 
-  useEffect(() => {
-    initializeCollaborationData()
-    checkForTeamAchievements()
-  }, [partnerships, goals])
-
   const initializeCollaborationData = () => {
     // In a real app, this would fetch from collaboration API
     // For now, initialize with empty arrays until real data is implemented
@@ -67,7 +62,7 @@ export function PartnerCollaborationView({
     setSharedNotes([])
   }
 
-  const checkForTeamAchievements = () => {
+  const checkForTeamAchievements = useCallback(() => {
     if (!partnerships || partnerships.length === 0) return
 
     const newAchievements: TeamAchievement[] = []
@@ -112,7 +107,12 @@ export function PartnerCollaborationView({
     }
 
     setTeamAchievements(newAchievements)
-  }
+  }, [partnerships, goals])
+
+  useEffect(() => {
+    initializeCollaborationData()
+    checkForTeamAchievements()
+  }, [partnerships, goals, checkForTeamAchievements])
 
   const calculateCollaborationScore = () => {
     if (!partnerships || partnerships.length === 0) return 0

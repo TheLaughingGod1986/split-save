@@ -598,7 +598,7 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
                 ))}
               </select>
               <p className="form-help-text">
-                We'll remind you to contribute on your payday
+                We&apos;ll remind you to contribute on your payday
               </p>
               
               {/* Payday Preview */}

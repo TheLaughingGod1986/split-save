@@ -160,7 +160,7 @@ export function SmartNotifications() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, defaultSettings])
 
   // Load notification data when component mounts
   useEffect(() => {

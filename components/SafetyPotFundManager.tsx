@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 import { 
@@ -47,11 +47,9 @@ export function SafetyPotFundManager({
   const [goals, setGoals] = useState<any[]>([])
   const [optimalContribution, setOptimalContribution] = useState(0)
 
-  useEffect(() => {
-    loadSafetyPotData()
-  }, [monthlyExpenses])
 
-  const loadSafetyPotData = async () => {
+
+  const loadSafetyPotData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -87,7 +85,11 @@ export function SafetyPotFundManager({
     } finally {
       setLoading(false)
     }
-  }
+  }, [monthlyExpenses])
+
+  useEffect(() => {
+    loadSafetyPotData()
+  }, [monthlyExpenses, loadSafetyPotData])
 
   const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault()

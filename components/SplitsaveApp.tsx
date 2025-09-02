@@ -8,6 +8,8 @@ import { apiClient, type Expense, type Goal, type ApprovalRequest } from '@/lib/
 import { useAnalytics, trackPageView, trackNavigation } from '@/lib/analytics'
 import { notificationSystem } from '@/lib/notification-system'
 import { paydayReminderSystem, setupPaydayReminders, checkMissedContributions } from '@/lib/payday-reminder-system'
+import { serviceWorkerManager } from '@/lib/service-worker'
+import { pushNotificationManager, NotificationTypes, NotificationTemplates } from '@/lib/push-notifications'
 import { DarkModeToggle } from './DesignSystem'
 // import { NotificationBell } from './NotificationBell' // Removed - using NotificationManager instead
 import { NotificationTester } from './NotificationTester'
@@ -139,6 +141,8 @@ export function SplitsaveApp() {
   const [isOnline, setIsOnline] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [celebratingAchievement, setCelebratingAchievement] = useState<any>(null)
+  const [serviceWorkerReady, setServiceWorkerReady] = useState(false)
+  const [updateAvailable, setUpdateAvailable] = useState(false)
   const [achievements, setAchievements] = useState<any[]>([])
   const [achievementSummary, setAchievementSummary] = useState<any>(null)
 
@@ -445,7 +449,7 @@ export function SplitsaveApp() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, user])
 
   const loadPartnerProfile = async (partnership: any) => {
     try {
@@ -489,9 +493,9 @@ export function SplitsaveApp() {
       // Track unauthenticated page view
       trackPageView('main_app', false)
     }
-  }, [user?.id, loadData]) // Include loadData in dependencies
+  }, [user?.id, loadData, user]) // Include loadData in dependencies
 
-  // Online/offline, mobile detection, and PWA install setup
+  // Online/offline, mobile detection, PWA install setup, and Service Worker
   useEffect(() => {
     // Check if online/offline
     const handleOnline = () => setIsOnline(true)
@@ -515,6 +519,50 @@ export function SplitsaveApp() {
       ;(window as any).deferredPrompt = null
     }
     
+                      // Service Worker setup
+                  const setupServiceWorker = async () => {
+                    try {
+                      await serviceWorkerManager.register()
+                      setServiceWorkerReady(true)
+                      console.log('✅ Service Worker ready')
+
+                      // Listen for updates
+                      serviceWorkerManager.on('updateavailable', () => {
+                        setUpdateAvailable(true)
+                        toast.info('New version available! Refresh to update.', {
+                          duration: 5000
+                        })
+                      })
+
+                      // Listen for online/offline events
+                      serviceWorkerManager.on('online', () => {
+                        setIsOnline(true)
+                        toast.success('Connection restored!')
+                      })
+
+                      serviceWorkerManager.on('offline', () => {
+                        setIsOnline(false)
+                        toast.error('You\'re offline. Some features may be limited.')
+                      })
+
+                    } catch (error) {
+                      console.error('❌ Service Worker setup failed:', error)
+                    }
+                  }
+
+                  // Push Notifications setup
+                  const setupPushNotifications = async () => {
+                    try {
+                      const enabled = await pushNotificationManager.initialize()
+                      if (enabled) {
+                        await pushNotificationManager.subscribeToPush()
+                        console.log('✅ Push notifications enabled')
+                      }
+                    } catch (error) {
+                      console.error('❌ Push notifications setup failed:', error)
+                    }
+                  }
+    
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
     window.addEventListener('resize', checkMobile)
@@ -524,6 +572,10 @@ export function SplitsaveApp() {
     // Initial check
     setIsOnline(navigator.onLine)
     checkMobile()
+    
+    // Setup Service Worker
+    setupServiceWorker()
+    setupPushNotifications()
     
     return () => {
       window.removeEventListener('online', handleOnline)
@@ -809,6 +861,29 @@ export function SplitsaveApp() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Offline Indicator */}
+      {!isOnline && (
+        <div className="bg-red-500 text-white text-center py-2 px-4 text-sm font-medium sticky top-0 z-50">
+          📴 You&apos;re offline. Some features may be limited.
+        </div>
+      )}
+      
+      {/* Update Available Indicator */}
+      {updateAvailable && (
+        <div className="bg-blue-500 text-white text-center py-2 px-4 text-sm font-medium sticky top-0 z-50">
+          🔄 New version available! 
+          <button 
+            onClick={() => {
+              serviceWorkerManager.applyUpdate()
+              window.location.reload()
+            }}
+            className="ml-2 underline hover:no-underline"
+          >
+            Refresh to update
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 safe-area-inset-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1537,7 +1612,7 @@ function DashboardView({
               {profileCompletion === 0 && (
                 <>
                   <p className="text-purple-700 dark:text-purple-300 text-lg leading-relaxed mb-6">
-                    Let's get you set up for collaborative financial success! Start by configuring your profile to unlock shared expenses and savings goals.
+                    Let&apos;s get you set up for collaborative financial success! Start by configuring your profile to unlock shared expenses and savings goals.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button 
@@ -1549,7 +1624,7 @@ function DashboardView({
                       <span className="ml-2">→</span>
                     </button>
                     <div className="text-sm text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-4 py-3 rounded-lg">
-                      <strong>What you'll configure:</strong> Income, personal allowance, and financial preferences
+                      <strong>What you&apos;ll configure:</strong> Income, personal allowance, and financial preferences
                     </div>
                   </div>
                 </>
@@ -1558,7 +1633,7 @@ function DashboardView({
               {profileCompletion > 0 && profileCompletion < 90 && (
                 <>
                   <p className="text-purple-700 dark:text-purple-300 text-lg leading-relaxed mb-6">
-                    Great progress! You're {profileCompletion}% of the way there. Complete your profile to unlock all SplitSave features.
+                    Great progress! You&apos;re {profileCompletion}% of the way there. Complete your profile to unlock all SplitSave features.
                   </p>
                   <div className="space-y-4">
                     <button 
@@ -1761,7 +1836,7 @@ function DashboardView({
                 <span className="text-white text-sm font-bold">{partnerProfile?.name?.charAt(0)?.toUpperCase() || 'P'}</span>
               </div>
               <h4 className="text-md font-semibold text-gray-700 dark:text-gray-300">
-                {partnerProfile?.name || 'Partner'}'s Breakdown
+                {partnerProfile?.name || 'Partner'}&apos;s Breakdown
               </h4>
             </div>
             
@@ -1789,7 +1864,7 @@ function DashboardView({
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-lg border border-green-200 dark:border-green-700">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-green-700 dark:text-green-300">Personal Allowance</span>
-                  <span className="text-xs text-green-600 dark:text-green-400">Partner's Money</span>
+                  <span className="text-xs text-green-600 dark:text-green-400">Partner&apos;s Money</span>
                 </div>
                 <div className="text-xl font-bold text-green-900 dark:text-green-100">
                   {partnerProfile ? (
@@ -1824,7 +1899,7 @@ function DashboardView({
             
             {/* Partner's Contribution Breakdown */}
             <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-              <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{partnerProfile?.name || 'Partner'}'s Monthly Contributions</h5>
+              <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{partnerProfile?.name || 'Partner'}&apos;s Monthly Contributions</h5>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -1895,7 +1970,7 @@ function DashboardView({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Monthly Progress Status</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Track your current month's financial achievements</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Track your current month&apos;s financial achievements</p>
             </div>
           </div>
           
@@ -2107,7 +2182,7 @@ function DashboardView({
                   <div className="text-lg font-bold text-green-900 dark:text-green-100">
                     {currencySymbol}{Math.round(1890 + 578 + 285)}
                   </div>
-                  <div className="text-xs text-green-700 dark:text-green-300">Partner's total contribution</div>
+                  <div className="text-xs text-green-700 dark:text-green-300">Partner&apos;s total contribution</div>
                   <div className="text-xs text-green-600 dark:text-green-400">54.2% of joint total</div>
                 </div>
               </div>
@@ -2158,7 +2233,7 @@ function DashboardView({
                       <span className="text-white text-xs font-bold">{partnerProfile?.name?.charAt(0)?.toUpperCase() || 'P'}</span>
                     </div>
                     <div>
-                      <h5 className="text-xs font-semibold text-amber-800 dark:text-amber-200">{partnerProfile?.name || 'Partner'}'s Payday</h5>
+                      <h5 className="text-xs font-semibold text-amber-800 dark:text-amber-200">{partnerProfile?.name || 'Partner'}&apos;s Payday</h5>
                       <p className="text-xs text-amber-700 dark:text-amber-300">
                         {partnerProfile?.payday ? (
                           <>
@@ -2197,7 +2272,7 @@ function DashboardView({
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-3">Partnership Required</h3>
                 <p className="text-blue-700 dark:text-blue-300 text-lg leading-relaxed mb-4">
-                  To unlock SplitSave's full potential, you need to connect with a partner. 
+                  To unlock SplitSave&apos;s full potential, you need to connect with a partner. 
                   This enables shared expenses, savings goals, and collaborative financial planning.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-blue-600 dark:text-blue-400">
@@ -2582,7 +2657,7 @@ function ExpensesView({ expenses, partnerships, onAddExpense, currencySymbol }: 
                   <strong>Partner Approval Required</strong>
                 </p>
                 <p className="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
-                  Expenses over {currencySymbol}100 require your partner's approval before they're added to your shared account. 
+                  Expenses over {currencySymbol}100 require your partner&apos;s approval before they&apos;re added to your shared account. 
                   Smaller expenses are added immediately for convenience.
                 </p>
               </div>
@@ -3100,7 +3175,7 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                   <strong>Partner Approval Required</strong>
                 </p>
                 <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
-                  All new savings goals require your partner's approval before they're added to your shared account. 
+                  All new savings goals require your partner&apos;s approval before they&apos;re added to your shared account. 
                   This ensures both partners are aligned on financial priorities.
                 </p>
               </div>
@@ -3166,7 +3241,7 @@ function GoalsView({ goals, partnerships, onAddGoal, currencySymbol, userCountry
                       {calculateMonthlySavings()}
                     </p>
                     <p className="text-green-600 dark:text-green-400 text-sm mt-1">
-                      This is how much you'll need to save together each month to reach your goal on time.
+                      This is how much you&apos;ll need to save together each month to reach your goal on time.
                     </p>
                   </div>
                 </div>
@@ -3758,7 +3833,7 @@ function ApprovalsView({
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-12 text-center">
         <div className="text-8xl mb-6 opacity-50">✅</div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No Pending Approvals</h2>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">You're all caught up!</p>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">You&apos;re all caught up!</p>
       </div>
     )
   }
@@ -3772,7 +3847,7 @@ function ApprovalsView({
         <div className="flex items-center space-x-2">
           <div className="text-blue-600 dark:text-blue-400">ℹ️</div>
           <p className="text-blue-800 dark:text-blue-200 text-sm">
-            <strong>Approval System:</strong> Large expenses (over {currencySymbol}100) and new goals require partner approval. You can see your own requests and approve your partner's requests.
+            <strong>Approval System:</strong> Large expenses (over {currencySymbol}100) and new goals require partner approval. You can see your own requests and approve your partner&apos;s requests.
           </p>
         </div>
       </div>
@@ -3844,7 +3919,7 @@ function ApprovalsView({
                     <p className="text-blue-800 dark:text-blue-200 text-sm">
                       <strong>Request Sent:</strong> Your {approval.request_type} request has been sent to your partner for approval. 
                       {approval.request_type === 'expense' && approval.request_data.amount > 100 && (
-                        <span> This expense requires approval because it's over {currencySymbol}100.</span>
+                        <span> This expense requires approval because it&apos;s over {currencySymbol}100.</span>
                       )}
                     </p>
                   ) : (
@@ -3852,7 +3927,7 @@ function ApprovalsView({
                     <p className="text-amber-800 dark:text-amber-200 text-sm">
                       <strong>Action Required:</strong> Please review this request and either approve or decline it. 
                       {approval.request_type === 'expense' && approval.request_data.amount > 100 && (
-                        <span> This expense requires approval because it's over {currencySymbol}100.</span>
+                        <span> This expense requires approval because it&apos;s over {currencySymbol}100.</span>
                       )}
                     </p>
                   )}

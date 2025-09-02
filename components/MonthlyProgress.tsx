@@ -191,15 +191,41 @@ export function MonthlyProgress({
       goalContributions[goal.id] = Math.round(remainingAmount / monthsUntilTarget)
     })
     
+    // Calculate proportional shared expenses based on partnership data
+    let sharedExpensesAmount = Math.round(baseDisposableIncome * 0.7) // Default fallback
+    
+    if (partnerships && partnerships.length > 0) {
+      // Get the active partnership
+      const activePartnership = partnerships.find(p => p.status === 'active')
+      
+      if (activePartnership) {
+        // Calculate total household income (user + partner)
+        const userIncome = profile.income
+        const partnerIncome = activePartnership.partner_income || 0
+        const totalHouseholdIncome = userIncome + partnerIncome
+        
+        if (totalHouseholdIncome > 0) {
+          // Calculate user's proportion of household income
+          const userProportion = userIncome / totalHouseholdIncome
+          
+          // Get total shared expenses from partnership
+          const totalSharedExpenses = activePartnership.shared_expenses || 0
+          
+          // Calculate user's proportional share
+          sharedExpensesAmount = Math.round(totalSharedExpenses * userProportion)
+        }
+      }
+    }
+    
     // Base recommendations from BASE salary (fixed) - these are your MANUAL savings targets
     const baseRecommendation = {
-      sharedExpenses: Math.round(baseDisposableIncome * 0.7), // FIXED: Always based on base salary
+      sharedExpenses: sharedExpensesAmount, // Now proportional based on partnership
       safetyPot: Math.round(baseDisposableIncome * 0.1),      // FIXED: Always based on base salary
       ...goalContributions // Add actual goal contributions
     }
     
     return baseRecommendation
-  }, [profile?.income, profile?.personal_allowance, goals])
+  }, [profile?.income, profile?.personal_allowance, goals, partnerships])
 
   // NEW: Get recommended savings amounts that include extra income distribution
   const getRecommendedSavings = (actualSalary: number) => {
@@ -762,7 +788,10 @@ export function MonthlyProgress({
                     </div>
                   )}
                   <div className="text-caption text-purple-600 dark:text-purple-400 space-small">
-                    70% of your base salary disposable income (fixed)
+                    {partnerships && partnerships.length > 0 
+                      ? 'Proportional share based on partnership income split'
+                      : '70% of your base salary disposable income (fallback)'
+                    }
                   </div>
                 </div>
                 <div>

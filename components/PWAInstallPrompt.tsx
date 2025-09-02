@@ -67,7 +67,7 @@ export function PWAInstallPrompt() {
       window.removeEventListener('appinstalled', handleAppInstalled)
       clearTimeout(timer)
     }
-  }, []) // Remove deferredPrompt from dependencies to prevent infinite loop
+  }, [deferredPrompt])
 
   const handleInstall = async () => {
     if (!deferredPrompt) {

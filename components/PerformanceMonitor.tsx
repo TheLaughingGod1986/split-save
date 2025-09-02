@@ -81,31 +81,9 @@ export function PerformanceMonitor({
   const renderStartTimeRef = useRef<number>(0)
 
   // Initialize performance monitoring
-  useEffect(() => {
-    if (!enabled) return
 
-    // Start monitoring when component mounts
-    startMonitoring()
-    
-    // Monitor component render time
-    renderStartTimeRef.current = performance.now()
-    
-    return () => {
-      stopMonitoring()
-    }
-  }, [enabled])
 
-  // Monitor component render time
-  useEffect(() => {
-    if (renderStartTimeRef.current > 0) {
-      const renderTime = performance.now() - renderStartTimeRef.current
-      updateMetric('componentRenderTime', renderTime)
-      
-      if (logToConsole) {
-        console.log(`Component render time: ${renderTime.toFixed(2)}ms`)
-      }
-    }
-  }, [])
+
 
   const startMonitoring = useCallback(() => {
     try {
@@ -200,12 +178,39 @@ export function PerformanceMonitor({
     }
   }, [])
 
+  // Start monitoring when component mounts
+  useEffect(() => {
+    if (!enabled) return
+
+    // Start monitoring when component mounts
+    startMonitoring()
+    
+    // Monitor component render time
+    renderStartTimeRef.current = performance.now()
+    
+    return () => {
+      stopMonitoring()
+    }
+  }, [enabled, startMonitoring, stopMonitoring])
+
   const updateMetric = useCallback((key: keyof PerformanceMetrics, value: number) => {
     setMetrics(prev => ({
       ...prev,
       [key]: value
     }))
   }, [])
+
+  // Monitor component render time
+  useEffect(() => {
+    if (renderStartTimeRef.current > 0) {
+      const renderTime = performance.now() - renderStartTimeRef.current
+      updateMetric('componentRenderTime', renderTime)
+      
+      if (logToConsole) {
+        console.log(`Component render time: ${renderTime.toFixed(2)}ms`)
+      }
+    }
+  }, [logToConsole, updateMetric])
 
   const checkThreshold = useCallback((metric: string, value: number, threshold: number) => {
     if (value > threshold) {

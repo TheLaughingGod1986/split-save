@@ -2,20 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SplitSave - Offline</title>
-    <meta name="description" content="SplitSave is currently offline. Your data will sync when connection is restored.">
-    <meta name="theme-color" content="#7c3aed">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="SplitSave">
-    
-    <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed">
-    
+    <meta name="description" content="SplitSave is temporarily offline. Check your connection and try again.">
+    <link rel="icon" href="/icon-192x192.png">
     <style>
         * {
             margin: 0;
@@ -30,276 +20,161 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            padding: 1rem;
-            line-height: 1.6;
+            padding: 20px;
         }
         
-        .offline-container {
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
             text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 100%;
         }
         
-        .offline-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            opacity: 0.8;
         }
         
         h1 {
-            font-size: 2rem;
+            color: #1f2937;
+            font-size: 28px;
             font-weight: 700;
-            margin-bottom: 1rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
         }
         
-        .subtitle {
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            opacity: 0.9;
-            font-weight: 500;
+        p {
+            color: #6b7280;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 32px;
         }
         
-        .description {
-            margin-bottom: 2rem;
-            opacity: 0.8;
-            font-size: 0.95rem;
-        }
-        
-        .features {
-            background: rgba(255,255,255,0.1);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .features h3 {
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        
-        .feature-list {
-            list-style: none;
-            text-align: left;
-        }
-        
-        .feature-list li {
-            margin-bottom: 0.5rem;
-            padding-left: 1.5rem;
-            position: relative;
-            font-size: 0.9rem;
-        }
-        
-        .feature-list li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #10b981;
-            font-weight: bold;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
-        .btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
         
-        .btn:active {
+        .retry-btn:active {
             transform: translateY(0);
         }
         
-        .btn-primary {
-            background: rgba(255,255,255,0.25);
-            border-color: rgba(255,255,255,0.4);
+        .status {
+            margin-top: 24px;
+            padding: 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #6b7280;
         }
         
-        .btn-primary:hover {
-            background: rgba(255,255,255,0.35);
+        .online {
+            background: #d1fae5;
+            color: #065f46;
         }
         
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: rgba(0,0,0,0.2);
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #ef4444;
-            animation: blink 1.5s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
-        }
-        
-        .connection-info {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-top: 1rem;
+        .offline {
+            background: #fee2e2;
+            color: #991b1b;
         }
         
         @media (max-width: 480px) {
-            .offline-container {
-                padding: 1rem;
+            .container {
+                padding: 24px;
+                margin: 10px;
             }
             
             h1 {
-                font-size: 1.75rem;
+                font-size: 24px;
             }
             
-            .actions {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            .icon {
+                font-size: 48px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="offline-container">
-        <div class="status-indicator">
-            <div class="status-dot"></div>
-            <span>Offline Mode</span>
-        </div>
-        
-        <div class="offline-icon">📱</div>
-        
+    <div class="container">
+        <div class="icon">📱</div>
         <h1>You're Offline</h1>
-        <p class="subtitle">SplitSave is currently offline</p>
-        <p class="description">
-            Don't worry! Your data is safe and will sync automatically when your connection is restored.
-        </p>
+        <p>SplitSave needs an internet connection to work properly. Please check your connection and try again.</p>
         
-        <div class="features">
-            <h3>What you can do:</h3>
-            <ul class="feature-list">
-                <li>View cached data and recent activity</li>
-                <li>Prepare new expenses and goals</li>
-                <li>Review your financial progress</li>
-                <li>Access your safety pot information</li>
-            </ul>
-        </div>
+        <button class="retry-btn" onclick="checkConnection()">
+            Check Connection
+        </button>
         
-        <div class="actions">
-            <button class="btn btn-primary" onclick="window.location.reload()">
-                🔄 Try Again
-            </button>
-            <button class="btn" onclick="checkConnection()">
-                📡 Check Connection
-            </button>
-        </div>
-        
-        <div class="connection-info">
-            <p>Last synced: <span id="lastSync">Just now</span></p>
-            <p>Connection status: <span id="connectionStatus">Checking...</span></p>
+        <div id="status" class="status offline">
+            🔴 No internet connection detected
         </div>
     </div>
-    
+
     <script>
-        // Check connection status
         function checkConnection() {
-            const statusElement = document.getElementById('connectionStatus');
-            const statusDot = document.querySelector('.status-dot');
+            const statusEl = document.getElementById('status');
+            const retryBtn = document.querySelector('.retry-btn');
             
             if (navigator.onLine) {
-                statusElement.textContent = 'Online - Reloading...';
-                statusDot.style.background = '#10b981';
+                statusEl.textContent = '🟢 Connection restored! Redirecting...';
+                statusEl.className = 'status online';
+                retryBtn.textContent = 'Redirecting...';
+                retryBtn.disabled = true;
+                
                 setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                    window.location.href = '/';
+                }, 1500);
             } else {
-                statusElement.textContent = 'Still offline';
-                statusDot.style.background = '#ef4444';
+                statusEl.textContent = '🔴 Still offline. Please check your connection.';
+                statusEl.className = 'status offline';
+                
+                // Retry after 3 seconds
+                setTimeout(() => {
+                    retryBtn.textContent = 'Check Connection';
+                    retryBtn.disabled = false;
+                }, 3000);
             }
         }
         
         // Listen for online/offline events
         window.addEventListener('online', () => {
-            document.getElementById('connectionStatus').textContent = 'Online - Reloading...';
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            checkConnection();
         });
         
         window.addEventListener('offline', () => {
-            document.getElementById('connectionStatus').textContent = 'Offline';
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = '🔴 Connection lost';
+            statusEl.className = 'status offline';
         });
         
-        // Set last sync time
-        document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
-        
-        // Check connection on load
-        checkConnection();
+        // Check connection on page load
+        window.addEventListener('load', () => {
+            if (navigator.onLine) {
+                checkConnection();
+            }
+        });
         
         // Auto-retry every 30 seconds
         setInterval(() => {
-            if (navigator.onLine) {
-                window.location.reload();
+            if (!navigator.onLine) {
+                checkConnection();
             }
         }, 30000);
-        
-        // Service Worker registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('SW registered: ', registration);
-                })
-                .catch(registrationError => {
-                    console.log('SW registration failed: ', registrationError);
-                });
-        }
     </script>
 </body>
 </html>

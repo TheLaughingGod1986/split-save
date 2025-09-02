@@ -7,6 +7,7 @@ import { ProfileManager } from './ProfileManager'
 import { SecurityDashboard } from './SecurityDashboard'
 import { DataExportView } from './DataExportView'
 import { SmartNotifications } from './SmartNotifications'
+import { PushNotificationSettings } from './PushNotificationSettings'
 
 interface AccountHubProps {
   profile: any
@@ -30,7 +31,7 @@ export function AccountHub({
   onUpdate
 }: AccountHubProps) {
   const { signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'data' | 'preferences'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'onboarding' | 'security' | 'data' | 'preferences' | 'push-notifications'>('profile')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleSignOut = async () => {
@@ -60,7 +61,8 @@ export function AccountHub({
     { id: 'onboarding', label: 'Onboarding', icon: '🚀' },
     { id: 'security', label: 'Security', icon: '🔒' },
     { id: 'data', label: 'Data & Export', icon: '📊' },
-    { id: 'preferences', label: 'Notifications', icon: '🔔' }
+    { id: 'preferences', label: 'Notifications', icon: '🔔' },
+    { id: 'push-notifications', label: 'Push Notifications', icon: '📱' }
   ]
 
   const renderProfile = () => (
@@ -242,6 +244,10 @@ export function AccountHub({
 
   const renderPreferences = () => (
     <SmartNotifications />
+  )
+
+  const renderPushNotifications = () => (
+    <PushNotificationSettings />
   )
 
   const renderOldPreferences = () => (
@@ -428,9 +434,11 @@ export function AccountHub({
         {/* Tab Content */}
         <div className="p-6 bg-white dark:bg-gray-800">
           {activeTab === 'profile' && renderProfile()}
+          {activeTab === 'onboarding' && renderOnboarding()}
           {activeTab === 'security' && renderSecurity()}
           {activeTab === 'data' && renderDataExport()}
           {activeTab === 'preferences' && renderPreferences()}
+          {activeTab === 'push-notifications' && renderPushNotifications()}
         </div>
       </div>
     </div>

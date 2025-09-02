@@ -154,7 +154,7 @@ export function SmartNotificationManager({
   }, [userId, userProfile, goals, contributions, achievements, generateInitialNotifications, startNotificationChecks])
 
   // Check for new notifications
-  const checkForNewNotifications = () => {
+  const checkForNewNotifications = useCallback(() => {
     const now = new Date()
     
     // Check if any scheduled notifications should be shown
@@ -167,7 +167,7 @@ export function SmartNotificationManager({
         showNotification(notification)
       }
     })
-  }
+  }, [notifications, preferences])
 
   // Show a notification
   const showNotification = (notification: NotificationConfig) => {
