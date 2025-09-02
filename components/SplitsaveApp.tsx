@@ -499,29 +499,30 @@ export function SplitsaveApp() {
                       // Service Worker setup
                   const setupServiceWorker = async () => {
                     try {
-                      await serviceWorkerManager.register()
-                      setServiceWorkerReady(true)
-                      console.log('✅ Service Worker ready')
+                      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                        await serviceWorkerManager.register()
+                        setServiceWorkerReady(true)
+                        console.log('✅ Service Worker ready')
 
-                      // Listen for updates
-                      serviceWorkerManager.on('updateavailable', () => {
-                        setUpdateAvailable(true)
-                        toast.info('New version available! Refresh to update.', {
-                          duration: 5000
+                        // Listen for updates
+                        serviceWorkerManager.on('updateavailable', () => {
+                          setUpdateAvailable(true)
+                          toast.info('New version available! Refresh to update.', {
+                            duration: 5000
+                          })
                         })
-                      })
 
-                      // Listen for online/offline events
-                      serviceWorkerManager.on('online', () => {
-                        setIsOnline(true)
-                        toast.success('Connection restored!')
-                      })
+                        // Listen for online/offline events
+                        serviceWorkerManager.on('online', () => {
+                          setIsOnline(true)
+                          toast.success('Connection restored!')
+                        })
 
-                      serviceWorkerManager.on('offline', () => {
-                        setIsOnline(false)
-                        toast.error('You\'re offline. Some features may be limited.')
-                      })
-
+                        serviceWorkerManager.on('offline', () => {
+                          setIsOnline(false)
+                          toast.error('You\'re offline. Some features may be limited.')
+                        })
+                      }
                     } catch (error) {
                       console.error('❌ Service Worker setup failed:', error)
                     }
@@ -530,36 +531,48 @@ export function SplitsaveApp() {
                   // Push Notifications setup
                   const setupPushNotifications = async () => {
                     try {
-                      const enabled = await pushNotificationManager.initialize()
-                      if (enabled) {
-                        await pushNotificationManager.subscribeToPush()
-                        console.log('✅ Push notifications enabled')
+                      if (typeof window !== 'undefined' && 'Notification' in window) {
+                        const enabled = await pushNotificationManager.initialize()
+                        if (enabled) {
+                          await pushNotificationManager.subscribeToPush()
+                          console.log('✅ Push notifications enabled')
+                        }
                       }
                     } catch (error) {
                       console.error('❌ Push notifications setup failed:', error)
                     }
                   }
     
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    window.addEventListener('resize', checkMobile)
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', handleAppInstalled)
+    // Add event listeners with defensive checks
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline)
+      window.addEventListener('offline', handleOffline)
+      window.addEventListener('resize', checkMobile)
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.addEventListener('appinstalled', handleAppInstalled)
+      
+      // Initial check
+      setIsOnline(navigator.onLine)
+      checkMobile()
+    }
     
-    // Initial check
-    setIsOnline(navigator.onLine)
-    checkMobile()
-    
-    // Setup Service Worker
+    // Setup Service Worker and Push Notifications
     setupServiceWorker()
     setupPushNotifications()
     
     return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-      window.removeEventListener('resize', checkMobile)
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', handleAppInstalled)
+      // Defensive cleanup - only remove listeners if they exist
+      try {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('online', handleOnline)
+          window.removeEventListener('offline', handleOffline)
+          window.removeEventListener('resize', checkMobile)
+          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+          window.removeEventListener('appinstalled', handleAppInstalled)
+        }
+      } catch (error) {
+        console.warn('Error during event listener cleanup:', error)
+      }
     }
   }, [])
 
