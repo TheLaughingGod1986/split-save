@@ -60,11 +60,12 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
       
       // Load goals for reallocation suggestions
       try {
-        const goalsData = await apiClient.get('/goals')
-        setGoals(goalsData || [])
+        const response = await apiClient.get('/goals')
+        const goalsData = response.data || []
+        setGoals(goalsData)
         
         // Generate reallocation suggestions
-        const suggestions = generateReallocationSuggestions(status, goalsData || [], 0)
+        const suggestions = generateReallocationSuggestions(status, goalsData, 0)
         setReallocationSuggestions(suggestions)
       } catch (err) {
         console.log('Could not load goals for reallocation suggestions')
@@ -280,21 +281,21 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
               </div>
               <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
                 <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">Target Coverage:</span>
-                <span className="text-blue-800 dark:text-blue-200 font-semibold">3 months</span>
+                <span className="text-blue-800 dark:text-blue-200 font-semibold">6 months</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
                 <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">Calculation:</span>
-                <span className="text-blue-800 dark:text-blue-200 font-semibold">{currencySymbol}{monthlyExpenses.toFixed(2)} × 3</span>
+                <span className="text-blue-800 dark:text-blue-200 font-semibold">{currencySymbol}{monthlyExpenses.toFixed(2)} × 6</span>
               </div>
             </div>
             
             <div className="space-y-3">
               <div className="bg-white/60 dark:bg-blue-900/30 rounded-lg p-3">
-                <h5 className="text-blue-800 dark:text-blue-200 font-medium mb-2">Why 3 months?</h5>
+                <h5 className="text-blue-800 dark:text-blue-200 font-medium mb-2">Why 6 months?</h5>
                 <ul className="text-blue-700 dark:text-blue-300 text-sm space-y-1">
-                  <li>• Covers job loss or income reduction</li>
+                  <li>• Covers extended job loss or income reduction</li>
                   <li>• Handles unexpected major expenses</li>
-                  <li>• Provides time to adjust spending</li>
+                  <li>• Provides ample time to adjust spending</li>
                   <li>• Follows financial advisor recommendations</li>
                 </ul>
               </div>
@@ -303,7 +304,7 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
           
           <div className="mt-4 p-3 bg-white/60 dark:bg-blue-900/30 rounded-lg">
             <p className="text-blue-700 dark:text-blue-300 text-sm">
-              <strong>Your target:</strong> {currencySymbol}{monthlyExpenses.toFixed(2)} × 3 months = <strong>{currencySymbol}{safetyPotStatus.targetAmount.toFixed(2)}</strong>
+              <strong>Your target:</strong> {currencySymbol}{monthlyExpenses.toFixed(2)} × 6 months = <strong>{currencySymbol}{safetyPotStatus.targetAmount.toFixed(2)}</strong>
             </p>
           </div>
           
@@ -337,7 +338,7 @@ export default function SafetyPotManager({ currencySymbol, monthlyExpenses, onUp
             <div className="w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center text-white text-sm">⚙️</div>
             <div>
               <p className="text-amber-800 dark:text-amber-200 text-sm">
-                <strong>Customizable:</strong> You can adjust your safety pot target by changing the number of months (currently 3) or minimum amount in your profile settings. Some users prefer 6 months for extra security, while others choose 2 months for faster goal achievement.
+                <strong>Customizable:</strong> You can adjust your safety pot target by changing the number of months (currently 6) or minimum amount in your profile settings. Some users prefer 6 months for extra security, while others choose 3 months for faster goal achievement.
               </p>
             </div>
           </div>

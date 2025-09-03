@@ -59,14 +59,14 @@ export function GoalContributionForm({
         year: parseInt(year)
       })
       
-      if (response.success) {
+      if (response.data?.success) {
         toast.success('Contribution added successfully!')
         setShowForm(false)
         resetForm()
         onContributionAdded()
         
         // Show completion message if goal is now complete
-        if (response.contribution.isCompleted) {
+        if (response.data?.contribution?.isCompleted) {
           toast.success(`🎉 Goal "${goal.name}" completed!`, { duration: 5000 })
         }
       }

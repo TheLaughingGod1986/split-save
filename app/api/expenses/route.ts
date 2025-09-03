@@ -11,19 +11,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json([], { status: 200 })
-  }
-
   try {
-          const { data: expenses, error } = await supabaseAdmin
-        .from('expenses')
-        .select(`
-          *,
-          added_by_user:users!expenses_added_by_user_id_fkey(id, name)
-        `)
-        .eq('partnership_id', user.partnershipId)
-        .order('created_at', { ascending: false })
+    let query = supabaseAdmin
+      .from('expenses')
+      .select(`
+        *,
+        added_by_user:users!expenses_added_by_user_id_fkey(id, name)
+      `)
+      .order('created_at', { ascending: false })
+
+    // If user has a partnership, get partnership expenses
+    // If no partnership, get personal expenses (where partnership_id is null and added_by_user_id matches)
+    if (user.partnershipId) {
+      query = query.eq('partnership_id', user.partnershipId)
+    } else {
+      query = query.is('partnership_id', null).eq('added_by_user_id', user.id)
+    }
+
+    const { data: expenses, error } = await query
 
     if (error) {
       return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 })
@@ -42,9 +47,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
-  }
+  // Allow expenses without partnership - users can track personal expenses
+  // if (!user.partnershipId) {
+  //   return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+  // }
 
   try {
     const body = await req.json()
@@ -59,28 +65,38 @@ export async function POST(req: NextRequest) {
     const expenseData = expenseSchema.parse(body)
     console.log('✅ Expenses API - Validated data:', expenseData)
     
-    // Check number of partners in this partnership
-    const { data: partnership, error: partnershipError } = await supabaseAdmin
-      .from('partnerships')
-      .select('id, user1_id, user2_id')
-      .eq('id', user.partnershipId)
-      .single()
+    // Handle partnership logic - allow personal expenses if no partnership
+    let requiresApproval = false
+    let partnershipId: string | null = user.partnershipId || null
     
-    if (partnershipError) {
-      console.error('❌ Expenses API - Failed to fetch partnership:', partnershipError)
-      return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
+    if (user.partnershipId) {
+      // Check number of partners in this partnership
+      const { data: partnership, error: partnershipError } = await supabaseAdmin
+        .from('partnerships')
+        .select('id, user1_id, user2_id')
+        .eq('id', user.partnershipId)
+        .single()
+      
+      if (partnershipError) {
+        console.error('❌ Expenses API - Failed to fetch partnership:', partnershipError)
+        return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
+      }
+      
+      console.log('🔍 Expenses API - Partnership data:', partnership)
+      console.log('🔍 Expenses API - user1_id:', partnership.user1_id)
+      console.log('🔍 Expenses API - user2_id:', partnership.user2_id)
+      
+      // Count active partners (users who are not null)
+      const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
+      console.log('🔍 Expenses API - Active partners in partnership:', activePartners)
+      
+      // Check if requires approval: only if amount > 100 AND there are 2+ partners
+      requiresApproval = expenseData.amount > 100 && activePartners > 1
+    } else {
+      // No partnership - create personal expense
+      console.log('🔍 Expenses API - Creating personal expense (no partnership)')
+      partnershipId = null
     }
-    
-    console.log('🔍 Expenses API - Partnership data:', partnership)
-    console.log('🔍 Expenses API - user1_id:', partnership.user1_id)
-    console.log('🔍 Expenses API - user2_id:', partnership.user2_id)
-    
-    // Count active partners (users who are not null)
-    const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
-    console.log('🔍 Expenses API - Active partners in partnership:', activePartners)
-    
-    // Check if requires approval: only if amount > 100 AND there are 2+ partners
-    const requiresApproval = expenseData.amount > 100 && activePartners > 1
     
     if (requiresApproval) {
       console.log('🔍 Expenses API - Creating approval request for amount:', expenseData.amount, '(2+ partners)')
@@ -88,7 +104,7 @@ export async function POST(req: NextRequest) {
       const { data: approval, error } = await supabaseAdmin
         .from('approval_requests')
         .insert({
-          partnership_id: user.partnershipId,
+          partnership_id: partnershipId,
           requested_by_user_id: user.id, // Use correct column name
           request_type: 'expense', // Fixed: was 'expense_add', should be 'expense'
           request_data: expenseData,
@@ -114,7 +130,7 @@ export async function POST(req: NextRequest) {
       const { data: expense, error } = await supabaseAdmin
         .from('expenses')
         .insert({
-          partnership_id: user.partnershipId,
+          partnership_id: partnershipId,
           description: expenseData.description,
           amount: expenseData.amount,
           category: expenseData.category,

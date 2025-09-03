@@ -1105,31 +1105,11 @@ export function MonthlyProgress({
         </h3>
         
         <div className="space-y-3">
-          {/* Demo history items - replace with real data */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <span className="text-lg">✅</span>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-white">December 2024</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">All targets met</div>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {new Date().toLocaleDateString('en-GB')}
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <span className="text-lg">⚠️</span>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-white">November 2024</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Partial targets met</div>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB')}
-            </div>
+          {/* TODO: Replace with real contribution history from API */}
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-lg mb-2">📊</div>
+            <div>No contribution history yet</div>
+            <div className="text-sm">Start recording your monthly contributions to see your progress here</div>
           </div>
         </div>
       </div>

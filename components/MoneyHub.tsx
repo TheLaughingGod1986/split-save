@@ -544,7 +544,7 @@ export function MoneyHub({
             <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
               <p className="text-green-700 dark:text-green-300 text-sm">Average per Expense</p>
               <p className="text-xl font-bold text-green-900 dark:text-green-100">
-                {currencySymbol}{expenses && expenses.length > 0 ? (monthlyExpenses / expenses.length).toFixed(2) : '0.00'}
+                {currencySymbol}{expenses && expenses.length > 0 ? (monthlyExpenses / (expenses.length || 1)).toFixed(2) : '0.00'}
               </p>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">

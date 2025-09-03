@@ -42,7 +42,7 @@ DECLARE
     feasibility DECIMAL(3,2);
 BEGIN
     -- Get user's monthly income (simplified calculation)
-    SELECT COALESCE(monthly_income, 0) INTO total_monthly_income
+    SELECT COALESCE(income, 0) INTO total_monthly_income
     FROM user_profiles 
     WHERE user_id = NEW.added_by_user_id;
     

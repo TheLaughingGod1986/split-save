@@ -44,7 +44,7 @@ export function DashboardWidgets({
     const totalProgress = goals.reduce((sum, goal) => {
       return sum + (goal.current_amount / goal.target_amount) * 100
     }, 0)
-    return Math.round(totalProgress / goals.length)
+    return Math.round(totalProgress / (goals.length || 1))
   }
 
   const findNextMilestone = (goals: any[]): any => {
@@ -177,7 +177,7 @@ export function DashboardWidgets({
   const calculateMonthlyAverage = (expenses: any[]): number => {
     if (expenses.length === 0) return 0
     const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-    return Math.round(total / expenses.length)
+    return Math.round(total / (expenses.length || 1))
   }
 
   const calculateStreakDays = (monthlyProgress: any): number => {
@@ -210,15 +210,15 @@ export function DashboardWidgets({
 
     // Safety Pot Widget
     const safetyPotTarget = calculateSafetyPotTarget(expenses, profile)
-    const safetyPotStatus = getSafetyPotStatus(profile.safety_pot_amount || 0, expenses)
-    const monthsCovered = calculateMonthsCovered(profile.safety_pot_amount || 0, expenses)
+    const safetyPotStatus = getSafetyPotStatus(profile?.safety_pot_amount || 0, expenses)
+    const monthsCovered = calculateMonthsCovered(profile?.safety_pot_amount || 0, expenses)
     widgets.push({
       id: 'safety-pot',
       type: 'safety-pot',
       title: 'Safety Pot',
       description: 'Emergency fund status',
       data: {
-        currentAmount: profile.safety_pot_amount || 0,
+        currentAmount: profile?.safety_pot_amount || 0,
         targetAmount: safetyPotTarget,
         status: safetyPotStatus,
         monthsCovered
@@ -238,7 +238,7 @@ export function DashboardWidgets({
       data: {
         activities: partnerActivities,
         lastContribution: lastPartnerContribution,
-        partnerName: profile.partner_name || 'Partner'
+        partnerName: profile?.partner_name || 'Partner'
       },
       priority: 3,
       size: 'large'

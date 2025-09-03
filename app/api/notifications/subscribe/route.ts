@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Store subscription in database
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('push_subscriptions')
       .upsert({
         user_id: userId,

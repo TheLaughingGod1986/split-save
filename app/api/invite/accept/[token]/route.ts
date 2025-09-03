@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request: NextRequest, { params }: { params: { token: string } }) {
   const { token } = params

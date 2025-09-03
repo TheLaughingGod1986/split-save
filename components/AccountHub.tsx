@@ -67,6 +67,7 @@ export function AccountHub({
 
   const renderProfile = () => (
     <ProfileManager 
+      allowEditing={true}
       onProfileUpdate={(updatedProfile) => {
         console.log('Profile updated:', updatedProfile)
         onUpdate()

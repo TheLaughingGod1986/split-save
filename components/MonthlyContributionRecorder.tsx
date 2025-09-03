@@ -48,18 +48,18 @@ export function MonthlyContributionRecorder({
       
       // Load expenses and goals for the current month
       const [expensesData, goalsData] = await Promise.all([
-        apiClient.get('/expenses').catch(() => []),
-        apiClient.get('/goals').catch(() => [])
+        apiClient.get('/expenses').catch(() => ({ data: [] })),
+        apiClient.get('/goals').catch(() => ({ data: [] }))
       ])
       
-      setExpenses(expensesData || [])
-      setGoals(goalsData || [])
+      setExpenses(expensesData.data || [])
+      setGoals(goalsData.data || [])
       
       // Calculate contribution breakdown
       if (profile?.income && partnerProfile?.income) {
         const breakdown = calculateMonthlyContribution(
-          expensesData || [],
-          goalsData || [],
+          expensesData.data || [],
+          goalsData.data || [],
           0, // Safety pot target
           profile.income,
           partnerProfile.income,

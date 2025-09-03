@@ -39,8 +39,9 @@ export default function ContributionManager({ currencySymbol, onUpdate }: Contri
   const loadContributions = async () => {
     try {
       setLoading(true)
-      const data = await apiClient.get('/contributions')
-      setContributions(data || [])
+      const response = await apiClient.get('/contributions')
+      const data = response.data || []
+      setContributions(data)
       
       // Calculate summary
       if (data && data.length > 0) {
@@ -60,12 +61,13 @@ export default function ContributionManager({ currencySymbol, onUpdate }: Contri
       setSaving(true)
       setError('')
       
-      const result = await apiClient.post(`/contributions/${contributionId}/mark-paid`, {})
+      const response = await apiClient.post(`/contributions/${contributionId}/mark-paid`, {})
+      const result = response.data
       
-      if (result.isComplete) {
+      if (result?.isComplete) {
         setSuccess(result.message)
       } else {
-        setSuccess(result.message)
+        setSuccess(result?.message || 'Contribution marked as paid')
       }
       
       // Reload contributions to get updated status

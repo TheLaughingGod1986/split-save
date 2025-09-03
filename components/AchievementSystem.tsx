@@ -28,16 +28,16 @@ export function AchievementSystem() {
       setLoading(true)
       const response = await apiClient.get('/achievements')
       
-      if (response.achievements) {
-        setAchievements(response.achievements)
-        setSummary(response.summary)
+      if (response.data?.achievements) {
+        setAchievements(response.data.achievements)
+        setSummary(response.data.summary)
         
         // Show notifications for new achievements
-        if (response.newAchievements && response.newAchievements.length > 0) {
-          response.newAchievements.forEach((achievement: any) => {
+        if (response.data?.newAchievements && response.data.newAchievements.length > 0) {
+          response.data.newAchievements.forEach((achievement: any) => {
             toast.success(`🎉 Achievement Unlocked: ${achievement.name}!`, { duration: 5000 })
           })
-          setNewAchievements(response.newAchievements)
+          setNewAchievements(response.data.newAchievements)
         }
       }
     } catch (error) {

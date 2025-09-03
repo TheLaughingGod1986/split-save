@@ -48,18 +48,18 @@ export function EnhancedDashboard() {
       // Load monthly progress for insights
       const progressResponse = await apiClient.get('/monthly-progress')
       
-      if (achievementsResponse.progress && progressResponse.insights) {
+      if (achievementsResponse.data?.progress && progressResponse.data?.insights) {
         const summary = {
-          totalContributions: achievementsResponse.progress.total_contributions || 0,
-          totalGoals: achievementsResponse.progress.total_goals || 0,
-          completedGoals: achievementsResponse.progress.completed_goals || 0,
-          currentStreak: achievementsResponse.progress.current_streak || 0,
-          totalPoints: achievementsResponse.progress.total_points || 0,
-          currentLevel: Math.floor((achievementsResponse.progress.total_points || 0) / 100) + 1,
-          nextLevelProgress: ((achievementsResponse.progress.total_points || 0) % 100)
+          totalContributions: achievementsResponse.data.progress.total_contributions || 0,
+          totalGoals: achievementsResponse.data.progress.total_goals || 0,
+          completedGoals: achievementsResponse.data.progress.completed_goals || 0,
+          currentStreak: achievementsResponse.data.progress.current_streak || 0,
+          totalPoints: achievementsResponse.data.progress.total_points || 0,
+          currentLevel: Math.floor((achievementsResponse.data.progress.total_points || 0) / 100) + 1,
+          nextLevelProgress: ((achievementsResponse.data.progress.total_points || 0) % 100)
         }
 
-        const recommendations = progressResponse.insights.recommendations || []
+        const recommendations = progressResponse.data.insights.recommendations || []
         const upcomingDeadlines: any[] = [] // Will be populated when goals/expenses API is available
         const recentActivity: any[] = [] // Will be populated when activity API is available
         const partnerUpdates: any[] = [] // Will be populated when partner API is available

@@ -7,6 +7,7 @@ import { AchievementsView } from './AchievementsView'
 import { GoalPrioritizationEngine, GoalPriority } from '@/lib/goal-prioritization'
 import { GoalRecommendations } from './GoalRecommendations'
 import { GoalAllocationView } from './GoalAllocationView'
+import { useLocalization } from '@/lib/localization'
 
 interface GoalsHubProps {
   goals: any[]
@@ -49,14 +50,12 @@ export function GoalsHub({
     targetAmount?: string
     currentAmount?: string
     targetDate?: string
-    category?: string
     description?: string
   }>({})
   const [goalForm, setGoalForm] = useState({
     name: '',
     targetAmount: '',
     targetDate: '',
-    category: 'vacation',
     description: '',
     priority: GoalPriority.MEDIUM
   })
@@ -67,17 +66,12 @@ export function GoalsHub({
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [allocations, setAllocations] = useState<any[]>([])
 
-  const categories = [
-    { value: 'vacation', label: 'Vacation', icon: '🏖️', color: 'blue' },
-    { value: 'emergency', label: 'Emergency Fund', icon: '🛡️', color: 'green' },
-    { value: 'house', label: 'House Deposit', icon: '🏠', color: 'purple' },
-    { value: 'car', label: 'Car', icon: '🚗', color: 'red' },
-    { value: 'wedding', label: 'Wedding', icon: '💒', color: 'pink' },
-    { value: 'education', label: 'Education', icon: '🎓', color: 'indigo' },
-    { value: 'retirement', label: 'Retirement', icon: '🏖️', color: 'orange' },
-    { value: 'gadgets', label: 'Gadgets', icon: '📱', color: 'gray' },
-    { value: 'other', label: 'Other', icon: '🎯', color: 'gray' }
-  ]
+  // Get localized text
+  const localizedText = useLocalization(profile?.currency)
+  
+
+  
+
 
   // Separate active and completed goals
   const { activeGoals, completedGoals } = useMemo(() => {
@@ -106,7 +100,7 @@ export function GoalsHub({
   // Initialize prioritization engine
   useEffect(() => {
     if (goals && profile) {
-      const monthlyIncome = profile.monthly_income || 0
+      const monthlyIncome = profile.income || 0
       const engine = new GoalPrioritizationEngine(goals, monthlyIncome)
       setPrioritizationEngine(engine)
       
@@ -128,14 +122,31 @@ export function GoalsHub({
     }
 
     try {
+      // Convert numeric priority to string for API
+      const getPriorityString = (priority: number): string => {
+        switch (priority) {
+          case GoalPriority.CRITICAL:
+            return 'high'
+          case GoalPriority.HIGH:
+            return 'high'
+          case GoalPriority.MEDIUM:
+            return 'medium'
+          case GoalPriority.LOW:
+            return 'low'
+          case GoalPriority.OPTIONAL:
+            return 'low'
+          default:
+            return 'medium'
+        }
+      }
+
       const goal = {
         name: goalForm.name.trim(),
         target_amount: parseFloat(goalForm.targetAmount),
         current_amount: 0, // Initialize with 0 for new goals
         target_date: goalForm.targetDate,
-        category: goalForm.category,
         description: goalForm.description.trim(),
-        priority: goalForm.priority
+        priority: getPriorityString(goalForm.priority)
       }
 
       await onAddGoal(goal)
@@ -145,7 +156,6 @@ export function GoalsHub({
         name: '',
         targetAmount: '',
         targetDate: '',
-        category: 'vacation',
         description: '',
         priority: GoalPriority.MEDIUM
       })
@@ -165,7 +175,6 @@ export function GoalsHub({
       targetAmount: goal.target_amount.toString(),
       currentAmount: goal.current_amount.toString(),
       targetDate: goal.target_date,
-      category: goal.category,
       description: goal.description || ''
     })
   }
@@ -288,9 +297,7 @@ export function GoalsHub({
     }
   }
 
-  const getCategoryInfo = (category: string) => {
-    return categories.find(cat => cat.value === category) || categories[categories.length - 1]
-  }
+
 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 80) return 'green'
@@ -376,22 +383,7 @@ export function GoalsHub({
               />
             </div>
 
-            <div>
-              <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
-                Category
-              </label>
-              <select
-                value={goalForm.category}
-                onChange={(e) => setGoalForm(prev => ({ ...prev, category: e.target.value }))}
-                className="input"
-              >
-                {categories.map(category => (
-                  <option key={category.value} value={category.value}>
-                    {category.icon} {category.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+
 
             <div>
               <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
@@ -446,13 +438,13 @@ export function GoalsHub({
       <div className="space-y-4">
         {activeGoals.length > 0 ? (
           activeGoals.map((goal) => {
-            const categoryInfo = getCategoryInfo(goal.category)
+
             const progressPercentage = getProgressPercentage(goal)
             const progressColor = getProgressColor(progressPercentage)
             const timeRemaining = getTimeRemaining(goal.target_date)
             
             return (
-              <div key={goal.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div key={goal.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600">
                 {editingGoal === goal.id ? (
                   // Edit Mode
                   <div className="space-y-4">
@@ -485,20 +477,7 @@ export function GoalsHub({
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                        <select
-                          value={editForm.category}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                        >
-                          {categories.map(category => (
-                            <option key={category.value} value={category.value}>
-                              {category.icon} {category.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Amount ({currencySymbol})</label>
@@ -581,15 +560,15 @@ export function GoalsHub({
                   <div>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="text-3xl">{categoryInfo.icon}</div>
+                        <div className="text-3xl">🎯</div>
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{goal.name}</h4>
+                          <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{goal.name}</h4>
                           <div className="flex items-center space-x-2">
                             <p className="text-sm text-gray-500 dark:text-gray-400">{categoryInfo.label}</p>
                             {goal.priority && (
                               <>
                                 <span className="text-gray-300 dark:text-gray-600">•</span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).bgColor} ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).color}`}>
+                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).bgColor} ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).color}`}>
                                   {GoalPrioritizationEngine.getPriorityInfo(goal.priority).label}
                                 </span>
                               </>
@@ -628,12 +607,16 @@ export function GoalsHub({
                 {/* Progress Bar - Show only in view mode */}
                 {editingGoal !== goal.id && (
                   <div className="mb-4">
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{progressPercentage.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                       <div 
-                        className={`h-3 rounded-full transition-all duration-500 ${
-                          progressColor === 'green' ? 'bg-green-500' :
-                          progressColor === 'blue' ? 'bg-blue-500' :
-                          progressColor === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
+                        className={`h-4 rounded-full transition-all duration-700 ease-out ${
+                          progressColor === 'green' ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                          progressColor === 'blue' ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
+                          progressColor === 'yellow' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-red-400 to-red-600'
                         }`}
                         style={{ width: `${progressPercentage}%` }}
                       ></div>
@@ -690,7 +673,7 @@ export function GoalsHub({
       {completedGoals.length > 0 ? (
         <div className="space-y-4">
           {completedGoals.map((goal) => {
-            const categoryInfo = getCategoryInfo(goal.category)
+
             
             return (
               <div key={goal.id} className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 shadow-sm">
@@ -765,7 +748,7 @@ export function GoalsHub({
   )
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
       {/* Header with Overall Progress */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 shadow-lg">
         <h1 className="text-2xl font-bold mb-2">Savings Goals</h1>
@@ -816,7 +799,7 @@ export function GoalsHub({
         </div>
 
         {/* Tab Content */}
-        <div className="p-6">
+        <div className="p-6 space-y-6">
           {activeTab === 'active' && renderActiveGoals()}
           {activeTab === 'prioritization' && renderPrioritization()}
           {activeTab === 'completed' && renderCompletedGoals()}

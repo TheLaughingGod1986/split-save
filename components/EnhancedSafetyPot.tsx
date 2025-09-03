@@ -61,42 +61,132 @@ export function EnhancedSafetyPot({
   const [contributionAmount, setContributionAmount] = useState('')
   const [showContributeForm, setShowContributeForm] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'recommendations'>('overview')
+  const [appliedRecommendations, setAppliedRecommendations] = useState<Map<string, number>>(new Map())
 
+  // Handle applying recommendations
+  const handleApplyRecommendation = useCallback(async (recommendation: any) => {
+    try {
+      if (recommendation.suggestedAmount && recommendation.suggestedAmount > 0) {
+        // Mark this recommendation as applied with timestamp
+        const recommendationId = `${recommendation.type}-${recommendation.suggestedAmount}`
+        setAppliedRecommendations(prev => new Map([...prev, [recommendationId, Date.now()]]))
+        
+        // Set the contribution amount to the suggested amount
+        setContributionAmount(recommendation.suggestedAmount.toString())
+        setShowContributeForm(true)
+        
+        // Switch to overview tab to show the contribution form
+        setActiveTab('overview')
+        
+        toast.success(`Recommendation applied! Suggested amount: ${currencySymbol}${recommendation.suggestedAmount.toLocaleString()}`)
+      } else {
+        toast.error('No suggested amount available for this recommendation')
+      }
+    } catch (error) {
+      console.error('Error applying recommendation:', error)
+      toast.error('Failed to apply recommendation')
+    }
+  }, [currencySymbol])
 
+  // Handle learn more
+  const handleLearnMore = useCallback((recommendation: any) => {
+    // For now, just show an alert with more details
+    const details = `
+Recommendation: ${recommendation.title}
+Type: ${recommendation.type}
+Confidence: ${(recommendation.confidence * 100).toFixed(0)}%
+Suggested Amount: ${currencySymbol}${recommendation.suggestedAmount?.toLocaleString() || 'N/A'}
+
+Description: ${recommendation.description}
+
+Reasoning:
+${recommendation.reasoning?.map((r: string) => `• ${r}`).join('\n') || 'No additional reasoning provided'}
+
+Impact Analysis:
+• Risk: ${recommendation.impactAnalysis?.risk || 'Unknown'}
+• Benefit: ${recommendation.impactAnalysis?.benefit || 'Unknown'}
+• Timeframe: ${recommendation.impactAnalysis?.timeframe || 'Unknown'}
+    `.trim()
+    
+    alert(details)
+  }, [currencySymbol])
 
   const calculateMonthlyExpenses = useCallback(() => {
-    // Group expenses by category and calculate monthly averages
+    // Group expenses by month and category to calculate proper monthly averages
     const now = new Date()
-    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+    
+    console.log('🔍 Date Debug:')
+    console.log('- Current date:', now.toISOString())
+    console.log('- Six months ago:', sixMonthsAgo.toISOString())
+    
+    console.log('🔍 Monthly Expenses Debug:')
+    console.log('- Total expenses available:', expenses.length)
+    console.log('- Looking for expenses from:', sixMonthsAgo.toISOString())
     
     const recentExpenses = expenses.filter(expense => 
-      new Date(expense.created_at) >= threeMonthsAgo
+      new Date(expense.created_at) >= sixMonthsAgo
     )
-
-    const categoryTotals = recentExpenses.reduce((acc: any, expense) => {
+    
+    console.log('- Recent expenses (last 6 months):', recentExpenses.length)
+    console.log('- Recent expenses data:', recentExpenses)
+    
+    // If no expenses in last 6 months, use all available expenses
+    const expensesToUse = recentExpenses.length > 0 ? recentExpenses : expenses
+    
+    console.log('- Using expenses:', expensesToUse.length)
+    
+    // Group expenses by month and category
+    const monthlyData: Record<string, Record<string, number>> = {}
+    
+    expensesToUse.forEach(expense => {
+      const expenseDate = new Date(expense.created_at)
+      const monthKey = `${expenseDate.getFullYear()}-${expenseDate.getMonth()}`
       const category = expense.category || 'other'
-      if (!acc[category]) {
-        acc[category] = { total: 0, count: 0, amounts: [] }
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {}
       }
-      acc[category].total += expense.amount
-      acc[category].count += 1
-      acc[category].amounts.push(expense.amount)
-      return acc
-    }, {})
-
-    return Object.entries(categoryTotals).map(([category, data]: [string, any]) => ({
+      if (!monthlyData[monthKey][category]) {
+        monthlyData[monthKey][category] = 0
+      }
+      monthlyData[monthKey][category] += expense.amount
+    })
+    
+    console.log('- Monthly data by category:', monthlyData)
+    
+    // Calculate average monthly spending per category
+    const categoryAverages: Record<string, { total: number, months: number, amounts: number[] }> = {}
+    
+    Object.values(monthlyData).forEach(monthData => {
+      Object.entries(monthData).forEach(([category, amount]) => {
+        if (!categoryAverages[category]) {
+          categoryAverages[category] = { total: 0, months: 0, amounts: [] }
+        }
+        categoryAverages[category].total += amount
+        categoryAverages[category].months += 1
+        categoryAverages[category].amounts.push(amount)
+      })
+    })
+    
+    const result = Object.entries(categoryAverages).map(([category, data]) => ({
       category,
-      amount: data.total / 3, // Average over 3 months
-      count: data.count,
+      amount: data.months > 0 ? data.total / data.months : 0, // Average monthly amount
+      count: data.amounts.length,
       volatility: calculateVolatility(data.amounts)
     }))
+    
+    console.log('- Category averages:', categoryAverages)
+    console.log('- Final monthly averages:', result)
+    
+    return result
   }, [expenses])
 
   const calculateVolatility = (amounts: number[]): 'low' | 'medium' | 'high' => {
     if (amounts.length < 2) return 'low'
     
-    const avg = amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length
-    const variance = amounts.reduce((sum, amount) => sum + Math.pow(amount - avg, 2), 0) / amounts.length
+    const avg = amounts.reduce((sum, amount) => sum + amount, 0) / (amounts.length || 1)
+    const variance = amounts.reduce((sum, amount) => sum + Math.pow(amount - avg, 2), 0) / (amounts.length || 1)
     const coefficient = Math.sqrt(variance) / avg
 
     if (coefficient < 0.2) return 'low'
@@ -214,26 +304,29 @@ export function EnhancedSafetyPot({
     try {
       setLoading(true)
 
-      // Calculate essential monthly expenses
+      // Calculate total monthly shared expenses (all expenses, not just essential)
       const monthlyExpenses = calculateMonthlyExpenses()
-      const essentialExpenses = monthlyExpenses.filter(exp => 
-        ['rent', 'groceries', 'utilities', 'insurance', 'transport'].includes(exp.category.toLowerCase())
-      )
+      const totalMonthlyExpenses = monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0)
       
-      const totalEssentialMonthly = essentialExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+      console.log('🔍 Safety Pot Debug:')
+      console.log('- Total expenses found:', expenses.length)
+      console.log('- Monthly expenses calculated:', monthlyExpenses)
+      console.log('- Total monthly expenses:', totalMonthlyExpenses)
+      console.log('- Recommended target (6x):', totalMonthlyExpenses * 6)
+      console.log('- Individual expense amounts:', monthlyExpenses.map(exp => `${exp.category}: £${exp.amount}`))
       
-      // Get current safety pot amount (mock for demo)
-      const currentAmount = profile?.safety_pot_amount || 1250
-      const recommendedTarget = totalEssentialMonthly * 6 // 6 months coverage
-      const monthsCovered = totalEssentialMonthly > 0 ? currentAmount / totalEssentialMonthly : 0
+      // Get current safety pot amount from profile
+      const currentAmount = profile?.safety_pot_amount || 0
+      const recommendedTarget = totalMonthlyExpenses * 6 // 6 months coverage
+      const monthsCovered = totalMonthlyExpenses > 0 ? currentAmount / totalMonthlyExpenses : 0
 
       setSafetyPotData({
         currentAmount,
         targetAmount: recommendedTarget,
         monthsCovered,
-        lastContribution: '2024-11-15', // Mock data
+        lastContribution: profile?.last_safety_pot_contribution || null,
         autoContributeEnabled: profile?.auto_contribute_safety_pot || false,
-        monthlyTarget: totalEssentialMonthly
+        monthlyTarget: totalMonthlyExpenses
       })
 
       // Generate expense analysis
@@ -262,6 +355,15 @@ export function EnhancedSafetyPot({
   useEffect(() => {
     calculateSafetyPotData()
   }, [calculateSafetyPotData])
+
+  // Clear applied recommendations when safety pot amount significantly increases
+  useEffect(() => {
+    // Only clear applied recommendations if the safety pot amount has increased significantly
+    // This allows recommendations to reappear if the user actually contributed
+    if (safetyPotData.currentAmount > 100) {
+      setAppliedRecommendations(new Map())
+    }
+  }, [safetyPotData.currentAmount])
 
 
 
@@ -405,7 +507,7 @@ export function EnhancedSafetyPot({
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-600 dark:text-gray-400">
-                Progress to 6-month target
+                Progress to 6 months of shared expenses
               </span>
               <span className="font-medium">
                 {currencySymbol}{safetyPotData.currentAmount.toLocaleString()} / {currencySymbol}{safetyPotData.targetAmount.toLocaleString()}
@@ -423,9 +525,9 @@ export function EnhancedSafetyPot({
                 )}
               </div>
             </div>
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1 relative">
               <span>0 months</span>
-              <span className="absolute left-1/4 transform -translate-x-1/2">3 months</span>
+              <span className="absolute left-1/2 transform -translate-x-1/2">3 months</span>
               <span>6 months</span>
             </div>
           </div>
@@ -616,7 +718,20 @@ export function EnhancedSafetyPot({
 
       {activeTab === 'recommendations' && (
         <div className="space-y-6">
-          {mlRecommendations.length === 0 ? (
+          {mlRecommendations.filter((recommendation) => {
+            const recommendationId = `${recommendation.type}-${recommendation.suggestedAmount}`
+            const appliedTime = appliedRecommendations.get(recommendationId)
+            
+            // If not applied, show it
+            if (!appliedTime) return true
+            
+            // If applied less than 5 minutes ago, hide it
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
+            if (appliedTime > fiveMinutesAgo) return false
+            
+            // If applied more than 5 minutes ago, show it again
+            return true
+          }).length === 0 ? (
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
               <span className="text-4xl mb-4 block">🤖</span>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -627,7 +742,22 @@ export function EnhancedSafetyPot({
               </p>
             </div>
           ) : (
-            mlRecommendations.map((recommendation, index) => (
+            mlRecommendations
+              .filter((recommendation) => {
+                const recommendationId = `${recommendation.type}-${recommendation.suggestedAmount}`
+                const appliedTime = appliedRecommendations.get(recommendationId)
+                
+                // If not applied, show it
+                if (!appliedTime) return true
+                
+                // If applied less than 5 minutes ago, hide it
+                const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
+                if (appliedTime > fiveMinutesAgo) return false
+                
+                // If applied more than 5 minutes ago, show it again (in case user didn't complete contribution)
+                return true
+              })
+              .map((recommendation, index) => (
               <div key={index} className={`rounded-xl border p-6 ${getRecommendationColor(recommendation.type)}`}>
                 <div className="flex items-start space-x-4">
                   <span className="text-3xl">{getRecommendationIcon(recommendation.type)}</span>
@@ -679,10 +809,16 @@ export function EnhancedSafetyPot({
                     </div>
                     
                     <div className="flex space-x-3 mt-4">
-                      <button className="bg-white bg-opacity-50 hover:bg-opacity-70 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                      <button 
+                        onClick={() => handleApplyRecommendation(recommendation)}
+                        className="bg-white bg-opacity-50 hover:bg-opacity-70 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
                         Apply Recommendation
                       </button>
-                      <button className="bg-white bg-opacity-30 hover:bg-opacity-50 px-4 py-2 rounded-lg text-sm transition-colors">
+                      <button 
+                        onClick={() => handleLearnMore(recommendation)}
+                        className="bg-white bg-opacity-30 hover:bg-opacity-50 px-4 py-2 rounded-lg text-sm transition-colors"
+                      >
                         Learn More
                       </button>
                     </div>

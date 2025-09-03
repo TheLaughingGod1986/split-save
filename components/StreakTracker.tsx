@@ -29,7 +29,7 @@ export function StreakTracker() {
     try {
       setLoading(true)
       const response = await apiClient.get('/streaks')
-      setStreakData(response)
+      setStreakData(response.data)
     } catch (error) {
       console.error('Error loading streak data:', error)
       toast.error('Failed to load streak data')

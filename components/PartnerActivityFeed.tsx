@@ -34,10 +34,10 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
       })
 
       const response = await apiClient.get(`/activity-feed?${params}`)
-      setActivities(response.activities || [])
+      setActivities(response.data?.activities || [])
       
       // Mark activities as viewed
-      const activityIds = response.activities?.map((a: ActivityFeedItem) => a.id) || []
+      const activityIds = response.data?.activities?.map((a: ActivityFeedItem) => a.id) || []
       if (activityIds.length > 0) {
         await apiClient.post('/activity-feed', {
           action: 'mark_viewed',
@@ -92,7 +92,7 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
       const response = await apiClient.get(`/activity-feed/${activityId}/comments`)
       setComments(prev => ({
         ...prev,
-        [activityId]: response.comments || []
+        [activityId]: response.data?.comments || []
       }))
     } catch (error) {
       console.error('Error loading comments:', error)

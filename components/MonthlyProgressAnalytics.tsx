@@ -32,13 +32,13 @@ export function MonthlyProgressAnalytics() {
       setLoading(true)
       const response = await apiClient.get('/monthly-progress')
       
-      if (response.monthlyProgress) {
-        setMonthlyData(response.monthlyProgress)
-        setTrends(response.trends)
-        setPartnerAccountability(response.partnerAccountability)
-        setInsights(response.insights)
-        setCurrentMonth(response.currentMonth)
-        setSelectedMonth(response.currentMonth?.month || '')
+      if (response.data?.monthlyProgress) {
+        setMonthlyData(response.data.monthlyProgress)
+        setTrends(response.data.trends)
+        setPartnerAccountability(response.data.partnerAccountability)
+        setInsights(response.data.insights)
+        setCurrentMonth(response.data.currentMonth)
+        setSelectedMonth(response.data.currentMonth?.month || '')
       }
     } catch (error) {
       console.error('Error loading monthly progress:', error)

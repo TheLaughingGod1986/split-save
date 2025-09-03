@@ -57,13 +57,13 @@ export function MLInsightsPanel({ userId, onInsightAction }: MLInsightsPanelProp
       
       // Load behavior analysis
       const analysisResponse = await apiClient.get('/ml/analyze-behavior')
-      if (analysisResponse.analysis) {
-        setAnalysis(analysisResponse.analysis)
+      if (analysisResponse.data?.analysis) {
+        setAnalysis(analysisResponse.data.analysis)
       }
 
       // Load recommendations
       const recommendationsResponse = await apiClient.get('/ml/recommendations')
-      setRecommendations(recommendationsResponse.recommendations || [])
+      setRecommendations(recommendationsResponse.data?.recommendations || [])
 
     } catch (error) {
       console.error('Failed to load ML insights:', error)
@@ -78,13 +78,13 @@ export function MLInsightsPanel({ userId, onInsightAction }: MLInsightsPanelProp
       setAnalyzing(true)
       const response = await apiClient.post('/ml/analyze-behavior', {})
       
-      if (response.analysis) {
-        setAnalysis(response.analysis)
+      if (response.data?.analysis) {
+        setAnalysis(response.data.analysis)
         toast.success('Behavior analysis completed!')
       }
       
-      if (response.recommendations) {
-        setRecommendations(response.recommendations)
+      if (response.data?.recommendations) {
+        setRecommendations(response.data.recommendations)
       }
     } catch (error) {
       console.error('Failed to analyze behavior:', error)
@@ -132,8 +132,8 @@ export function MLInsightsPanel({ userId, onInsightAction }: MLInsightsPanelProp
         }
       })
 
-      if (response.recommendations) {
-        setRecommendations(response.recommendations)
+      if (response.data?.recommendations) {
+        setRecommendations(response.data.recommendations)
       }
 
       setShowUnderSavingForm(false)

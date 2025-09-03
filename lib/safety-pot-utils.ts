@@ -31,7 +31,7 @@ export interface FundReallocationSuggestion {
 
 // Default safety pot configuration
 export const DEFAULT_SAFETY_POT_CONFIG: SafetyPotConfig = {
-  targetMonths: 3, // Keep 3 months of expenses
+  targetMonths: 6, // Keep 6 months of expenses
   minAmount: 500, // Minimum $500
   maxAmount: 10000, // Maximum $10,000 before suggesting reallocation
   reallocationThreshold: 0.7 // Suggest reallocating 70% of excess
@@ -61,9 +61,9 @@ export function getSafetyPotTargetExplanation(
   
   const reasoning = [
     'Financial advisors recommend 3-6 months of expenses for emergency funds',
-    '3 months provides a good balance between security and accessibility',
-    'Covers most common financial emergencies without over-saving',
-    'Allows time to find new income sources or adjust spending habits'
+    '6 months provides excellent security and peace of mind',
+    'Covers extended financial emergencies and job loss scenarios',
+    'Allows ample time to find new income sources or adjust spending habits'
   ]
   
   const benefits = [
@@ -118,7 +118,7 @@ export function calculateSafetyPotStatus(
     status = 'low'
     message = 'Your safety pot covers less than 1 month of expenses. Consider adding funds.'
     suggestions = [
-      'Add funds to reach 3-month coverage',
+      'Add funds to reach 6-month coverage',
       'Review and reduce monthly expenses',
       'Set up automatic monthly contributions'
     ]
@@ -126,7 +126,7 @@ export function calculateSafetyPotStatus(
     status = 'adequate'
     message = `Your safety pot covers ${monthsCovered.toFixed(1)} months. Aim for ${finalConfig.targetMonths} months coverage.`
     suggestions = [
-      'Continue building towards 3-month coverage',
+      'Continue building towards 6-month coverage',
       'Consider increasing monthly contributions',
       'Monitor expenses to maintain target'
     ]
@@ -221,7 +221,7 @@ export function generateReallocationSuggestions(
 export function calculateOptimalSafetyPotContribution(
   currentAmount: number,
   monthlyExpenses: number,
-  targetMonths: number = 3,
+  targetMonths: number = 6,
   monthsToTarget: number = 12
 ): number {
   const targetAmount = monthlyExpenses * targetMonths

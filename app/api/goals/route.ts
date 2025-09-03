@@ -10,12 +10,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json([], { status: 200 })
-  }
-
   try {
-    const { data: goals, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('goals')
       .select(`
         *,
@@ -32,15 +28,44 @@ export async function GET(req: NextRequest) {
           user:users!goal_contributions_user_id_fkey(id, name)
         )
       `)
-      .eq('partnership_id', user.partnershipId)
       .order('created_at', { ascending: false })
+
+    // If user has a partnership, get partnership goals
+    // If no partnership, get personal goals (where partnership_id is null and added_by_user_id matches)
+    if (user.partnershipId) {
+      query = query.eq('partnership_id', user.partnershipId)
+    } else {
+      query = query.is('partnership_id', null).eq('added_by_user_id', user.id)
+    }
+
+    const { data: goals, error } = await query
 
     if (error) {
       console.error('Goals fetch error:', error)
       return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 })
     }
 
-    return NextResponse.json(goals)
+    // Convert integer priority back to string for frontend
+    const convertPriorityToString = (priority: number): string => {
+      switch (priority) {
+        case 1:
+          return 'high'
+        case 2:
+          return 'medium'
+        case 3:
+          return 'low'
+        default:
+          return 'medium'
+      }
+    }
+
+    // Transform goals to include string priority
+    const transformedGoals = goals?.map(goal => ({
+      ...goal,
+      priority: convertPriorityToString(goal.priority)
+    })) || []
+
+    return NextResponse.json(transformedGoals)
   } catch (error) {
     console.error('Get goals error:', error)
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 })
@@ -53,32 +78,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
-  }
+  // Allow goals without partnership - users can have personal goals
+  // if (!user.partnershipId) {
+  //   return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+  // }
 
   try {
     const body = await req.json()
+    console.log('🔍 Goals API - Received request body:', body)
+    
     const goalData = goalSchema.parse(body)
+    console.log('🔍 Goals API - Parsed goal data:', goalData)
 
-    // Check number of partners in this partnership
-    const { data: partnership, error: partnershipError } = await supabaseAdmin
-      .from('partnerships')
-      .select('id, user1_id, user2_id')
-      .eq('id', user.partnershipId)
-      .single()
+    // Handle partnership logic - allow personal goals if no partnership
+    let requiresApproval = false
+    let partnershipId: string | null = user.partnershipId || null
     
-    if (partnershipError) {
-      console.error('❌ Goals API - Failed to fetch partnership:', partnershipError)
-      return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
+    if (user.partnershipId) {
+      // Check number of partners in this partnership
+      const { data: partnership, error: partnershipError } = await supabaseAdmin
+        .from('partnerships')
+        .select('id, user1_id, user2_id')
+        .eq('id', user.partnershipId)
+        .single()
+      
+      if (partnershipError) {
+        console.error('❌ Goals API - Failed to fetch partnership:', partnershipError)
+        return NextResponse.json({ error: 'Failed to fetch partnership details' }, { status: 500 })
+      }
+      
+      // Count active partners (users who are not null)
+      const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
+      console.log('🔍 Goals API - Active partners in partnership:', activePartners)
+      
+      // Check if requires approval: only if there are 2+ partners
+      requiresApproval = activePartners > 1
+    } else {
+      // No partnership - create personal goal
+      console.log('🔍 Goals API - Creating personal goal (no partnership)')
+      partnershipId = null
     }
-    
-    // Count active partners (users who are not null)
-    const activePartners = [partnership.user1_id, partnership.user2_id].filter(id => id !== null).length
-    console.log('🔍 Goals API - Active partners in partnership:', activePartners)
-    
-    // Check if requires approval: only if there are 2+ partners
-    const requiresApproval = activePartners > 1
     
     if (requiresApproval) {
       console.log('🔍 Goals API - Creating approval request (2+ partners)')
@@ -106,17 +145,31 @@ export async function POST(req: NextRequest) {
       }, { status: 201 })
     } else {
       console.log('🔍 Goals API - Creating goal directly (single partner)')
-      // Create goal directly when there's only one partner
+      // Convert string priority to integer for database
+      const getPriorityInteger = (priority: string): number => {
+        switch (priority) {
+          case 'low':
+            return 3
+          case 'medium':
+            return 2
+          case 'high':
+            return 1
+          default:
+            return 2 // Default to medium
+        }
+      }
+
+      // Create goal directly (single partner or personal goal)
       const { data: goal, error } = await supabaseAdmin
         .from('goals')
         .insert({
-          partnership_id: user.partnershipId,
+          partnership_id: partnershipId,
           name: goalData.name,
           description: goalData.description,
           target_amount: goalData.target_amount,
           current_amount: goalData.current_amount || 0,
-          category: goalData.category,
           target_date: goalData.target_date || null,
+          priority: getPriorityInteger(goalData.priority || 'medium'),
           added_by_user_id: user.id
         })
         .select(`
@@ -130,6 +183,26 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create goal' }, { status: 400 })
       }
 
+      // Convert integer priority back to string for response
+      const convertPriorityToString = (priority: number): string => {
+        switch (priority) {
+          case 1:
+            return 'high'
+          case 2:
+            return 'medium'
+          case 3:
+            return 'low'
+          default:
+            return 'medium'
+        }
+      }
+
+      // Transform goal to include string priority
+      const transformedGoal = {
+        ...goal,
+        priority: convertPriorityToString(goal.priority)
+      }
+
       // Log activity for the goal creation
       if (user.partnershipId) {
         try {
@@ -140,7 +213,7 @@ export async function POST(req: NextRequest) {
             goalData.name,
             'created',
             goalData.target_amount,
-            { category: goalData.category, target_date: goalData.target_date }
+            { target_date: goalData.target_date }
           )
           console.log('✅ Activity logged for goal creation:', goal.id)
         } catch (activityError) {
@@ -149,10 +222,20 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      return NextResponse.json(goal, { status: 201 })
+      return NextResponse.json(transformedGoal, { status: 201 })
     }
   } catch (error) {
     console.error('Add goal error:', error)
-    return NextResponse.json({ error: 'Invalid input data' }, { status: 400 })
+    
+    // Handle Zod validation errors specifically
+    if (error instanceof Error && error.name === 'ZodError') {
+      console.error('Validation error details:', error)
+      return NextResponse.json({ 
+        error: 'Invalid input data', 
+        details: error.message 
+      }, { status: 400 })
+    }
+    
+    return NextResponse.json({ error: 'Failed to create goal' }, { status: 400 })
   }
 }

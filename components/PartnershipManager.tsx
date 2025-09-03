@@ -38,9 +38,9 @@ export function PartnershipManager() {
   // Fetch partnerships and invitations
   const fetchData = async () => {
     try {
-      const data = await apiClient.get('/invite')
-      setPartnerships(data.partnerships || [])
-      setInvitations(data.invitations || [])
+      const response = await apiClient.get('/invite')
+      setPartnerships(response.data?.partnerships || [])
+      setInvitations(response.data?.invitations || [])
     } catch (error) {
       console.error('Error fetching partnership data:', error)
     } finally {
@@ -61,8 +61,8 @@ export function PartnershipManager() {
 
     setSendingInvite(true)
     try {
-      const result = await apiClient.post('/invite', { toEmail: inviteEmail.trim() })
-      toast.success(result.message)
+      const response = await apiClient.post('/invite', { toEmail: inviteEmail.trim() })
+      toast.success(response.data?.message || 'Invitation sent successfully!')
       setInviteEmail('')
       setShowInviteForm(false)
       fetchData() // Refresh data

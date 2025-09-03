@@ -6,7 +6,6 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizePackageImports: [
-      'framer-motion', 
       '@heroicons/react',
       'react-hot-toast',
       'socket.io-client'
@@ -58,11 +57,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self'",
-              "connect-src 'self' https:",
+              "connect-src 'self' https: https://va.vercel-scripts.com",
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",
@@ -133,12 +132,6 @@ const nextConfig = {
             priority: 5,
           },
           // Separate large libraries
-          framerMotion: {
-            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-            name: 'framer-motion',
-            chunks: 'all',
-            priority: 20,
-          },
           supabase: {
             test: /[\\/]node_modules[\\/]@supabase[\\/]/,
             name: 'supabase',

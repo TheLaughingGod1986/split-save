@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { useAuth } from './AuthProvider'
@@ -43,7 +43,7 @@ export function SmartNotifications() {
   const [activeTab, setActiveTab] = useState<'settings' | 'reminders' | 'alerts'>('settings')
 
   // Default notification settings
-  const defaultSettings: NotificationSetting[] = [
+  const defaultSettings: NotificationSetting[] = useMemo(() => [
     {
       id: 'payday-reminder',
       type: 'payday',
@@ -98,7 +98,7 @@ export function SmartNotifications() {
       title: 'Partner Activity',
       description: 'Updates when your partner makes contributions'
     }
-  ]
+  ], [])
 
   const loadNotificationData = useCallback(async () => {
     try {
@@ -107,52 +107,11 @@ export function SmartNotifications() {
       // Load notification settings (use defaults for now)
       setSettings(defaultSettings)
       
-      // Generate mock payday reminders
-      const mockPaydayReminders: PaydayReminder[] = [
-        {
-          id: '1',
-          userId: user?.id || '',
-          nextPayday: getNextPayday(),
-          reminderDays: [1, 3], // 1 and 3 days before
-          enabled: true,
-          message: 'Your payday is coming up! Don\'t forget to make your monthly savings contributions.'
-        }
-      ]
-      setPaydayReminders(mockPaydayReminders)
+      // Load real payday reminders (empty for now - will be populated from API)
+      setPaydayReminders([])
       
-      // Generate mock progress alerts
-      const mockProgressAlerts: ProgressAlert[] = [
-        {
-          id: '1',
-          type: 'goal_behind',
-          title: 'Goal Progress Behind',
-          message: 'Your "Holiday Fund" goal is 15% behind target for this month. Consider increasing your contribution.',
-          severity: 'warning',
-          actionRequired: true,
-          relatedEntityId: 'goal-1',
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '2',
-          type: 'milestone_reached',
-          title: 'Milestone Achieved!',
-          message: 'Congratulations! You\'ve reached 50% of your "Emergency Fund" goal.',
-          severity: 'success',
-          actionRequired: false,
-          relatedEntityId: 'goal-2',
-          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '3',
-          type: 'streak_broken',
-          title: 'Streak Interrupted',
-          message: 'Your 4-month savings streak was broken. Start a new streak by making a contribution today!',
-          severity: 'error',
-          actionRequired: true,
-          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
-        }
-      ]
-      setProgressAlerts(mockProgressAlerts)
+      // Load real progress alerts (empty for now - will be populated from API)
+      setProgressAlerts([])
       
     } catch (error) {
       console.error('Error loading notification data:', error)
@@ -160,7 +119,7 @@ export function SmartNotifications() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, defaultSettings])
+  }, [defaultSettings])
 
   // Load notification data when component mounts
   useEffect(() => {

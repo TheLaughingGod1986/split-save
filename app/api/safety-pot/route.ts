@@ -8,17 +8,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
-  }
+  // Allow personal safety pots even without partnership
+  // if (!user.partnershipId) {
+  //   return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+  // }
 
   try {
-    // Get safety pot amount for this partnership
-    const { data: safetyPot, error } = await supabaseAdmin
+    // Get safety pot amount for this partnership or personal safety pot
+    let query = supabaseAdmin
       .from('safety_pot')
       .select('*')
-      .eq('partnership_id', user.partnershipId)
-      .single()
+    
+    if (user.partnershipId) {
+      query = query.eq('partnership_id', user.partnershipId)
+    } else {
+      // For personal safety pot, use user_id instead of partnership_id
+      query = query.is('partnership_id', null).eq('user_id', user.id)
+    }
+    
+    const { data: safetyPot, error } = await query.single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
       console.error('Safety pot fetch error:', error)
@@ -27,14 +35,22 @@ export async function GET(req: NextRequest) {
 
     // If no safety pot exists, create one with 0 amount
     if (!safetyPot) {
+      const insertData: any = {
+        current_amount: 0,
+        target_amount: 0,
+        created_at: new Date().toISOString()
+      }
+      
+      if (user.partnershipId) {
+        insertData.partnership_id = user.partnershipId
+      } else {
+        insertData.partnership_id = null
+        insertData.user_id = user.id
+      }
+      
       const { data: newSafetyPot, error: createError } = await supabaseAdmin
         .from('safety_pot')
-        .insert({
-          partnership_id: user.partnershipId,
-          current_amount: 0,
-          target_amount: 0,
-          created_at: new Date().toISOString()
-        })
+        .insert(insertData)
         .select()
         .single()
 
@@ -59,9 +75,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
-  }
+  // Allow personal safety pots even without partnership
+  // if (!user.partnershipId) {
+  //   return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+  // }
 
   try {
     const body = await req.json()
@@ -72,22 +89,36 @@ export async function POST(req: NextRequest) {
     }
 
     // Get current safety pot
-    let { data: safetyPot } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('safety_pot')
       .select('*')
-      .eq('partnership_id', user.partnershipId)
-      .single()
+    
+    if (user.partnershipId) {
+      query = query.eq('partnership_id', user.partnershipId)
+    } else {
+      query = query.is('partnership_id', null).eq('user_id', user.id)
+    }
+    
+    let { data: safetyPot } = await query.single()
 
     // Create safety pot if it doesn't exist
     if (!safetyPot) {
+      const insertData: any = {
+        current_amount: 0,
+        target_amount: 0,
+        created_at: new Date().toISOString()
+      }
+      
+      if (user.partnershipId) {
+        insertData.partnership_id = user.partnershipId
+      } else {
+        insertData.partnership_id = null
+        insertData.user_id = user.id
+      }
+      
       const { data: newSafetyPot, error: createError } = await supabaseAdmin
         .from('safety_pot')
-        .insert({
-          partnership_id: user.partnershipId,
-          current_amount: 0,
-          target_amount: 0,
-          created_at: new Date().toISOString()
-        })
+        .insert(insertData)
         .select()
         .single()
 

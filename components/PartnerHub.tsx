@@ -5,6 +5,8 @@ import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { PartnershipManager } from './PartnershipManager'
 import { PartnerActivityFeed } from './PartnerActivityFeed'
+import { DashboardContributionSummary } from './DashboardContributionSummary'
+import { TransparencyDashboard } from './TransparencyDashboard'
 
 interface PartnerHubProps {
   partnerships: any[]
@@ -17,6 +19,7 @@ interface PartnerHubProps {
   onApprove: (approvalId: string) => void
   onDecline: (approvalId: string) => void
   onUpdate: () => void
+  initialTab?: 'overview' | 'approvals' | 'activity' | 'collaboration' | 'transparency'
 }
 
 interface Approval {
@@ -44,9 +47,10 @@ export function PartnerHub({
   currencySymbol,
   onApprove,
   onDecline,
-  onUpdate
+  onUpdate,
+  initialTab = 'overview'
 }: PartnerHubProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'activity' | 'collaboration'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'activity' | 'collaboration' | 'transparency'>(initialTab)
   const [sharedNotes, setSharedNotes] = useState<any[]>([])
   const [newNote, setNewNote] = useState('')
   const [showAddNote, setShowAddNote] = useState(false)
@@ -135,6 +139,7 @@ export function PartnerHub({
     { id: 'overview', label: 'Overview', icon: '👥' },
     { id: 'approvals', label: 'Approvals', icon: '⏳', count: actionRequiredCount },
     { id: 'activity', label: 'Activity', icon: '📱' },
+    { id: 'transparency', label: 'Transparency', icon: '🔍' },
     { id: 'collaboration', label: 'Collaboration', icon: '💬' }
   ]
 
@@ -190,6 +195,23 @@ export function PartnerHub({
                 <div className="text-2xl">💼</div>
               </div>
             </div>
+          </div>
+
+          {/* Contribution Breakdown */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <h4 className="font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
+              <span className="mr-2">💰</span>
+              Who Pays What
+            </h4>
+            <DashboardContributionSummary
+              partnerships={partnerships}
+              profile={profile}
+              partnerProfile={partnerProfile}
+              user={user}
+              currencySymbol={currencySymbol}
+              expenses={[]}
+              goals={goals}
+            />
           </div>
 
           {/* Quick Stats */}
@@ -462,6 +484,18 @@ export function PartnerHub({
     </div>
   )
 
+  const renderTransparency = () => (
+    <TransparencyDashboard
+      partnerships={partnerships}
+      profile={profile}
+      partnerProfile={partnerProfile}
+      currencySymbol={currencySymbol}
+      expenses={[]}
+      goals={goals}
+      monthlyProgress={[]}
+    />
+  )
+
   const renderCollaboration = () => (
     <div className="space-y-6">
       {/* Add Note Section */}
@@ -591,6 +625,7 @@ export function PartnerHub({
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'approvals' && renderApprovals()}
           {activeTab === 'activity' && renderActivity()}
+          {activeTab === 'transparency' && renderTransparency()}
           {activeTab === 'collaboration' && renderCollaboration()}
         </div>
       </div>

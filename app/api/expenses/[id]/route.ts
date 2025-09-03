@@ -13,37 +13,56 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
-  }
+  // Allow editing of personal expenses even without partnership
+  // if (!user.partnershipId) {
+  //   return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+  // }
 
   try {
     const expenseId = params.id
     
-    // First, check if the expense exists and belongs to the user's partnership
-    const { data: existingExpense, error: fetchError } = await supabaseAdmin
+    // First, check if the expense exists and belongs to the user
+    let query = supabaseAdmin
       .from('expenses')
       .select('*')
       .eq('id', expenseId)
-      .eq('partnership_id', user.partnershipId)
-      .single()
+    
+    // If user has a partnership, check partnership expenses
+    // If no partnership, check personal expenses (where partnership_id is null and added_by_user_id matches)
+    if (user.partnershipId) {
+      query = query.eq('partnership_id', user.partnershipId)
+    } else {
+      query = query.is('partnership_id', null).eq('added_by_user_id', user.id)
+    }
+    
+    const { data: existingExpense, error: fetchError } = await query.single()
 
     if (fetchError || !existingExpense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
     }
 
-    // Check if user has permission to edit (either the creator or partner in the partnership)
-    const { data: partnership, error: partnershipError } = await supabaseAdmin
-      .from('partnerships')
-      .select('user1_id, user2_id')
-      .eq('id', user.partnershipId)
-      .single()
+    // For personal expenses, user can always edit their own expenses
+    // For partnership expenses, check if user has permission to edit (either the creator or partner in the partnership)
+    let isAuthorized = false
+    
+    if (user.partnershipId) {
+      // Partnership expense - check partnership permissions
+      const { data: partnership, error: partnershipError } = await supabaseAdmin
+        .from('partnerships')
+        .select('user1_id, user2_id')
+        .eq('id', user.partnershipId)
+        .single()
 
-    if (partnershipError) {
-      return NextResponse.json({ error: 'Failed to verify partnership' }, { status: 500 })
+      if (partnershipError) {
+        return NextResponse.json({ error: 'Failed to verify partnership' }, { status: 500 })
+      }
+
+      isAuthorized = partnership.user1_id === user.id || partnership.user2_id === user.id
+    } else {
+      // Personal expense - user can always edit their own expenses
+      isAuthorized = existingExpense.added_by_user_id === user.id
     }
-
-    const isAuthorized = partnership.user1_id === user.id || partnership.user2_id === user.id
+    
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Not authorized to edit this expense' }, { status: 403 })
     }
@@ -54,9 +73,9 @@ export async function PUT(
     const expenseData = expenseSchema.parse(body)
     console.log('✅ Expense Update API - Validated data:', expenseData)
 
-    // Check if this edit requires approval (large amount changes or if original was large)
+    // Check if this edit requires approval (large amount changes AND partnership expense)
     const amountChanged = existingExpense.amount !== expenseData.amount
-    const requiresApproval = (expenseData.amount > 100 || existingExpense.amount > 100) && amountChanged
+    const requiresApproval = (expenseData.amount > 100 || existingExpense.amount > 100) && amountChanged && user.partnershipId
 
     if (requiresApproval) {
       console.log('🔍 Expense Update API - Creating approval request for update')
@@ -67,7 +86,7 @@ export async function PUT(
         .insert({
           partnership_id: user.partnershipId,
           requested_by_user_id: user.id,
-          request_type: 'expense_edit',
+          request_type: 'expense',
           request_data: {
             expense_id: expenseId,
             original_data: existingExpense,
@@ -155,43 +174,62 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!user.partnershipId) {
-    return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
-  }
+  // Allow deletion of personal expenses even without partnership
+  // if (!user.partnershipId) {
+  //   return NextResponse.json({ error: 'No active partnership' }, { status: 400 })
+  // }
 
   try {
     const expenseId = params.id
     
-    // First, check if the expense exists and belongs to the user's partnership
-    const { data: existingExpense, error: fetchError } = await supabaseAdmin
+    // First, check if the expense exists and belongs to the user
+    let query = supabaseAdmin
       .from('expenses')
       .select('*')
       .eq('id', expenseId)
-      .eq('partnership_id', user.partnershipId)
-      .single()
+    
+    // If user has a partnership, check partnership expenses
+    // If no partnership, check personal expenses (where partnership_id is null and added_by_user_id matches)
+    if (user.partnershipId) {
+      query = query.eq('partnership_id', user.partnershipId)
+    } else {
+      query = query.is('partnership_id', null).eq('added_by_user_id', user.id)
+    }
+    
+    const { data: existingExpense, error: fetchError } = await query.single()
 
     if (fetchError || !existingExpense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
     }
 
-    // Check if user has permission to delete (either the creator or partner in the partnership)
-    const { data: partnership, error: partnershipError } = await supabaseAdmin
-      .from('partnerships')
-      .select('user1_id, user2_id')
-      .eq('id', user.partnershipId)
-      .single()
+    // For personal expenses, user can always delete their own expenses
+    // For partnership expenses, check if user has permission to delete (either the creator or partner in the partnership)
+    let isAuthorized = false
+    
+    if (user.partnershipId) {
+      // Partnership expense - check partnership permissions
+      const { data: partnership, error: partnershipError } = await supabaseAdmin
+        .from('partnerships')
+        .select('user1_id, user2_id')
+        .eq('id', user.partnershipId)
+        .single()
 
-    if (partnershipError) {
-      return NextResponse.json({ error: 'Failed to verify partnership' }, { status: 500 })
+      if (partnershipError) {
+        return NextResponse.json({ error: 'Failed to verify partnership' }, { status: 500 })
+      }
+
+      isAuthorized = partnership.user1_id === user.id || partnership.user2_id === user.id
+    } else {
+      // Personal expense - user can always delete their own expenses
+      isAuthorized = existingExpense.added_by_user_id === user.id
     }
-
-    const isAuthorized = partnership.user1_id === user.id || partnership.user2_id === user.id
+    
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Not authorized to delete this expense' }, { status: 403 })
     }
 
-    // Check if this deletion requires approval (large amount)
-    const requiresApproval = existingExpense.amount > 100
+    // Check if this deletion requires approval (large amount AND partnership expense)
+    const requiresApproval = existingExpense.amount > 100 && user.partnershipId
 
     if (requiresApproval) {
       console.log('🔍 Expense Delete API - Creating approval request for deletion')
@@ -202,7 +240,7 @@ export async function DELETE(
         .insert({
           partnership_id: user.partnershipId,
           requested_by_user_id: user.id,
-          request_type: 'expense_delete',
+          request_type: 'expense',
           request_data: {
             expense_id: expenseId,
             expense_data: existingExpense

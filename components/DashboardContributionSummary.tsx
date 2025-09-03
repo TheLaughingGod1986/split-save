@@ -5,17 +5,21 @@ import { useState, useEffect } from 'react'
 interface DashboardContributionSummaryProps {
   partnerships: any[]
   profile: any
+  partnerProfile?: any
   user: any
   currencySymbol: string
-  expenses?: any[] // Add expenses prop
+  expenses?: any[]
+  goals?: any[]
 }
 
 export function DashboardContributionSummary({
   partnerships,
   profile,
+  partnerProfile,
   user,
   currencySymbol,
-  expenses
+  expenses,
+  goals
 }: DashboardContributionSummaryProps) {
   // Utility function to round monetary values to 2 decimal places
   const roundMoney = (amount: number) => Math.round(amount * 100) / 100
@@ -23,25 +27,17 @@ export function DashboardContributionSummary({
 
   const activePartnership = partnerships.find(p => p.status === 'active')
 
-  // For now, let's use a simpler approach - show the summary based on current user's profile
+  // Load real partner profiles data
   useEffect(() => {
-    if (activePartnership && profile) {
-      // Simulate partner profiles data for demonstration
-      const mockPartnerProfiles = {
+    if (activePartnership && profile && partnerProfile) {
+      // Use real partner profile data
+      const realPartnerProfiles = {
         user1Profile: profile,
-        user2Profile: {
-          id: 'partner-profile',
-          name: 'Partner',
-          email: 'partner@example.com',
-          income: 3000, // Assuming partner also has £3000
-          currency: 'GBP',
-          country_code: 'GB',
-          personal_allowance: 400 // Partner also has £400 personal allowance
-        }
+        user2Profile: partnerProfile
       }
-      setPartnerProfiles(mockPartnerProfiles)
+      setPartnerProfiles(realPartnerProfiles)
     }
-  }, [activePartnership, profile])
+  }, [activePartnership, profile, partnerProfile])
 
   if (!activePartnership || !profile) return null
 
@@ -59,12 +55,12 @@ export function DashboardContributionSummary({
 
   // Determine which user is which
   const currentUserProfile = profile.user_id === partnerProfiles.user1Profile.user_id ? partnerProfiles.user1Profile : partnerProfiles.user2Profile
-  const partnerProfile = profile.user_id === partnerProfiles.user1Profile.user_id ? partnerProfiles.user2Profile : partnerProfiles.user1Profile
+  const partnerUserProfile = profile.user_id === partnerProfiles.user1Profile.user_id ? partnerProfiles.user2Profile : partnerProfiles.user1Profile
 
   const userIncome = currentUserProfile.income || 0
-  const partnerIncome = partnerProfile.income || 0
+  const partnerIncome = partnerUserProfile.income || 0
   const userPersonalAllowance = currentUserProfile.personal_allowance || 0
-  const partnerPersonalAllowance = partnerProfile.personal_allowance || 0
+  const partnerPersonalAllowance = partnerUserProfile.personal_allowance || 0
   
   // Calculate disposable income (after personal allowance)
   const userDisposableIncome = userIncome - userPersonalAllowance
@@ -184,7 +180,7 @@ export function DashboardContributionSummary({
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p><strong>Monthly Salary:</strong></p>
-                    <p className="text-green-600 font-medium">{currencySymbol}3000</p>
+                    <p className="text-green-600 font-medium">{currencySymbol}{(profile?.income || 0).toLocaleString()}</p>
                   </div>
                   <div>
                     <p><strong>Extra Income:</strong></p>
@@ -193,7 +189,7 @@ export function DashboardContributionSummary({
                 </div>
                 <div className="mt-2 pt-2 border-t border-green-200">
                   <p><strong>Total Gross Income:</strong></p>
-                  <p className="text-xl font-bold text-green-800">{currencySymbol}3000</p>
+                  <p className="text-xl font-bold text-green-800">{currencySymbol}{(profile?.income || 0).toLocaleString()}</p>
                 </div>
               </div>
               
@@ -227,12 +223,12 @@ export function DashboardContributionSummary({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="text-center">
               <p className="text-gray-600 mb-1">Total Gross Income</p>
-              <p className="text-lg font-bold text-gray-800">{currencySymbol}{((profile?.income || 0) + 3000).toFixed(2)}</p>
+              <p className="text-lg font-bold text-gray-800">{currencySymbol}{((profile?.income || 0) + (partnerProfile?.income || 0)).toLocaleString()}</p>
               <p className="text-xs text-gray-500">Both partners combined</p>
             </div>
             <div className="text-center">
               <p className="text-gray-600 mb-1">Total Personal Allowances</p>
-              <p className="text-lg font-bold text-gray-800">{currencySymbol}{((profile?.personal_allowance || 0) + 400).toFixed(2)}</p>
+              <p className="text-lg font-bold text-gray-800">{currencySymbol}{((profile?.personal_allowance || 0) + (partnerProfile?.personal_allowance || 0)).toLocaleString()}</p>
               <p className="text-xs text-gray-500">Both partners combined</p>
             </div>
             <div className="text-center">

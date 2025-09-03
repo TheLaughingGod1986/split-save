@@ -1,107 +1,144 @@
 import { supabase } from './supabase'
 
 class ApiClient {
+  private requestCounts = new Map<string, number>()
+  private lastRequestTime = new Map<string, number>()
+  
   private async getAuthHeaders() {
-    console.log('🔐 API CLIENT: Getting auth headers...')
-    const { data: { session }, error } = await supabase.auth.getSession()
-    
-    console.log('🔐 API CLIENT: Session data:', session ? 'Present' : 'Missing')
-    console.log('🔐 API CLIENT: Session error:', error)
-    
-    if (!session?.access_token) {
-      console.error('🔐 API CLIENT: No session or access token')
-      throw new Error('Not authenticated')
-    }
-    
-    console.log('🔐 API CLIENT: Access token length:', session.access_token.length)
-    
-    const headers = {
-      'Authorization': `Bearer ${session.access_token}`,
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
     
-    console.log('🔐 API CLIENT: Returning headers:', headers)
+    // Get the current session from Supabase
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+    } catch (error) {
+      console.warn('Failed to get auth session:', error)
+    }
+    
     return headers
   }
   
-  async get(endpoint: string) {
-    const headers = await this.getAuthHeaders()
-    const response = await fetch(`/api${endpoint}`, { headers })
+  private shouldThrottle(endpoint: string): boolean {
+    const now = Date.now()
+    const lastTime = this.lastRequestTime.get(endpoint) || 0
+    const count = this.requestCounts.get(endpoint) || 0
     
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`)
+    // Reset count if more than 5 seconds have passed
+    if (now - lastTime > 5000) {
+      this.requestCounts.set(endpoint, 0)
+      this.lastRequestTime.set(endpoint, now)
+      return false
     }
     
-    return response.json()
+    // Throttle if more than 3 requests in 5 seconds
+    if (count >= 3) {
+      return true
+    }
+    
+    this.requestCounts.set(endpoint, count + 1)
+    this.lastRequestTime.set(endpoint, now)
+    return false
+  }
+  
+  async get(endpoint: string) {
+    // Check if we should throttle this request
+    if (this.shouldThrottle(endpoint)) {
+      console.warn(`API GET ${endpoint} throttled - too many requests`)
+      return { data: [] }
+    }
+    
+    try {
+      const headers = await this.getAuthHeaders()
+      const response = await fetch(`/api${endpoint}`, { headers })
+      
+      if (!response.ok) {
+        console.warn(`API GET ${endpoint} failed with status: ${response.status}`)
+        const errorText = await response.text()
+        console.warn(`API GET ${endpoint} error response:`, errorText)
+        throw new Error(`API GET ${endpoint} failed with status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      return { data }
+    } catch (error) {
+      console.warn(`API GET ${endpoint} failed:`, error)
+      throw error
+    }
   }
   
   async post(endpoint: string, data: any) {
-    console.log('=== API CLIENT: post method START ===')
-    console.log('1. POST endpoint:', endpoint)
-    console.log('2. POST data:', data)
-    console.log('3. Full URL:', `/api${endpoint}`)
-    
-    const headers = await this.getAuthHeaders()
-    console.log('4. Auth headers received:', headers)
-    console.log('4a. Authorization header present:', !!headers.Authorization)
-    console.log('4b. Content-Type header present:', !!headers['Content-Type'])
-    
     try {
+      const headers = await this.getAuthHeaders()
       const response = await fetch(`/api${endpoint}`, {
         method: 'POST',
         headers,
         body: JSON.stringify(data)
       })
-      
-      console.log('5. Response status:', response.status)
-      console.log('6. Response ok:', response.ok)
-      console.log('7. Response headers:', Object.fromEntries(response.headers.entries()))
 
       if (!response.ok) {
-        console.error('8. Response not ok - throwing error')
-        throw new Error(`API error: ${response.status}`)
+        console.warn(`API POST ${endpoint} failed with status: ${response.status}`)
+        const errorText = await response.text()
+        console.warn(`API POST ${endpoint} error response:`, errorText)
+        throw new Error(`API POST ${endpoint} failed with status: ${response.status}`)
       }
 
-      const responseData = await response.json()
-      console.log('9. Response data:', responseData)
-      return responseData
+      const result = await response.json()
+      return { data: result }
     } catch (error) {
-      console.error('10. POST method error:', error)
+      console.warn(`API POST ${endpoint} failed:`, error)
       throw error
-    } finally {
-      console.log('=== API CLIENT: post method END ===')
     }
   }
 
   async put(endpoint: string, data: any): Promise<any> {
-    const headers = await this.getAuthHeaders()
-    const response = await fetch(`/api${endpoint}`, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(data)
-    })
+    try {
+      const headers = await this.getAuthHeaders()
+      const response = await fetch(`/api${endpoint}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data)
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      if (!response.ok) {
+        console.warn(`API PUT ${endpoint} failed with status: ${response.status}`)
+        const errorText = await response.text()
+        console.warn(`API PUT ${endpoint} error response:`, errorText)
+        throw new Error(`API PUT ${endpoint} failed with status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      return { data: result }
+    } catch (error) {
+      console.warn(`API PUT ${endpoint} failed:`, error)
+      throw error
     }
-
-    return response.json()
   }
 
   async delete(endpoint: string): Promise<any> {
-    const headers = await this.getAuthHeaders()
-    const response = await fetch(`/api${endpoint}`, {
-      method: 'DELETE',
-      headers
-    })
+    try {
+      const headers = await this.getAuthHeaders()
+      const response = await fetch(`/api${endpoint}`, {
+        method: 'DELETE',
+        headers
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      if (!response.ok) {
+        console.warn(`API DELETE ${endpoint} failed with status: ${response.status}`)
+        const errorText = await response.text()
+        console.warn(`API DELETE ${endpoint} error response:`, errorText)
+        throw new Error(`API DELETE ${endpoint} failed with status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      return { data: result }
+    } catch (error) {
+      console.warn(`API DELETE ${endpoint} failed:`, error)
+      throw error
     }
-
-    return response.json()
   }
 
   async updateExpense(id: string, data: any): Promise<any> {
@@ -115,7 +152,7 @@ class ApiClient {
   // Partnership methods
   async getPartnerships(): Promise<PartnershipsResponse> {
     const response = await this.get('/invite')
-    return response
+    return response.data
   }
 
   async sendPartnershipInvitation(toEmail: string): Promise<any> {

@@ -54,8 +54,8 @@ export function SafetyPotFundManager({
       setLoading(true)
       
       // Load safety pot amount from API
-      const safetyPotData = await apiClient.get('/safety-pot')
-      const currentAmount = safetyPotData?.current_amount || 0
+      const response = await apiClient.get('/safety-pot')
+      const currentAmount = response.data?.current_amount || 0
       setSafetyPotAmount(currentAmount)
       
       // Calculate safety pot status
@@ -68,11 +68,12 @@ export function SafetyPotFundManager({
       
       // Load goals for reallocation suggestions
       try {
-        const goalsData = await apiClient.get('/goals')
-        setGoals(goalsData || [])
+        const response = await apiClient.get('/goals')
+        const goalsData = response.data || []
+        setGoals(goalsData)
         
         // Generate reallocation suggestions
-        const suggestions = generateReallocationSuggestions(status, goalsData || [], 0)
+        const suggestions = generateReallocationSuggestions(status, goalsData, 0)
         setReallocationSuggestions(suggestions)
       } catch (err) {
         console.log('Could not load goals for reallocation suggestions')
@@ -105,8 +106,8 @@ export function SafetyPotFundManager({
         amount: parseFloat(addAmount)
       })
       
-      if (response.success) {
-        const newAmount = response.safetyPot.current_amount
+      if (response.data?.success) {
+        const newAmount = response.data?.safetyPot.current_amount
         setSafetyPotAmount(newAmount)
         
         // Update safety pot status
@@ -161,8 +162,8 @@ export function SafetyPotFundManager({
         reason: reason
       })
       
-      if (response.success) {
-        const newAmount = response.safetyPot.current_amount
+      if (response.data?.success) {
+        const newAmount = response.data?.safetyPot.current_amount
         setSafetyPotAmount(newAmount)
         
         // Update safety pot status
@@ -218,8 +219,8 @@ export function SafetyPotFundManager({
         targetGoalId: selectedGoal
       })
       
-      if (response.success) {
-        const newAmount = response.safetyPot.current_amount
+      if (response.data?.success) {
+        const newAmount = response.data?.safetyPot.current_amount
         setSafetyPotAmount(newAmount)
         
         // Update safety pot status

@@ -54,14 +54,14 @@ export function OnboardingFlow({ user, onComplete }: OnboardingFlowProps) {
       setProfile(profileData)
       
       // Check if profile is complete (has income and payday set)
-      if (profileData.income && profileData.payday) {
+      if (profileData.data?.income && profileData.data?.payday) {
         // Profile is already complete, skip onboarding
         onComplete()
         return
       }
       
       // Profile needs completion, show onboarding
-      setCurrentStep(profileData.income ? 2 : 1)
+      setCurrentStep(profileData.data?.income ? 2 : 1)
       setCanProceed(false) // User must complete profile first
     } catch (error) {
       console.error('Failed to load profile:', error)

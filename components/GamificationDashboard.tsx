@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { StreakTracker } from './StreakTracker'
 import { AchievementSystem } from './AchievementSystem'
-import { AchievementCelebration } from './AchievementCelebration'
+// import { AchievementCelebration } from './AchievementCelebration'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 import { Achievement } from '@/lib/achievement-utils'
@@ -41,8 +41,8 @@ export function GamificationDashboard() {
       ])
 
       // Calculate stats from responses
-      const achievements = achievementsResponse.achievements || []
-      const streakData = streaksResponse
+      const achievements = achievementsResponse.data?.achievements || []
+      const streakData = streaksResponse.data
 
       const unlockedAchievements = achievements.filter((a: Achievement) => a.unlocked)
       const totalPoints = unlockedAchievements.reduce((sum: number, a: Achievement) => sum + a.points, 0)
@@ -62,8 +62,8 @@ export function GamificationDashboard() {
       })
 
       // Check for new achievements to celebrate
-      if (achievementsResponse.newAchievements && achievementsResponse.newAchievements.length > 0) {
-        const newAchievement = achievementsResponse.newAchievements[0]
+      if (achievementsResponse.data?.newAchievements && achievementsResponse.data.newAchievements.length > 0) {
+        const newAchievement = achievementsResponse.data.newAchievements[0]
         setCelebratingAchievement(newAchievement)
         setShowCelebration(true)
       }
@@ -322,11 +322,11 @@ export function GamificationDashboard() {
       </motion.div>
 
       {/* Achievement Celebration Modal */}
-      <AchievementCelebration
+      {/* <AchievementCelebration
         achievement={celebratingAchievement}
         isVisible={showCelebration}
         onClose={handleCelebrationClose}
-      />
+      /> */}
     </div>
   )
 }

@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          toast.success(`Welcome back, ${session.user.email}!`)
+          // Welcome message is shown in LoadingScreen, no need for duplicate toast
         } else if (event === 'SIGNED_OUT') {
           toast.info('You have been signed out')
         }

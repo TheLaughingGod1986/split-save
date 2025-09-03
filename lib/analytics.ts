@@ -136,13 +136,18 @@ export function useAnalytics() {
     trackNavigation(from, to, section)
   }, [])
 
-  // Track session start on mount
+  // Track session start on mount (only once)
   useEffect(() => {
-    trackEvent('session_started', { duration: 0, pages_visited: 1 })
+    // Only track if not already tracked in this session
+    if (!sessionStorage.getItem('analytics_session_tracked')) {
+      trackEvent('session_started', { duration: 0, pages_visited: 1 })
+      sessionStorage.setItem('analytics_session_tracked', 'true')
+    }
     
     // Track session end on unmount
     return () => {
       trackEvent('session_ended', { duration: 0, pages_visited: 1, exit_page: 'unknown' })
+      sessionStorage.removeItem('analytics_session_tracked')
     }
   }, [])
 

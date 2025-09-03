@@ -119,7 +119,7 @@ export function PerformanceOptimizer({
       return sum + progress
     }, 0)
     
-    return (totalProgress / goals.length) * 100
+    return (totalProgress / (goals.length || 1)) * 100
   }
 
   const calculatePartnerEfficiency = (): number => {
@@ -133,7 +133,7 @@ export function PerformanceOptimizer({
       return (contributionConsistency + communicationScore + goalAlignment) / 3 * 100
     })
     
-    return efficiencyScores.reduce((sum, score) => sum + score, 0) / efficiencyScores.length
+    return efficiencyScores.reduce((sum, score) => sum + score, 0) / (efficiencyScores.length || 1)
   }
 
   const calculateOverallScore = (savingsRate: number, expenseEfficiency: number, goalEfficiency: number, partnerEfficiency: number): number => {

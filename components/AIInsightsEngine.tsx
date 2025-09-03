@@ -99,7 +99,7 @@ export function AIInsightsEngine({
     if (goals.length === 0) return 0
     
     const completedGoals = goals.filter(goal => goal.status === 'completed')
-    return (completedGoals.length / goals.length) * 100
+    return (completedGoals.length / (goals.length || 1)) * 100
   }
 
   const calculatePartnerReliability = (partnerships: any[]): number => {
@@ -116,16 +116,16 @@ export function AIInsightsEngine({
       return (contributionConsistency + communicationScore + responseScore) / 3
     })
     
-    return reliabilityScores.reduce((sum, score) => sum + score, 0) / reliabilityScores.length
+    return reliabilityScores.reduce((sum, score) => sum + score, 0) / (reliabilityScores.length || 1)
   }
 
   const assessRiskTolerance = (contributions: any[], expenses: any[], goals: any[]): 'conservative' | 'moderate' | 'aggressive' => {
     const avgContribution = contributions.length > 0 
-      ? contributions.reduce((sum, c) => sum + c.amount, 0) / contributions.length 
+      ? contributions.reduce((sum, c) => sum + c.amount, 0) / (contributions.length || 1) 
       : 0
     
     const avgExpense = expenses.length > 0 
-      ? expenses.reduce((sum, e) => sum + e.amount, 0) / expenses.length 
+      ? expenses.reduce((sum, e) => sum + e.amount, 0) / (expenses.length || 1) 
       : 0
     
     const savingsRatio = avgContribution / (avgExpense + avgContribution)

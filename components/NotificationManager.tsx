@@ -34,11 +34,14 @@ export function NotificationManager({ profile, partnerships, goals, approvals, c
     setHasError(false)
 
     try {
-      const data = await apiClient.get('/notifications')
-      setNotifications(data || [])
+      const response = await apiClient.get('/notifications')
+      const data = response?.data || response || []
+      // Ensure data is an array
+      setNotifications(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
       setHasError(true)
+      setNotifications([]) // Ensure notifications is always an array
     } finally {
       setIsLoading(false)
     }
@@ -110,7 +113,7 @@ export function NotificationManager({ profile, partnerships, goals, approvals, c
   // Render notifications (if any)
   return (
     <div className="notification-manager">
-      {notifications.map((notification) => (
+      {Array.isArray(notifications) && notifications.map((notification) => (
         <div
           key={notification.id}
           className={`notification-item ${notification.read ? 'read' : 'unread'}`}

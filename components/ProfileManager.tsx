@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient, type UserProfile } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 
@@ -51,13 +51,14 @@ import { PAYDAY_OPTIONS, calculateNextPayday, getNextPaydayDescription, isTodayP
 
 const paydayOptions = PAYDAY_OPTIONS
 
-export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile: UserProfile) => void }) {
+export function ProfileManager({ onProfileUpdate, allowEditing = false }: { onProfileUpdate?: (profile: UserProfile) => void, allowEditing?: boolean }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showCustomPayday, setShowCustomPayday] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
   
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
@@ -73,10 +74,13 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
     loadProfile()
   }, [])
 
+
+
   const loadProfile = async () => {
     try {
       setLoading(true)
-      const profileData = await apiClient.get('/auth/profile')
+      const response = await apiClient.get('/auth/profile')
+      const profileData = response.data || response
       console.log('Loaded profile data:', profileData)
       console.log('Personal allowance from API:', profileData.personal_allowance)
       
@@ -197,17 +201,83 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
     setShowCustomPayday(value === 'custom')
   }
 
-  const calculateProfileCompletion = () => {
+  const calculateProfileCompletion = useCallback(() => {
     let completed = 0
     const total = 4 // name, income, payday, country
     
-    if (formData.name.trim()) completed++
-    if (formData.income && parseFloat(formData.income) > 0) completed++
-    if (formData.payday) completed++
-    if (formData.countryCode) completed++
+    // Use saved profile data if available, otherwise use form data
+    const dataToCheck = profile || formData
     
-    return (completed / total) * 100
-  }
+    console.log('🔍 Profile completion calculation:', {
+      hasProfile: !!profile,
+      profile: profile,
+      formData: formData,
+      dataToCheck: dataToCheck
+    })
+    
+    if (profile) {
+      // Check saved profile data - handle both direct fields and nested data structure
+      const nameComplete = (dataToCheck.name || (dataToCheck as any).data?.name) && (dataToCheck.name || (dataToCheck as any).data?.name).trim()
+      const incomeComplete = (dataToCheck.income || (dataToCheck as any).data?.income) && (typeof (dataToCheck.income || (dataToCheck as any).data?.income) === 'number' ? (dataToCheck.income || (dataToCheck as any).data?.income) > 0 : parseFloat(dataToCheck.income || (dataToCheck as any).data?.income) > 0)
+      const paydayComplete = (dataToCheck.payday || (dataToCheck as any).data?.payday) && (dataToCheck.payday || (dataToCheck as any).data?.payday).trim()
+      const countryComplete = ((dataToCheck as any).country_code || (dataToCheck as any).data?.country_code) && ((dataToCheck as any).country_code || (dataToCheck as any).data?.country_code).trim()
+      
+      console.log('🔍 Saved profile checks:', {
+        nameComplete,
+        incomeComplete,
+        paydayComplete,
+        countryComplete,
+        name: dataToCheck.name || (dataToCheck as any).data?.name,
+        income: dataToCheck.income || (dataToCheck as any).data?.income,
+        payday: dataToCheck.payday || (dataToCheck as any).data?.payday,
+        country_code: (dataToCheck as any).country_code || (dataToCheck as any).data?.country_code,
+        rawProfile: dataToCheck
+      })
+      
+      if (nameComplete) completed++
+      if (incomeComplete) completed++
+      if (paydayComplete) completed++
+      if (countryComplete) completed++
+    } else {
+      // Check form data
+      if (formData.name.trim()) completed++
+      if (formData.income && parseFloat(formData.income) > 0) completed++
+      if (formData.payday) completed++
+      if (formData.countryCode) completed++
+    }
+    
+    const percentage = (completed / total) * 100
+    console.log('🔍 Profile completion result:', { completed, total, percentage })
+    return percentage
+  }, [profile, formData])
+
+  // Auto-redirect to dashboard when profile is complete AND saved (only during onboarding)
+  useEffect(() => {
+    // Only auto-redirect if profile is complete AND we have a saved profile (not just form data) AND we're not in editing mode
+    if (profile && calculateProfileCompletion() === 100 && onProfileUpdate && !isRedirecting && !allowEditing) {
+      console.log('🚀 Saved profile is 100% complete - auto-redirecting to dashboard')
+      setIsRedirecting(true)
+      
+      // Add a small delay to ensure the save operation is complete
+      setTimeout(() => {
+        // Use the saved profile data, not form data
+        const completeProfile = {
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          income: profile.income,
+          payday: profile.payday,
+          personal_allowance: profile.personal_allowance || 0,
+          currency: profile.currency,
+          country_code: profile.country_code,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at
+        }
+        console.log('🚀 Auto-updating profile:', completeProfile)
+        onProfileUpdate(completeProfile)
+      }, 500) // 500ms delay to ensure save is complete
+    }
+  }, [profile, onProfileUpdate, isRedirecting, allowEditing, calculateProfileCompletion])
 
   const getProfileCompletionMessage = () => {
     const completion = calculateProfileCompletion()
@@ -424,6 +494,17 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
     )
   }
 
+  if (isRedirecting) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Profile complete! Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header Section */}
@@ -460,13 +541,53 @@ export function ProfileManager({ onProfileUpdate }: { onProfileUpdate?: (profile
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Required Fields Note */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <p className="text-sm text-blue-800 dark:text-blue-200">
-            <span className="text-red-500 font-semibold">*</span> Required fields must be completed to continue
-          </p>
+      {/* Force Continue Button - for debugging */}
+      {calculateProfileCompletion() === 100 && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">Profile Complete!</h3>
+              <p className="text-sm text-green-600 dark:text-green-400">All required fields are filled. You can continue to the dashboard.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('🚀 Force continue to dashboard clicked')
+                if (onProfileUpdate) {
+                  // Create a complete profile object from form data
+                  const completeProfile = {
+                    id: profile?.id || 'current-user',
+                    email: profile?.email || 'user@example.com',
+                    name: formData.name.trim(),
+                    income: parseFloat(formData.income),
+                    payday: formData.payday,
+                    personal_allowance: formData.personalAllowance ? parseFloat(formData.personalAllowance) : 0,
+                    currency: formData.currency,
+                    country_code: formData.countryCode,
+                    created_at: profile?.created_at || new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  }
+                  console.log('🚀 Force updating profile:', completeProfile)
+                  onProfileUpdate(completeProfile)
+                }
+              }}
+              className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
         </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Required Fields Note - only show if profile is incomplete */}
+        {calculateProfileCompletion() < 100 && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <span className="text-red-500 font-semibold">*</span> Required fields must be completed to continue
+            </p>
+          </div>
+        )}
 
         {/* Profile Completion Progress */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

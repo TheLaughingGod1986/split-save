@@ -6,14 +6,17 @@ import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { ClientOnly } from '@/components/ClientOnly'
 import { StructuredData, structuredDataSchemas } from '@/components/StructuredData'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { analytics } from '@/lib/analytics'
 
 export default function Home() {
   const { user, loading } = useAuth()
+  const analyticsTracked = useRef(false)
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !analyticsTracked.current) {
+      analyticsTracked.current = true
+      
       if (user) {
         analytics.session.started()
         analytics.conversion.landingPageView('direct', {

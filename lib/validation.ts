@@ -271,15 +271,12 @@ export const goalSchema = z.object({
   target_date: z.string().optional(),
   description: z.string()
     .optional()
-    .transform(val => val ? sanitizeInput.description(val) : val),
-  category: z.string()
-    .min(1, 'Category is required')
-    .max(50, 'Category must be less than 50 characters')
-    .optional()
+    .transform(val => val ? sanitizeInput.description(val) : val)
     .transform(val => val ? sanitizeInput.text(val, 50) : val),
   message: z.string()
     .optional()
-    .transform(val => val ? sanitizeInput.description(val) : val)
+    .transform(val => val ? sanitizeInput.description(val) : val),
+  priority: z.enum(['low', 'medium', 'high']).optional()
 })
 
 export const userProfileSchema = z.object({

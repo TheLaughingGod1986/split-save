@@ -66,10 +66,10 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
     if (data.length === 0) return null
     
     // Calculate averages and trends
-    const avgSalary = data.reduce((sum, month) => sum + month.actualSalary, 0) / data.length
-    const avgSavings = data.reduce((sum, month) => sum + month.goal1Saved + month.goal2Saved, 0) / data.length
-    const avgExpenses = data.reduce((sum, month) => sum + month.sharedExpensesContributed, 0) / data.length
-    const avgSafety = data.reduce((sum, month) => sum + month.safetyPotSaved, 0) / data.length
+    const avgSalary = data.reduce((sum, month) => sum + month.actualSalary, 0) / (data.length || 1)
+    const avgSavings = data.reduce((sum, month) => sum + month.goal1Saved + month.goal2Saved, 0) / (data.length || 1)
+    const avgExpenses = data.reduce((sum, month) => sum + month.sharedExpensesContributed, 0) / (data.length || 1)
+    const avgSafety = data.reduce((sum, month) => sum + month.safetyPotSaved, 0) / (data.length || 1)
     
     // Calculate scores (0-100)
     const savingsScore = Math.min(100, Math.round((avgSavings / (profile?.income * 0.2)) * 100))
@@ -98,9 +98,11 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
     setHasError(false)
     
     try {
-      if (monthlyProgress?.monthlyProgress) {
+      console.log('📊 AnalyticsView - monthlyProgress data:', monthlyProgress)
+      
+      if (monthlyProgress && Array.isArray(monthlyProgress)) {
         // Use the pre-loaded monthly progress data
-        const processedData = monthlyProgress.monthlyProgress.map((month: any) => ({
+        const processedData = monthlyProgress.map((month: any) => ({
           month: month.month,
           actualSalary: month.actualContributions?.salary || 0,
           sharedExpensesContributed: month.actualContributions?.sharedExpenses || 0,
@@ -110,9 +112,12 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
           extraIncome: month.actualContributions?.extraIncome || 0
         }))
         
+        console.log('📊 Processed analytics data:', processedData)
         setMonthlyData(processedData)
         setFinancialHealth(calculateFinancialHealthScore(processedData))
       } else {
+        console.log('📊 No monthly progress data available')
+        // Show empty state until real data is available
         setMonthlyData([])
         setFinancialHealth(null)
       }
