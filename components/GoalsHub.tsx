@@ -188,7 +188,6 @@ export function GoalsHub({
         target_amount: parseFloat(editForm.targetAmount || '0'),
         current_amount: parseFloat(editForm.currentAmount || '0'),
         target_date: editForm.targetDate || '',
-        category: editForm.category || 'other',
         description: editForm.description?.trim() || ''
       }
 
@@ -564,14 +563,10 @@ export function GoalsHub({
                         <div>
                           <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{goal.name}</h4>
                           <div className="flex items-center space-x-2">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{categoryInfo.label}</p>
                             {goal.priority && (
-                              <>
-                                <span className="text-gray-300 dark:text-gray-600">•</span>
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).bgColor} ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).color}`}>
-                                  {GoalPrioritizationEngine.getPriorityInfo(goal.priority).label}
-                                </span>
-                              </>
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).bgColor} ${GoalPrioritizationEngine.getPriorityInfo(goal.priority).color}`}>
+                                {GoalPrioritizationEngine.getPriorityInfo(goal.priority).label}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -679,7 +674,7 @@ export function GoalsHub({
               <div key={goal.id} className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="text-3xl">{categoryInfo.icon}</div>
+                    <div className="text-3xl">🎯</div>
                     <div>
                       <h4 className="text-lg font-semibold text-green-900 dark:text-green-100">{goal.name}</h4>
                       <p className="text-sm text-green-700 dark:text-green-300">

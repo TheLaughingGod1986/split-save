@@ -89,7 +89,6 @@ export async function PUT(
         target_amount: goalData.target_amount,
         current_amount: goalData.current_amount,
         target_date: goalData.target_date,
-        category: goalData.category,
         description: goalData.description,
         updated_at: new Date().toISOString()
       })

@@ -69,7 +69,11 @@ export function EnhancedSafetyPot({
       if (recommendation.suggestedAmount && recommendation.suggestedAmount > 0) {
         // Mark this recommendation as applied with timestamp
         const recommendationId = `${recommendation.type}-${recommendation.suggestedAmount}`
-        setAppliedRecommendations(prev => new Map([...prev, [recommendationId, Date.now()]]))
+        setAppliedRecommendations(prev => {
+          const newMap = new Map(prev)
+          newMap.set(recommendationId, Date.now())
+          return newMap
+        })
         
         // Set the contribution amount to the suggested amount
         setContributionAmount(recommendation.suggestedAmount.toString())
