@@ -8,6 +8,7 @@ interface AnalyticsViewProps {
   user: any
   currencySymbol: string
   monthlyProgress?: any
+  goals?: any[]
 }
 
 interface MonthlyData {
@@ -29,7 +30,7 @@ interface FinancialHealthScore {
   recommendations: string[]
 }
 
-export function AnalyticsView({ partnerships, profile, user, currencySymbol, monthlyProgress }: AnalyticsViewProps) {
+export function AnalyticsView({ partnerships, profile, user, currencySymbol, monthlyProgress, goals = [] }: AnalyticsViewProps) {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
   const [financialHealth, setFinancialHealth] = useState<FinancialHealthScore | null>(null)
   const [selectedTimeframe, setSelectedTimeframe] = useState<'3months' | '6months' | '12months'>('6months')
@@ -269,28 +270,32 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
       )}
 
       {/* Monthly Trends */}
-      <div className="card space-card">
-        <h2 className="text-heading-2 text-gray-900 dark:text-white space-card">📈 Monthly Trends</h2>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">📈 Monthly Trends</h2>
         
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b-2 border-gray-200 dark:border-gray-600">
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Month</th>
-                <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white">Salary</th>
-                <th className="text-center py-3 px-4 font-semibold text-blue-600 dark:text-blue-400">Expenses</th>
-                <th className="text-center py-3 px-4 font-semibold text-green-600 dark:text-green-400">Goal 1</th>
-                <th className="text-center py-3 px-4 font-semibold text-green-600 dark:text-green-400">Goal 2</th>
-                <th className="text-center py-3 px-4 font-semibold text-purple-600 dark:text-purple-400">Safety</th>
+                <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Month</th>
+                <th className="text-center py-4 px-6 font-semibold text-gray-900 dark:text-white">Salary</th>
+                <th className="text-center py-4 px-6 font-semibold text-blue-600 dark:text-blue-400">Expenses</th>
+                <th className="text-center py-4 px-6 font-semibold text-green-600 dark:text-green-400">
+                  {goals[0]?.name || 'Goal 1'}
+                </th>
+                <th className="text-center py-4 px-6 font-semibold text-green-600 dark:text-green-400">
+                  {goals[1]?.name || 'Goal 2'}
+                </th>
+                <th className="text-center py-4 px-6 font-semibold text-purple-600 dark:text-purple-400">Safety</th>
               </tr>
             </thead>
             <tbody>
               {monthlyData.map((month, index) => (
                 <tr key={month.month} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="py-4 px-4 font-medium text-gray-900 dark:text-white">
+                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
                     {month.month}
                   </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-4 px-6 text-center">
                     <div className="text-gray-900 dark:text-white font-medium">
                       {currencySymbol}{month.actualSalary.toLocaleString()}
                     </div>
@@ -300,22 +305,22 @@ export function AnalyticsView({ partnerships, profile, user, currencySymbol, mon
                       </div>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-4 px-6 text-center">
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {currencySymbol}{month.sharedExpensesContributed.toLocaleString()}
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-4 px-6 text-center">
                     <div className="text-lg font-bold text-green-600 dark:text-green-400">
                       {currencySymbol}{month.goal1Saved.toLocaleString()}
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-4 px-6 text-center">
                     <div className="text-lg font-bold text-green-600 dark:text-green-400">
                       {currencySymbol}{month.goal2Saved.toLocaleString()}
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-4 px-6 text-center">
                     <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
                       {currencySymbol}{month.safetyPotSaved.toLocaleString()}
                     </div>

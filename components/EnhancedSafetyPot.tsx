@@ -60,6 +60,8 @@ export function EnhancedSafetyPot({
   const [loading, setLoading] = useState(true)
   const [contributionAmount, setContributionAmount] = useState('')
   const [showContributeForm, setShowContributeForm] = useState(false)
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [showWithdrawForm, setShowWithdrawForm] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'recommendations'>('overview')
   const [appliedRecommendations, setAppliedRecommendations] = useState<Map<string, number>>(new Map())
 
@@ -82,7 +84,7 @@ export function EnhancedSafetyPot({
         // Switch to overview tab to show the contribution form
         setActiveTab('overview')
         
-        toast.success(`Recommendation applied! Suggested amount: ${currencySymbol}${recommendation.suggestedAmount.toLocaleString()}`)
+        toast.success(`Recommendation applied! Suggested amount: ${currencySymbol}${(recommendation.suggestedAmount || 0).toLocaleString()}`)
       } else {
         toast.error('No suggested amount available for this recommendation')
       }
@@ -304,9 +306,11 @@ Impact Analysis:
     return recommendations
   }
 
-  const calculateSafetyPotData = useCallback(async () => {
+  const calculateSafetyPotData = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
 
       // Calculate total monthly shared expenses (all expenses, not just essential)
       const monthlyExpenses = calculateMonthlyExpenses()
@@ -319,8 +323,21 @@ Impact Analysis:
       console.log('- Recommended target (6x):', totalMonthlyExpenses * 6)
       console.log('- Individual expense amounts:', monthlyExpenses.map(exp => `${exp.category}: £${exp.amount}`))
       
-      // Get current safety pot amount from profile
-      const currentAmount = profile?.safety_pot_amount || 0
+      // Fetch current safety pot amount from API instead of profile
+      let currentAmount = 0
+      let lastContribution = null
+      try {
+        const response = await apiClient.get('/safety-pot')
+        currentAmount = response.data?.current_amount || 0
+        lastContribution = response.data?.last_contribution || null
+        console.log('🔍 Fetched safety pot data from API:', response.data)
+      } catch (error) {
+        console.warn('Failed to fetch safety pot data from API, using profile data:', error)
+        // Fallback to profile data if API fails
+        currentAmount = profile?.safety_pot_amount || 0
+        lastContribution = profile?.last_safety_pot_contribution || null
+      }
+      
       const recommendedTarget = totalMonthlyExpenses * 6 // 6 months coverage
       const monthsCovered = totalMonthlyExpenses > 0 ? currentAmount / totalMonthlyExpenses : 0
 
@@ -328,7 +345,7 @@ Impact Analysis:
         currentAmount,
         targetAmount: recommendedTarget,
         monthsCovered,
-        lastContribution: profile?.last_safety_pot_contribution || null,
+        lastContribution,
         autoContributeEnabled: profile?.auto_contribute_safety_pot || false,
         monthlyTarget: totalMonthlyExpenses
       })
@@ -357,8 +374,8 @@ Impact Analysis:
 
   // Load safety pot data when component mounts or dependencies change
   useEffect(() => {
-    calculateSafetyPotData()
-  }, [calculateSafetyPotData])
+    calculateSafetyPotData(true) // Show loading for initial load
+  }, [expenses, profile]) // Only run when expenses or profile change, not when calculateSafetyPotData changes
 
   // Clear applied recommendations when safety pot amount significantly increases
   useEffect(() => {
@@ -381,12 +398,22 @@ Impact Analysis:
     try {
       const amount = parseFloat(contributionAmount)
       
-      // Update safety pot (in real app, this would be an API call)
-      const newAmount = safetyPotData.currentAmount + amount
+      // Make API call to add contribution using apiClient
+      const response = await apiClient.post('/safety-pot', {
+        action: 'add',
+        amount: amount,
+        reason: 'Manual contribution'
+      })
+
+      const updatedSafetyPot = response.data.safetyPot
+      console.log('🔍 Safety pot contribution response:', response.data)
+      console.log('🔍 Updated safety pot data:', updatedSafetyPot)
+      
+      // Update local state with API response
       setSafetyPotData(prev => ({
         ...prev,
-        currentAmount: newAmount,
-        monthsCovered: prev.monthlyTarget > 0 ? newAmount / prev.monthlyTarget : 0,
+        currentAmount: updatedSafetyPot.current_amount,
+        monthsCovered: prev.monthlyTarget > 0 ? updatedSafetyPot.current_amount / prev.monthlyTarget : 0,
         lastContribution: new Date().toISOString()
       }))
 
@@ -395,12 +422,65 @@ Impact Analysis:
       setShowContributeForm(false)
       
       if (onSafetyPotUpdate) {
-        onSafetyPotUpdate(newAmount)
+        onSafetyPotUpdate(updatedSafetyPot.current_amount)
       }
+      
+      // Dispatch custom event to notify dashboard of safety pot update
+      window.dispatchEvent(new CustomEvent('safetyPotUpdated', { 
+        detail: { amount: updatedSafetyPot.current_amount } 
+      }))
 
     } catch (error) {
       console.error('Error contributing to safety pot:', error)
       toast.error('Failed to add contribution')
+    }
+  }
+
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      toast.error('Please enter a valid withdrawal amount')
+      return
+    }
+
+    const amount = parseFloat(withdrawAmount)
+    if (amount > safetyPotData.currentAmount) {
+      toast.error('Cannot withdraw more than available amount')
+      return
+    }
+
+    try {
+      // Make API call to withdraw from safety pot using apiClient
+      const response = await apiClient.post('/safety-pot', {
+        action: 'withdraw',
+        amount: amount,
+        reason: 'Manual withdrawal'
+      })
+
+      const updatedSafetyPot = response.data.safetyPot
+      
+      // Update local state with API response
+      setSafetyPotData(prev => ({
+        ...prev,
+        currentAmount: updatedSafetyPot.current_amount,
+        monthsCovered: prev.monthlyTarget > 0 ? updatedSafetyPot.current_amount / prev.monthlyTarget : 0,
+        lastContribution: new Date().toISOString()
+      }))
+
+      toast.success(`${currencySymbol}${amount.toFixed(2)} withdrawn from safety pot!`)
+      setWithdrawAmount('')
+      setShowWithdrawForm(false)
+      
+      if (onSafetyPotUpdate) {
+        onSafetyPotUpdate(updatedSafetyPot.current_amount)
+      }
+      
+      // Dispatch custom event to notify dashboard of safety pot update
+      window.dispatchEvent(new CustomEvent('safetyPotUpdated', { 
+        detail: { amount: updatedSafetyPot.current_amount } 
+      }))
+    } catch (error) {
+      console.error('Error withdrawing from safety pot:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to withdraw from safety pot')
     }
   }
 
@@ -466,7 +546,7 @@ Impact Analysis:
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {currencySymbol}{safetyPotData.currentAmount.toLocaleString()}
+            {currencySymbol}{(safetyPotData.currentAmount || 0).toLocaleString()}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">Current Amount</div>
         </div>
@@ -480,7 +560,7 @@ Impact Analysis:
         
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
           <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {currencySymbol}{safetyPotData.targetAmount.toLocaleString()}
+            {currencySymbol}{(safetyPotData.targetAmount || 0).toLocaleString()}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">Target Amount</div>
         </div>
@@ -499,12 +579,21 @@ Impact Analysis:
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Safety Pot Progress
           </h2>
-          <button
-            onClick={() => setShowContributeForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            + Add Contribution
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowWithdrawForm(true)}
+              disabled={safetyPotData.currentAmount <= 0}
+              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              - Withdraw
+            </button>
+            <button
+              onClick={() => setShowContributeForm(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              + Add Contribution
+            </button>
+          </div>
         </div>
         
         <div className="space-y-4">
@@ -514,7 +603,7 @@ Impact Analysis:
                 Progress to 6 months of shared expenses
               </span>
               <span className="font-medium">
-                {currencySymbol}{safetyPotData.currentAmount.toLocaleString()} / {currencySymbol}{safetyPotData.targetAmount.toLocaleString()}
+                {currencySymbol}{(safetyPotData.currentAmount || 0).toLocaleString()} / {currencySymbol}{(safetyPotData.targetAmount || 0).toLocaleString()}
               </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
@@ -599,7 +688,7 @@ Impact Analysis:
                 </p>
                 <div className="flex items-center space-x-4 text-sm">
                   <span>
-                    <strong>Monthly Target:</strong> {currencySymbol}{safetyPotData.monthlyTarget.toLocaleString()}
+                    <strong>Monthly Target:</strong> {currencySymbol}{(safetyPotData.monthlyTarget || 0).toLocaleString()}
                   </span>
                   <span>
                     <strong>Last Contribution:</strong> {
@@ -711,7 +800,7 @@ Impact Analysis:
                     {safetyPotData.currentAmount >= 2000 ? 'Low Risk' : safetyPotData.currentAmount >= 1000 ? 'Medium Risk' : 'High Risk'}
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    {currencySymbol}{safetyPotData.currentAmount.toLocaleString()} available for emergencies
+                    {currencySymbol}{(safetyPotData.currentAmount || 0).toLocaleString()} available for emergencies
                   </p>
                 </div>
               </div>
@@ -777,7 +866,7 @@ Impact Analysis:
                     
                     {recommendation.suggestedAmount && (
                       <div className="bg-white bg-opacity-30 p-3 rounded-lg mb-4">
-                        <div className="font-medium">Suggested Amount: {currencySymbol}{recommendation.suggestedAmount.toLocaleString()}</div>
+                        <div className="font-medium">Suggested Amount: {currencySymbol}{(recommendation.suggestedAmount || 0).toLocaleString()}</div>
                       </div>
                     )}
                     
@@ -874,6 +963,57 @@ Impact Analysis:
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors"
                 >
                   Add Contribution
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdraw Modal */}
+      {showWithdrawForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowWithdrawForm(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Withdraw from Safety Pot
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Withdrawal Amount
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    {currencySymbol}
+                  </span>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="0.00"
+                    max={safetyPotData.currentAmount}
+                    className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Available: {currencySymbol}{safetyPotData.currentAmount.toFixed(2)}
+                </div>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowWithdrawForm(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleWithdraw}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-medium transition-colors"
+                >
+                  Withdraw
                 </button>
               </div>
             </div>

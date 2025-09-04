@@ -8,13 +8,11 @@ import { Goal } from '@/lib/api-client'
 interface GoalAllocationViewProps {
   allocations: GoalAllocation[]
   goals: Goal[]
-  onUpdateAllocation: (goalId: string, allocation: number) => void
 }
 
 export function GoalAllocationView({ 
   allocations, 
-  goals, 
-  onUpdateAllocation 
+  goals
 }: GoalAllocationViewProps) {
   if (allocations.length === 0) {
     return (
@@ -90,7 +88,7 @@ export function GoalAllocationView({
                   </h4>
                   <div className="flex items-center space-x-2 text-sm">
                     <span className={`font-medium ${getPriorityColor(allocation.priority)}`}>
-                      Priority {allocation.priority}
+                      Priority {GoalPrioritizationEngine.getPriorityInfo(allocation.priority).label.toLowerCase()}
                     </span>
                     <span className="text-gray-400">•</span>
                     <span className={`font-medium ${getRiskColor(allocation.riskLevel)}`}>
@@ -132,22 +130,15 @@ export function GoalAllocationView({
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Guidance Text */}
             {Math.abs(allocation.currentAllocation - allocation.recommendedAllocation) > 1 && (
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {allocation.recommendedAllocation > allocation.currentAllocation 
-                    ? 'Increase allocation to prioritize this goal'
-                    : 'Consider reducing allocation for other goals'
+                    ? '💡 To prioritize this goal, increase its priority in the Goals section'
+                    : '💡 Consider reducing the priority of other goals to balance your allocations'
                   }
                 </div>
-                
-                <button
-                  onClick={() => onUpdateAllocation(allocation.goalId, allocation.recommendedAllocation)}
-                  className="px-3 py-1 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  Apply
-                </button>
               </div>
             )}
           </motion.div>

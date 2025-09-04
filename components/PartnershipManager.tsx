@@ -104,6 +104,58 @@ export function PartnershipManager() {
     }
   }
 
+  // Withdraw invitation (for sent invitations)
+  const withdrawInvitation = async (invitationId: string) => {
+    if (!confirm('Are you sure you want to withdraw this invitation?')) {
+      return
+    }
+
+    try {
+      await apiClient.delete(`/invite?id=${invitationId}`)
+      toast.success('Invitation withdrawn successfully')
+      fetchData() // Refresh data
+    } catch (error) {
+      console.error('Withdraw invitation error:', error)
+      toast.error('Failed to withdraw invitation')
+    }
+  }
+
+  // Resend invitation
+  const resendInvitation = async (invitationId: string, toEmail: string) => {
+    try {
+      const response = await apiClient.post('/invite/resend', { 
+        invitationId,
+        toEmail 
+      })
+      toast.success('Invitation resent successfully!')
+      fetchData() // Refresh data
+    } catch (error) {
+      console.error('Resend invitation error:', error)
+      toast.error('Failed to resend invitation')
+    }
+  }
+
+  // Generate joint link
+  const generateJointLink = async (invitationId: string) => {
+    try {
+      const response = await apiClient.post('/invite/joint-link', { 
+        invitationId 
+      })
+      const jointLink = response.data?.jointLink
+      
+      if (jointLink) {
+        // Copy to clipboard
+        await navigator.clipboard.writeText(jointLink)
+        toast.success('Joint link copied to clipboard!')
+      } else {
+        toast.error('Failed to generate joint link')
+      }
+    } catch (error) {
+      console.error('Generate joint link error:', error)
+      toast.error('Failed to generate joint link')
+    }
+  }
+
   // Remove partnership
   const removePartnership = async (partnershipId: string) => {
     if (!confirm('Are you sure you want to remove this partnership? This action cannot be undone.')) {
@@ -208,7 +260,8 @@ export function PartnershipManager() {
                     </span>
                   </div>
                   
-                  {invitation.from_user_id !== user?.id && (
+                  {invitation.from_user_id !== user?.id ? (
+                    // Received invitation - show Accept/Decline
                     <div className="flex space-x-2">
                       <button
                         onClick={() => acceptInvitation(invitation.id)}
@@ -221,6 +274,28 @@ export function PartnershipManager() {
                         className="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
                       >
                         Decline
+                      </button>
+                    </div>
+                  ) : (
+                    // Sent invitation - show management options
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => resendInvitation(invitation.id, invitation.to_email)}
+                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Resend
+                      </button>
+                      <button
+                        onClick={() => generateJointLink(invitation.id)}
+                        className="px-3 py-1 bg-purple-600 text-white text-xs rounded-md hover:bg-purple-700 transition-colors"
+                      >
+                        Joint Link
+                      </button>
+                      <button
+                        onClick={() => withdrawInvitation(invitation.id)}
+                        className="px-3 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
+                      >
+                        Withdraw
                       </button>
                     </div>
                   )}

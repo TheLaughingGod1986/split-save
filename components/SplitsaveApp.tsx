@@ -11,6 +11,7 @@ import { GoalsHub } from './GoalsHub'
 import { AccountHub } from './AccountHub'
 import { AnalyticsView } from './AnalyticsView'
 import { NotificationManager } from './NotificationManager'
+import { NotificationDropdown } from './NotificationDropdown'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MoneyHub } from './MoneyHub'
 import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
@@ -27,6 +28,7 @@ export function SplitsaveApp() {
   const [navigationParams, setNavigationParams] = useState<any>({})
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
@@ -287,14 +289,37 @@ export function SplitsaveApp() {
       if (response.data) {
         setGoals(prev => prev ? [...prev, response.data] : [response.data])
         toast.success('Goal added successfully!')
-        // Refresh data to ensure consistency
-        await loadData()
+        // No need to refresh data - local state is already updated
       }
     } catch (err) {
       console.error('Error adding goal:', err)
       toast.error('Failed to add goal. Please try again.')
     }
-  }, [loadData])
+  }, [])
+
+  // Update goal handler
+  const updateGoal = useCallback(async (goalId: string, updates: any) => {
+    try {
+      console.log('🔄 Updating goal:', goalId, 'with updates:', updates)
+      const response = await apiClient.put(`/goals/${goalId}`, updates)
+      console.log('📡 API response:', response.data)
+      
+      if (response.data) {
+        setGoals(prev => {
+          const updated = prev ? prev.map(goal => 
+            goal.id === goalId ? { ...goal, ...response.data } : goal
+          ) : [response.data]
+          console.log('🎯 Updated goals state:', updated)
+          return updated
+        })
+        toast.success('Goal updated successfully!')
+        // No need to refresh data - local state is already updated
+      }
+    } catch (err) {
+      console.error('Error updating goal:', err)
+      toast.error('Failed to update goal. Please try again.')
+    }
+  }, [])
 
   // Achievement unlock handler
   const handleAchievementUnlocked = useCallback((achievement: any) => {
@@ -306,19 +331,28 @@ export function SplitsaveApp() {
       const response = await apiClient.post('/expenses', expense)
       if (response.data?.requiresApproval) {
         toast.success('Expense submitted for approval!')
-        // Refresh data to show the approval request
+        // Only refresh data if approval is required to show the approval request
         await loadData()
       } else if (response.data) {
         setExpenses(prev => prev ? [...prev, response.data] : [response.data])
         toast.success('Expense added successfully!')
-        // Refresh data to ensure consistency
-        await loadData()
+        // No need to refresh data - local state is already updated
       }
     } catch (error) {
       console.error('Error adding expense:', error)
       toast.error('Failed to add expense')
     }
   }, [loadData])
+
+  // Lightweight update function for expenses (no loading screen)
+  const handleExpenseUpdate = useCallback(async () => {
+    try {
+      // Only fetch expenses, not all data
+      await fetchExpenses()
+    } catch (error) {
+      console.error('Error updating expenses:', error)
+    }
+  }, [])
 
   const handleApprove = useCallback(async (approvalId: string) => {
     try {
@@ -414,6 +448,23 @@ export function SplitsaveApp() {
     checkSession()
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuOpen) {
+        const target = event.target as Element
+        if (!target.closest('nav')) {
+          setMobileMenuOpen(false)
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [mobileMenuOpen])
+
   // Show loading state
   if (loading || showLoadingScreen) {
     return (
@@ -483,89 +534,84 @@ export function SplitsaveApp() {
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
-              <div className="flex items-center space-x-8">
+              <div className="flex items-center">
                 {/* Logo */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 mr-6">
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">S</span>
                   </div>
                   <span className="text-xl font-bold text-gray-900 dark:text-white">SplitSave</span>
                 </div>
-                <button
-                  onClick={() => handleNavigation('overview')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'overview'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Dashboard
-                </button>
-
-                <button
-                  onClick={() => handleNavigation('expenses')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'expenses'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Money
-                </button>
-                <button
-                  onClick={() => handleNavigation('goals')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'goals'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Goals
-                </button>
-                <button
-                  onClick={() => handleNavigation('partnerships')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'partnerships'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Partners
-                </button>
-                <button
-                  onClick={() => handleNavigation('analytics')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'analytics'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Analytics
-                </button>
-                <button
-                  onClick={() => handleNavigation('monthly-progress')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'monthly-progress'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Forecasting
-                </button>
-                <button
-                  onClick={() => handleNavigation('account')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'account'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Profile
-                </button>
+                
+                {/* Navigation Links - Responsive */}
+                <div className="hidden lg:flex items-center space-x-1">
+                  <button
+                    onClick={() => handleNavigation('overview')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'overview'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('expenses')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'expenses'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Money
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('goals')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'goals'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Goals
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('partnerships')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'partnerships'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Partners
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('analytics')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'analytics'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Analytics
+                  </button>
+                </div>
+                
+                {/* Mobile Menu Button */}
+                <div className="lg:hidden">
+                  <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 {/* User Info - Show Name */}
-                <div className="hidden sm:block">
+                <div className="hidden md:block">
                   <span className="text-sm text-gray-600 dark:text-gray-300">
                     {profile?.name || 'User'}
                   </span>
@@ -575,32 +621,29 @@ export function SplitsaveApp() {
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => handleNavigation('account')}
-                    className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     title="Settings"
                   >
                     ⚙️
                   </button>
-                  <button
-                    onClick={() => handleNavigation('partnerships', { initialTab: 'activity' })}
-                    className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    title="Notifications"
-                  >
-                    🔔
-                  </button>
+                  <NotificationDropdown 
+                    userId={user?.id || ''}
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  />
                   <button
                     onClick={toggleTheme}
-                    className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     title="Toggle Theme"
                   >
                     🌙
                   </button>
                 </div>
                 
-                {/* Sign Out - Separated */}
-                <div className="border-l border-gray-200 dark:border-gray-600 pl-3">
+                {/* Sign Out - Compact */}
+                <div className="border-l border-gray-200 dark:border-gray-600 pl-2">
                   <button
                     onClick={handleSignOut}
-                    className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="px-2 py-1 rounded-md text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     Sign out
                   </button>
@@ -610,9 +653,108 @@ export function SplitsaveApp() {
           </div>
         </nav>
 
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              <button
+                onClick={() => {
+                  handleNavigation('overview')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'overview'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => {
+                  handleNavigation('expenses')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'expenses'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Money
+              </button>
+              <button
+                onClick={() => {
+                  handleNavigation('goals')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'goals'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Goals
+              </button>
+              <button
+                onClick={() => {
+                  handleNavigation('partnerships')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'partnerships'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Partners
+              </button>
+              <button
+                onClick={() => {
+                  handleNavigation('analytics')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'analytics'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Analytics
+              </button>
+              <button
+                onClick={() => {
+                  handleNavigation('monthly-progress')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'monthly-progress'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Forecasting
+              </button>
+              <button
+                onClick={() => {
+                  handleNavigation('account')
+                  setMobileMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  currentView === 'account'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Profile
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
+        <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+          <div className="py-4 sm:py-6">
             <ErrorBoundary>
               {currentView === 'overview' && (
                 <OverviewHub
@@ -628,6 +770,9 @@ export function SplitsaveApp() {
                   onNavigate={handleNavigation}
                   onNavigateToProfile={() => handleNavigation('account')}
                   onNavigateToPartnerships={() => handleNavigation('partnerships')}
+                  onSafetyPotUpdate={() => {
+                    console.log('🔍 Dashboard: Safety pot update callback triggered')
+                  }}
                 />
               )}
               {currentView === 'expenses' && (
@@ -640,7 +785,8 @@ export function SplitsaveApp() {
                   goals={goals || []}
                   monthlyProgress={monthlyProgress}
                   onAddExpense={handleAddExpense}
-                  onUpdate={loadData}
+                  onUpdate={handleExpenseUpdate}
+                  navigationParams={navigationParams}
                 />
               )}
               {currentView === 'goals' && (
@@ -648,6 +794,7 @@ export function SplitsaveApp() {
                   goals={goals || []}
                   partnerships={partnerships}
                   onAddGoal={addGoal}
+                  onUpdateGoal={updateGoal}
                   currencySymbol={currencySymbol}
                   profile={profile}
                   partnerProfile={partnerProfile}
@@ -685,6 +832,7 @@ export function SplitsaveApp() {
                   user={user}
                   currencySymbol={currencySymbol}
                   monthlyProgress={monthlyProgress}
+                  goals={goals || []}
                 />
               )}
               {currentView === 'account' && (
@@ -697,6 +845,7 @@ export function SplitsaveApp() {
                   user={user}
                   currencySymbol={currencySymbol}
                   onUpdate={fetchProfile}
+                  navigationParams={navigationParams}
                 />
               )}
             </ErrorBoundary>

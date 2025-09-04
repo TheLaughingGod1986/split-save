@@ -191,3 +191,51 @@ export async function POST(request: NextRequest) {
     console.log('=== INVITE API ROUTE END ===')
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  console.log('=== INVITE DELETE API ROUTE START ===')
+  
+  try {
+    const user = await authenticateRequest(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const invitationId = searchParams.get('id')
+
+    if (!invitationId) {
+      return NextResponse.json({ error: 'Invitation ID required' }, { status: 400 })
+    }
+
+    // Verify the user owns this invitation
+    const { data: invitation, error: fetchError } = await supabaseAdmin
+      .from('partnership_invitations')
+      .select('*')
+      .eq('id', invitationId)
+      .eq('from_user_id', user.id)
+      .single()
+
+    if (fetchError || !invitation) {
+      return NextResponse.json({ error: 'Invitation not found or unauthorized' }, { status: 404 })
+    }
+
+    // Delete the invitation
+    const { error: deleteError } = await supabaseAdmin
+      .from('partnership_invitations')
+      .delete()
+      .eq('id', invitationId)
+
+    if (deleteError) {
+      console.error('Delete invitation error:', deleteError)
+      return NextResponse.json({ error: 'Failed to delete invitation' }, { status: 500 })
+    }
+
+    return NextResponse.json({ message: 'Invitation withdrawn successfully' })
+  } catch (error) {
+    console.error('DELETE method error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } finally {
+    console.log('=== INVITE DELETE API ROUTE END ===')
+  }
+}

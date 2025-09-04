@@ -214,8 +214,8 @@ class ActivityLogger {
           comment,
           created_at,
           updated_at,
-          profiles:user_id (
-            display_name,
+          users:user_id (
+            name,
             avatar_url
           )
         `)
@@ -234,8 +234,8 @@ class ActivityLogger {
         comment: item.comment,
         created_at: item.created_at,
         updated_at: item.updated_at,
-        user_name: (item.profiles as any)?.display_name || 'Unknown User',
-        user_avatar: (item.profiles as any)?.avatar_url
+        user_name: (item.users as any)?.name || 'Unknown User',
+        user_avatar: (item.users as any)?.avatar_url
       }))
 
       return { success: true, comments }

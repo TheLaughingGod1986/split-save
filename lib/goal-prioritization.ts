@@ -39,6 +39,13 @@ export class GoalPrioritizationEngine {
   }
 
   /**
+   * Update the goals array with new data
+   */
+  updateGoals(newGoals: Goal[]): void {
+    this.goals = newGoals
+  }
+
+  /**
    * Calculate optimal allocation percentages for all goals
    */
   calculateOptimalAllocations(): GoalAllocation[] {

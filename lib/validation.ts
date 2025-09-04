@@ -276,7 +276,11 @@ export const goalSchema = z.object({
   message: z.string()
     .optional()
     .transform(val => val ? sanitizeInput.description(val) : val),
-  priority: z.enum(['low', 'medium', 'high']).optional()
+  priority: z.number()
+    .int('Priority must be an integer')
+    .min(1, 'Priority must be at least 1')
+    .max(5, 'Priority must be at most 5')
+    .optional()
 })
 
 export const userProfileSchema = z.object({

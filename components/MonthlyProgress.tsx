@@ -212,7 +212,21 @@ export function MonthlyProgress({
           const totalSharedExpenses = activePartnership.shared_expenses || 0
           
           // Calculate user's proportional share
-          sharedExpensesAmount = Math.round(totalSharedExpenses * userProportion)
+          const calculatedShare = Math.round(totalSharedExpenses * userProportion)
+          
+          // Safety check: user's contribution should never exceed total shared expenses
+          sharedExpensesAmount = Math.min(calculatedShare, totalSharedExpenses)
+          
+          // Debug logging to help identify issues
+          console.log('🔍 Shared Expenses Calculation:', {
+            userIncome,
+            partnerIncome,
+            totalHouseholdIncome,
+            userProportion: (userProportion * 100).toFixed(1) + '%',
+            totalSharedExpenses,
+            calculatedShare,
+            finalShare: sharedExpensesAmount
+          })
         }
       }
     }
@@ -793,6 +807,11 @@ export function MonthlyProgress({
                       : '70% of your base salary disposable income (fallback)'
                     }
                   </div>
+                  {partnerships && partnerships.length > 0 && (
+                    <div className="text-caption text-purple-500 dark:text-purple-300 space-small">
+                      Total Shared Expenses: {currencySymbol}{partnerships.find(p => p.status === 'active')?.shared_expenses || 0}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-heading-4 text-purple-800 dark:text-purple-200 space-small">

@@ -18,6 +18,7 @@ interface AccountHubProps {
   user: any
   currencySymbol: string
   onUpdate: () => void
+  navigationParams?: any
 }
 
 export function AccountHub({
@@ -28,10 +29,13 @@ export function AccountHub({
   expenses,
   user,
   currencySymbol,
-  onUpdate
+  onUpdate,
+  navigationParams
 }: AccountHubProps) {
   const { signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'onboarding' | 'security' | 'data' | 'preferences' | 'push-notifications'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'onboarding' | 'security' | 'data' | 'preferences' | 'push-notifications'>(
+    navigationParams?.initialTab || 'profile'
+  )
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleSignOut = async () => {

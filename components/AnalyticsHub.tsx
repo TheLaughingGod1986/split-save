@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AnalyticsView } from './AnalyticsView'
 import { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard'
 import { DataExportView } from './DataExportView'
+import { FinancialCharts } from './FinancialCharts'
 
 interface AnalyticsHubProps {
   partnerships: any[]
@@ -30,7 +31,8 @@ export function AnalyticsHub({
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊', description: 'Financial insights & trends' },
-    { id: 'advanced', label: 'Advanced', icon: '📈', description: 'Detailed analytics & reports' },
+    { id: 'charts', label: 'Charts', icon: '📈', description: 'Interactive charts & graphs' },
+    { id: 'advanced', label: 'Advanced', icon: '🔬', description: 'Detailed analytics & reports' },
     { id: 'export', label: 'Export', icon: '📤', description: 'Data export & reports' }
   ]
 
@@ -76,10 +78,23 @@ export function AnalyticsHub({
             user={user}
             currencySymbol={currencySymbol}
             monthlyProgress={monthlyProgress}
+            goals={goals || []}
           />
         )}
 
-                  {activeTab === 'advanced' && (
+        {activeTab === 'charts' && (
+          <FinancialCharts
+            expenses={expenses}
+            goals={goals}
+            partnerships={partnerships}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            currencySymbol={currencySymbol}
+            monthlyProgress={monthlyProgress}
+          />
+        )}
+
+        {activeTab === 'advanced' && (
             <AdvancedAnalyticsDashboard
               userId={user?.id || ''}
               goals={goals}

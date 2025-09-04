@@ -45,27 +45,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 })
     }
 
-    // Convert integer priority back to string for frontend
-    const convertPriorityToString = (priority: number): string => {
-      switch (priority) {
-        case 1:
-          return 'high'
-        case 2:
-          return 'medium'
-        case 3:
-          return 'low'
-        default:
-          return 'medium'
-      }
-    }
-
-    // Transform goals to include string priority
-    const transformedGoals = goals?.map(goal => ({
-      ...goal,
-      priority: convertPriorityToString(goal.priority)
-    })) || []
-
-    return NextResponse.json(transformedGoals)
+    // Return goals with numeric priority (consistent with database and validation schema)
+    return NextResponse.json(goals || [])
   } catch (error) {
     console.error('Get goals error:', error)
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 })
@@ -145,8 +126,12 @@ export async function POST(req: NextRequest) {
       }, { status: 201 })
     } else {
       console.log('🔍 Goals API - Creating goal directly (single partner)')
-      // Convert string priority to integer for database
-      const getPriorityInteger = (priority: string): number => {
+      // Handle priority (now numeric from frontend, but keep backward compatibility)
+      const getPriorityInteger = (priority: string | number): number => {
+        if (typeof priority === 'number') {
+          return priority // Already numeric, return as-is
+        }
+        // Backward compatibility for string priorities
         switch (priority) {
           case 'low':
             return 3
@@ -169,7 +154,7 @@ export async function POST(req: NextRequest) {
           target_amount: goalData.target_amount,
           current_amount: goalData.current_amount || 0,
           target_date: goalData.target_date || null,
-          priority: getPriorityInteger(goalData.priority || 'medium'),
+          priority: getPriorityInteger(goalData.priority || 3), // Default to medium (3)
           added_by_user_id: user.id
         })
         .select(`
@@ -183,25 +168,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create goal' }, { status: 400 })
       }
 
-      // Convert integer priority back to string for response
-      const convertPriorityToString = (priority: number): string => {
-        switch (priority) {
-          case 1:
-            return 'high'
-          case 2:
-            return 'medium'
-          case 3:
-            return 'low'
-          default:
-            return 'medium'
-        }
-      }
-
-      // Transform goal to include string priority
-      const transformedGoal = {
-        ...goal,
-        priority: convertPriorityToString(goal.priority)
-      }
+      // Return goal with numeric priority (consistent with database and validation schema)
+      const transformedGoal = goal
 
       // Log activity for the goal creation
       if (user.partnershipId) {

@@ -54,10 +54,9 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
         .from('partnership_invitations')
         .update({ 
           to_user_id: existingUser!.id,
-          status: 'accepted',
-          updated_at: new Date().toISOString()
+          status: 'accepted'
         })
-        .eq('id', token)
+        .eq('id', invitationId)
       
       if (updateError) {
         console.error('7. Invitation update error:', updateError)
@@ -65,20 +64,44 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
           token,
           invitationId: invitation.id,
           existingUserId: existingUser?.id,
+          fromUserId: invitation.from_user_id,
+          toUserId: existingUser?.id,
           invitationData: invitation
         })
-        return NextResponse.json({ error: 'Failed to update invitation' }, { status: 500 })
+        console.error('7b. Error details:', JSON.stringify(updateError, null, 2))
+        return NextResponse.json({ 
+          error: 'Failed to update invitation',
+          details: updateError.message || 'Unknown database error'
+        }, { status: 500 })
       }
       
+      // Check if partnership already exists
+      const { data: existingPartnership, error: checkError } = await supabaseAdmin
+        .from('partnerships')
+        .select('id')
+        .or(`and(user1_id.eq.${invitation.from_user_id},user2_id.eq.${existingUser!.id}),and(user1_id.eq.${existingUser!.id},user2_id.eq.${invitation.from_user_id})`)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        console.error('8a. Error checking existing partnership:', checkError)
+        return NextResponse.json({ error: 'Failed to check existing partnership' }, { status: 500 })
+      }
+
+      if (existingPartnership) {
+        console.log('8b. Partnership already exists:', existingPartnership.id)
+        return NextResponse.json({
+          message: 'Partnership already exists!',
+          partnership: 'active'
+        })
+      }
+
       // Create the partnership
       const { error: partnershipError } = await supabaseAdmin
         .from('partnerships')
         .insert({
           user1_id: invitation.from_user_id,
           user2_id: existingUser!.id,
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          status: 'active'
         })
       
       if (partnershipError) {
@@ -253,14 +276,24 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
         .from('partnership_invitations')
         .update({ 
           to_user_id: existingUser!.id,
-          status: 'accepted',
-          updated_at: new Date().toISOString()
+          status: 'accepted'
         })
-        .eq('id', token)
+        .eq('id', invitationId)
       
       if (updateError) {
         console.error('4. Invitation update error:', updateError)
-        return NextResponse.json({ error: 'Failed to update invitation' }, { status: 500 })
+        console.error('4a. Update details:', {
+          invitationId: invitation.id,
+          existingUserId: existingUser?.id,
+          fromUserId: invitation.from_user_id,
+          toUserId: existingUser?.id,
+          invitationData: invitation
+        })
+        console.error('4b. Error details:', JSON.stringify(updateError, null, 2))
+        return NextResponse.json({ 
+          error: 'Failed to update invitation',
+          details: updateError.message || 'Unknown database error'
+        }, { status: 500 })
       }
       
       // Create the partnership

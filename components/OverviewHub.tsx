@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { DashboardContributionSummary } from './DashboardContributionSummary'
+import { QuickCharts } from './QuickCharts'
 
 interface OverviewHubProps {
   expenses: any[]
@@ -18,6 +19,7 @@ interface OverviewHubProps {
   onNavigate: (view: string, params?: any) => void
   onNavigateToProfile: () => void
   onNavigateToPartnerships: () => void
+  onSafetyPotUpdate?: () => void
 }
 
 interface DashboardStats {
@@ -51,11 +53,50 @@ export function OverviewHub({
   monthlyProgress,
   onNavigate,
   onNavigateToProfile,
-  onNavigateToPartnerships
+  onNavigateToPartnerships,
+  onSafetyPotUpdate
 }: OverviewHubProps) {
   const [loading, setLoading] = useState(false)
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [localMonthlyProgress, setLocalMonthlyProgress] = useState<any>(null)
+  const [safetyPotAmount, setSafetyPotAmount] = useState(0)
+
+  // Fetch safety pot data
+  const fetchSafetyPotData = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/safety-pot')
+      const currentAmount = response.data?.current_amount || 0
+      setSafetyPotAmount(currentAmount)
+      console.log('🔍 Dashboard: Fetched safety pot amount:', currentAmount)
+    } catch (error) {
+      console.warn('Failed to fetch safety pot data for dashboard:', error)
+      // Fallback to profile data if API fails
+      setSafetyPotAmount(profile?.safety_pot_amount || 0)
+    }
+  }, [profile?.safety_pot_amount])
+
+  // Load safety pot data on component mount
+  useEffect(() => {
+    fetchSafetyPotData()
+  }, [fetchSafetyPotData])
+
+  // Listen for safety pot updates from other components
+  useEffect(() => {
+    if (onSafetyPotUpdate) {
+      // Create a custom event listener for safety pot updates
+      const handleSafetyPotUpdate = () => {
+        console.log('🔍 Dashboard: Safety pot update detected, refreshing data')
+        fetchSafetyPotData()
+      }
+      
+      // Listen for custom safety pot update events
+      window.addEventListener('safetyPotUpdated', handleSafetyPotUpdate)
+      
+      return () => {
+        window.removeEventListener('safetyPotUpdated', handleSafetyPotUpdate)
+      }
+    }
+  }, [onSafetyPotUpdate, fetchSafetyPotData])
 
   // Calculate dashboard statistics
   const stats: DashboardStats = useMemo(() => {
@@ -66,10 +107,9 @@ export function OverviewHub({
       goal.current_amount >= goal.target_amount
     ).length : 0
     
-    // Calculate safety pot (10% of monthly income)
+    // Use actual safety pot amount from API
     const monthlyIncome = (profile?.income || 0) + (partnerProfile?.income || 0)
     const recommendedSafetyPot = monthlyIncome * 0.1 * 6 // 6 months coverage
-    const safetyPotAmount = totalSaved * 0.1 // Assume 10% of savings goes to safety pot
     const monthsOfExpensesCovered = totalExpenses > 0 ? safetyPotAmount / totalExpenses : 0
 
     return {
@@ -81,7 +121,7 @@ export function OverviewHub({
       safetyPotAmount,
       monthsOfExpensesCovered
     }
-  }, [expenses, goals, profile, partnerProfile, monthlyProgress?.trends?.consistencyScore])
+  }, [expenses, goals, profile, partnerProfile, monthlyProgress?.trends?.consistencyScore, safetyPotAmount])
 
   // Quick actions for main tasks
   const quickActions: QuickAction[] = useMemo(() => [
@@ -99,7 +139,7 @@ export function OverviewHub({
       icon: '📊',
       color: 'green',
       description: 'Update your monthly contributions',
-      action: () => onNavigate('monthly-progress')
+      action: () => onNavigate('expenses', { initialTab: 'contributions' })
     },
     {
       id: 'create-goal',
@@ -152,7 +192,7 @@ export function OverviewHub({
             id: `goal-${goal.id}`,
             type: 'goal',
             title: hasProgress ? `Progress: ${goal.name}` : `New Goal: ${goal.name}`,
-            amount: goal.current_amount,
+            amount: goal.target_amount, // Show target amount instead of current amount
             timestamp: new Date(goal.created_at || goal.updated_at || Date.now()),
             icon: hasProgress ? '🎯' : '✨',
             user: 'You'
@@ -269,7 +309,7 @@ export function OverviewHub({
             Smart Notifications
           </h2>
           <button
-            onClick={() => onNavigate('account')}
+            onClick={() => onNavigate('account', { initialTab: 'preferences' })}
             className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
           >
             Manage →
@@ -287,9 +327,12 @@ export function OverviewHub({
                    paydayInfo.daysUntilUserPayday === 1 ? 'Payday tomorrow' :
                    `Payday in ${paydayInfo.daysUntilUserPayday} days`}
                 </div>
-                <div className="text-xs text-blue-600 dark:text-blue-400">
+                <button
+                  onClick={() => onNavigate('partnerships', { initialTab: 'activity' })}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                >
                   Record contributions
-                </div>
+                </button>
               </div>
             </div>
           )}
@@ -354,15 +397,31 @@ export function OverviewHub({
                   <div className="text-sm font-medium text-green-800 dark:text-green-200 truncate">
                     {suggestion}
                   </div>
-                  <div className="text-xs text-green-600 dark:text-green-400">
-                    {suggestionDetail}
-                  </div>
+                  {suggestionDetail === 'Set your first goal' ? (
+                    <button
+                      onClick={() => onNavigate('goals')}
+                      className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium"
+                    >
+                      {suggestionDetail}
+                    </button>
+                  ) : (
+                    <div className="text-xs text-green-600 dark:text-green-400">
+                      {suggestionDetail}
+                    </div>
+                  )}
                 </div>
               </div>
             )
           })()}
         </div>
       </div>
+
+      {/* Quick Charts */}
+      <QuickCharts 
+        expenses={expenses}
+        goals={goals}
+        currencySymbol={currencySymbol}
+      />
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -411,10 +470,10 @@ export function OverviewHub({
             {stats.monthsOfExpensesCovered.toFixed(1)} months covered
           </p>
           <button
-            onClick={() => onNavigate('analytics')}
+            onClick={() => onNavigate('expenses', { initialTab: 'safety-pot' })}
             className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
           >
-            View Analytics →
+            View Safety Net →
           </button>
         </div>
 
@@ -1342,12 +1401,9 @@ export function OverviewHub({
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                      {currencySymbol}{(
-                        Math.round(((profile?.income || 0) - (profile?.personal_allowance || 0)) * 0.1) +
-                        Math.round(((partnerProfile?.income || 0) - (partnerProfile?.personal_allowance || 0)) * 0.1)
-                      ).toLocaleString()}
+                      {currencySymbol}{safetyPotAmount.toLocaleString()}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">per month</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">current amount</div>
                   </div>
                 </div>
                 

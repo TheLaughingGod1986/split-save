@@ -282,8 +282,8 @@ BEGIN
         pa.visibility,
         pa.is_milestone,
         pa.created_at,
-        COALESCE(profiles.display_name, profiles.email) as user_name,
-        profiles.avatar_url as user_avatar,
+        COALESCE(users.name, users.email) as user_name,
+        users.avatar_url as user_avatar,
         at.display_name as type_display_name,
         at.icon as type_icon,
         at.color as type_color,
@@ -292,7 +292,7 @@ BEGIN
         CASE WHEN user_reactions.activity_id IS NOT NULL THEN TRUE ELSE FALSE END as user_has_reacted
     FROM partner_activities pa
     JOIN activity_types at ON pa.activity_type = at.name
-    LEFT JOIN profiles ON pa.user_id = profiles.user_id
+    LEFT JOIN users ON pa.user_id = users.id
     LEFT JOIN (
         SELECT activity_id, COUNT(*) as count 
         FROM activity_reactions 

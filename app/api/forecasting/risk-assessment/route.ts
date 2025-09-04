@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { authenticateRequest } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabase'
 import { financialForecastingEngine } from '@/lib/financial-forecasting-engine'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await authenticateRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -35,18 +32,15 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await authenticateRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     console.log('🔮 API: Fetching risk assessments for user:', user.id)
 
     // Fetch latest risk assessment
-    const { data: riskAssessment, error } = await supabase
+    const { data: riskAssessment, error } = await supabaseAdmin
       .from('risk_assessments')
       .select('*')
       .eq('user_id', user.id)

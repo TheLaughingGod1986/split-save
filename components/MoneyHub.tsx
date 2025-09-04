@@ -17,6 +17,7 @@ interface MoneyHubProps {
   monthlyProgress?: any
   onAddExpense: (expense: any) => void
   onUpdate: () => void
+  navigationParams?: any
 }
 
 interface Expense {
@@ -39,9 +40,12 @@ export function MoneyHub({
   goals = [],
   monthlyProgress,
   onAddExpense,
-  onUpdate
+  onUpdate,
+  navigationParams
 }: MoneyHubProps) {
-  const [activeTab, setActiveTab] = useState<'expenses' | 'contributions' | 'safety-pot' | 'analytics'>('expenses')
+  const [activeTab, setActiveTab] = useState<'expenses' | 'contributions' | 'safety-pot' | 'analytics'>(
+    navigationParams?.initialTab || 'expenses'
+  )
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [editingExpense, setEditingExpense] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
@@ -487,9 +491,9 @@ export function MoneyHub({
       expenses={expenses}
       currencySymbol={currencySymbol}
       onSafetyPotUpdate={(amount) => {
-        // Trigger a refresh of data if needed
+        // Log the update but don't trigger full data refresh
         console.log('Enhanced safety pot updated:', amount)
-        onUpdate()
+        // Note: No need to call onUpdate() since the component updates its own state
       }}
     />
   )

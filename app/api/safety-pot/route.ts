@@ -116,6 +116,7 @@ export async function POST(req: NextRequest) {
         insertData.user_id = user.id
       }
       
+      console.log('🔍 DEBUG: Creating safety pot with data:', insertData)
       const { data: newSafetyPot, error: createError } = await supabaseAdmin
         .from('safety_pot')
         .insert(insertData)
@@ -123,10 +124,12 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (createError) {
-        console.error('Safety pot creation error:', createError)
+        console.error('❌ Safety pot creation error:', createError)
+        console.error('❌ Insert data was:', insertData)
         return NextResponse.json({ error: 'Failed to create safety pot' }, { status: 500 })
       }
-
+      
+      console.log('✅ Safety pot created successfully:', newSafetyPot)
       safetyPot = newSafetyPot
     }
 

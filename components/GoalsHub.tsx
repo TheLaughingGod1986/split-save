@@ -28,6 +28,7 @@ interface Goal {
   target_date: string
   category: string
   description?: string
+  priority?: GoalPriority
   created_at: string
   updated_at: string
 }
@@ -51,6 +52,7 @@ export function GoalsHub({
     currentAmount?: string
     targetDate?: string
     description?: string
+    priority?: GoalPriority
   }>({})
   const [goalForm, setGoalForm] = useState({
     name: '',
@@ -84,6 +86,11 @@ export function GoalsHub({
     console.log('🎯 GoalsHub - Active goals:', active)
     console.log('🎯 GoalsHub - Completed goals:', completed)
     
+    // Debug priority values
+    active.forEach(goal => {
+      console.log(`🎯 Goal "${goal.name}" priority:`, goal.priority, 'type:', typeof goal.priority)
+    })
+    
     return { activeGoals: active, completedGoals: completed }
   }, [goals])
 
@@ -100,6 +107,7 @@ export function GoalsHub({
   // Initialize prioritization engine
   useEffect(() => {
     if (goals && profile) {
+      console.log('🔄 Initializing prioritization engine with goals:', goals)
       const monthlyIncome = profile.income || 0
       const engine = new GoalPrioritizationEngine(goals, monthlyIncome)
       setPrioritizationEngine(engine)
@@ -108,10 +116,28 @@ export function GoalsHub({
       const recs = engine.generateRecommendations()
       const allocs = engine.calculateOptimalAllocations()
       
+      console.log('📊 Generated allocations:', allocs)
       setRecommendations(recs)
       setAllocations(allocs)
     }
   }, [goals, profile])
+
+  // Refresh prioritization engine when goals change (including priority updates)
+  useEffect(() => {
+    if (prioritizationEngine && goals) {
+      console.log('🔄 Refreshing prioritization engine with updated goals:', goals)
+      // Update the engine with the latest goals data
+      prioritizationEngine.updateGoals(goals)
+      
+      // Recalculate recommendations and allocations
+      const recs = prioritizationEngine.generateRecommendations()
+      const allocs = prioritizationEngine.calculateOptimalAllocations()
+      
+      console.log('📊 Refreshed allocations:', allocs)
+      setRecommendations(recs)
+      setAllocations(allocs)
+    }
+  }, [goals, prioritizationEngine])
 
   const handleAddGoal = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,31 +148,13 @@ export function GoalsHub({
     }
 
     try {
-      // Convert numeric priority to string for API
-      const getPriorityString = (priority: number): string => {
-        switch (priority) {
-          case GoalPriority.CRITICAL:
-            return 'high'
-          case GoalPriority.HIGH:
-            return 'high'
-          case GoalPriority.MEDIUM:
-            return 'medium'
-          case GoalPriority.LOW:
-            return 'low'
-          case GoalPriority.OPTIONAL:
-            return 'low'
-          default:
-            return 'medium'
-        }
-      }
-
       const goal = {
         name: goalForm.name.trim(),
         target_amount: parseFloat(goalForm.targetAmount),
         current_amount: 0, // Initialize with 0 for new goals
         target_date: goalForm.targetDate,
         description: goalForm.description.trim(),
-        priority: getPriorityString(goalForm.priority)
+        priority: goalForm.priority // Send numeric priority directly
       }
 
       await onAddGoal(goal)
@@ -170,12 +178,16 @@ export function GoalsHub({
 
   const handleEditGoal = (goal: Goal) => {
     setEditingGoal(goal.id)
+    const priority = goal.priority || GoalPriority.MEDIUM
+    console.log('🔍 DEBUG: handleEditGoal - goal.priority:', goal.priority, 'type:', typeof goal.priority)
+    console.log('🔍 DEBUG: handleEditGoal - setting priority to:', priority, 'type:', typeof priority)
     setEditForm({
       name: goal.name,
       targetAmount: goal.target_amount.toString(),
       currentAmount: goal.current_amount.toString(),
       targetDate: goal.target_date,
-      description: goal.description || ''
+      description: goal.description || '',
+      priority: priority
     })
   }
 
@@ -188,8 +200,13 @@ export function GoalsHub({
         target_amount: parseFloat(editForm.targetAmount || '0'),
         current_amount: parseFloat(editForm.currentAmount || '0'),
         target_date: editForm.targetDate || '',
-        description: editForm.description?.trim() || ''
+        description: editForm.description?.trim() || '',
+        priority: editForm.priority || GoalPriority.MEDIUM // Send numeric priority directly
       }
+
+      console.log('🔍 DEBUG: editForm.priority type:', typeof editForm.priority, 'value:', editForm.priority)
+      console.log('🔍 DEBUG: updates.priority type:', typeof updates.priority, 'value:', updates.priority)
+      console.log('🔍 DEBUG: GoalPriority.MEDIUM:', GoalPriority.MEDIUM, 'type:', typeof GoalPriority.MEDIUM)
 
       await onUpdateGoal(editingGoal, updates)
       setEditingGoal(null)
@@ -247,23 +264,7 @@ export function GoalsHub({
     setRecommendations(prev => prev.filter(r => !(r.goalId === goalId && r.type === type)))
   }
 
-  const handleUpdateAllocation = async (goalId: string, allocation: number) => {
-    try {
-      if (!onUpdateGoal) return
-      
-      await onUpdateGoal(goalId, { allocation_percentage: allocation })
-      toast.success('Allocation updated successfully!')
-      
-      // Refresh allocations
-      if (prioritizationEngine) {
-        const allocs = prioritizationEngine.calculateOptimalAllocations()
-        setAllocations(allocs)
-      }
-    } catch (error) {
-      console.error('Failed to update allocation:', error)
-      toast.error('Failed to update allocation')
-    }
-  }
+
 
   const getContributionPercentage = (current: number, target: number, income: number) => {
     if (!income || income <= 0) return 0
@@ -511,6 +512,25 @@ export function GoalsHub({
                       </div>
 
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+                        <select
+                          value={editForm.priority || GoalPriority.MEDIUM}
+                          onChange={(e) => {
+                            const newPriority = parseInt(e.target.value) as GoalPriority
+                            console.log('🔍 DEBUG: Priority select onChange - e.target.value:', e.target.value, 'type:', typeof e.target.value)
+                            console.log('🔍 DEBUG: Priority select onChange - parseInt result:', newPriority, 'type:', typeof newPriority)
+                            setEditForm(prev => ({ ...prev, priority: newPriority }))
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                        >
+                          <option value={GoalPriority.HIGH}>🔥 High - Critical priority</option>
+                          <option value={GoalPriority.MEDIUM}>⚡ Medium - Important goal</option>
+                          <option value={GoalPriority.LOW}>📋 Low - Nice to have</option>
+                          <option value={GoalPriority.OPTIONAL}>🤔 Optional - Future consideration</option>
+                        </select>
+                      </div>
+
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                         <input
                           type="text"
@@ -728,7 +748,6 @@ export function GoalsHub({
       <GoalAllocationView
         allocations={allocations}
         goals={goals}
-        onUpdateAllocation={handleUpdateAllocation}
       />
     </div>
   )
