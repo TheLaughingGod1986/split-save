@@ -480,7 +480,7 @@ export function PartnerHub({
         </div>
       </div>
       
-      <PartnerActivityFeed />
+      <PartnerActivityFeed user={user} partnerships={partnerships} />
     </div>
   )
 

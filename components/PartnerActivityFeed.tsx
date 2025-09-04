@@ -8,10 +8,13 @@ import { ActivityFeedItem, ActivityComment } from '@/lib/activity-logger'
 
 interface PartnerActivityFeedProps {
   className?: string
+  user?: any
+  partnerships?: any[]
 }
 
-export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps) {
-  const { user } = useAuth()
+export function PartnerActivityFeed({ className = '', user: propUser, partnerships }: PartnerActivityFeedProps) {
+  const { user: authUser } = useAuth()
+  const user = propUser || authUser
   const [activities, setActivities] = useState<ActivityFeedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'financial' | 'achievements' | 'social'>('all')
@@ -22,7 +25,10 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
   const [submittingComment, setSubmittingComment] = useState<string | null>(null)
 
   const loadActivities = useCallback(async (showLoading = true) => {
-    if (!user) return
+    if (!user) {
+      console.log('❌ No user available for activity feed')
+      return
+    }
 
     try {
       if (showLoading) setLoading(true)
@@ -33,11 +39,15 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
         ...(filter !== 'all' && { filter })
       })
 
+      console.log('🔄 Loading activities for user:', user.id)
       const response = await apiClient.get(`/activity-feed?${params}`)
       const apiActivities = response.data?.activities || []
       
+      console.log('📊 API returned activities:', apiActivities.length)
+      
       // If no activities from API, generate some sample activities for demo
       if (apiActivities.length === 0) {
+        console.log('📝 Generating sample activities for demo')
         const sampleActivities: ActivityFeedItem[] = [
           {
             id: 'sample-1',
@@ -113,8 +123,10 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
           }
         ]
         
+        console.log('✅ Setting sample activities:', sampleActivities.length)
         setActivities(sampleActivities)
       } else {
+        console.log('✅ Setting API activities:', apiActivities.length)
         setActivities(apiActivities)
       }
       
@@ -271,8 +283,9 @@ export function PartnerActivityFeed({ className = '' }: PartnerActivityFeedProps
   }
 
   useEffect(() => {
+    console.log('🔄 PartnerActivityFeed useEffect triggered, user:', user?.id)
     loadActivities()
-  }, [loadActivities])
+  }, [loadActivities, user])
 
   if (loading) {
     return (
