@@ -71,12 +71,15 @@ export function PartnerHub({
 
   const loadSharedNotes = async () => {
     try {
-      // Note: Shared notes feature requires additional API endpoint
-      // For now, return empty array until /api/shared-notes is implemented
-      setSharedNotes([])
-      console.log('📝 Shared notes feature available - requires API implementation')
+      console.log('📝 Loading shared notes...')
+      const response = await apiClient.get('/shared-notes')
+      const notes = response.data || []
+      console.log('✅ Loaded shared notes:', notes.length)
+      setSharedNotes(notes)
     } catch (error) {
-      console.error('Failed to load shared notes:', error)
+      console.error('❌ Failed to load shared notes:', error)
+      // Keep empty array if loading fails
+      setSharedNotes([])
     }
   }
 
@@ -89,22 +92,21 @@ export function PartnerHub({
     }
 
     try {
-      // Note: This requires implementing /api/shared-notes endpoint
-      const note = {
-        id: Date.now().toString(),
-        content: newNote.trim(),
-        author: profile?.name || 'You',
-        created_at: new Date().toISOString(),
-        type: 'note'
-      }
-
-      // Add to local state for now - would be replaced with API call
-      setSharedNotes(prev => [note, ...prev])
+      console.log('📝 Adding shared note...')
+      const response = await apiClient.post('/shared-notes', {
+        content: newNote.trim()
+      })
+      
+      const newNoteData = response.data
+      console.log('✅ Note added successfully:', newNoteData.id)
+      
+      // Add to local state for immediate UI update
+      setSharedNotes(prev => [newNoteData, ...prev])
       setNewNote('')
       setShowAddNote(false)
       toast.success('Note added successfully!')
     } catch (error) {
-      console.error('Failed to add note:', error)
+      console.error('❌ Failed to add note:', error)
       toast.error('Failed to add note')
     }
   }
