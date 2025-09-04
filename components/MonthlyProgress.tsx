@@ -192,7 +192,25 @@ export function MonthlyProgress({
     })
     
     // Calculate proportional shared expenses based on partnership data
-    let sharedExpensesAmount = Math.round(baseDisposableIncome * 0.7) // Default fallback
+    let sharedExpensesAmount = 0
+    
+    if (partnerships && partnerships.length > 0) {
+      // Get the active partnership
+      const activePartnership = partnerships.find(p => p.status === 'active')
+      
+      if (activePartnership && activePartnership.shared_expenses) {
+        // Calculate user's proportional share of actual shared expenses
+        const totalIncome = (profile?.income || 0) + (partnerProfile?.income || 0)
+        const userIncomeProportion = totalIncome > 0 ? (profile?.income || 0) / totalIncome : 0.5
+        sharedExpensesAmount = Math.round(activePartnership.shared_expenses * userIncomeProportion)
+      } else {
+        // Fallback: use a reasonable percentage of disposable income, but cap it
+        sharedExpensesAmount = Math.min(Math.round(baseDisposableIncome * 0.7), Math.round(baseDisposableIncome * 0.5))
+      }
+    } else {
+      // No partnership: use a conservative fallback
+      sharedExpensesAmount = Math.round(baseDisposableIncome * 0.3)
+    }
     
     if (partnerships && partnerships.length > 0) {
       // Get the active partnership
@@ -728,11 +746,11 @@ export function MonthlyProgress({
           
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Income Section */}
-            <div id="income-reality-section" className="card space-card">
-              <h4 className="text-heading-3 text-blue-900 dark:text-blue-100 space-item">💰 Income Reality</h4>
+            <div id="income-reality-section" className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-4">💰 Income Reality</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-heading-4 text-blue-800 dark:text-blue-200 space-small">
+                  <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                     Expected Salary (from profile)
                   </label>
                   <div className="px-3 py-2 bg-blue-100 dark:bg-blue-800 rounded-lg text-blue-900 dark:text-blue-100 font-medium">
@@ -740,7 +758,7 @@ export function MonthlyProgress({
                   </div>
                 </div>
                 <div>
-                  <label className="text-heading-4 text-blue-800 dark:text-blue-200 space-small">
+                  <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                     Actual Salary Received
                   </label>
                   <input
@@ -757,27 +775,27 @@ export function MonthlyProgress({
                     }}
                     min={profile?.income || 0}
                     step="1"
-                    className="input"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     placeholder="Enter actual salary"
                     required
                   />
-                  <div className="text-caption text-blue-600 dark:text-blue-400 space-small">
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     Minimum: {currencySymbol}{profile?.income || 0}
                   </div>
                 </div>
               </div>
               
               {extraIncome > 0 && (
-                <div className="space-item p-3 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
-                  <div className="text-body-small text-green-800 dark:text-green-200">
+                <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="text-sm text-green-800 dark:text-green-200">
                     🎉 Extra Income: {currencySymbol}{extraIncome} (automatically distributed to savings & safety net)
                   </div>
                 </div>
               )}
               
               {actualSalary === expectedSalary && (
-                <div className="space-item p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-                  <div className="text-body-small text-blue-800 dark:text-blue-200">
+                <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
                     ℹ️ Salary matches expected amount - using standard contribution targets
                   </div>
                 </div>
@@ -785,11 +803,11 @@ export function MonthlyProgress({
             </div>
 
             {/* Shared Expenses Section */}
-            <div className="card space-card">
-              <h4 className="text-heading-3 text-purple-900 dark:text-purple-100 space-item">🏠 Shared Expenses</h4>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-4">🏠 Shared Expenses</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-heading-4 text-purple-800 dark:text-purple-200 space-small">
+                  <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
                     What You Need to Contribute
                   </label>
                   {getClearTargets(actualSalary) ? (
@@ -801,34 +819,34 @@ export function MonthlyProgress({
                       Enter valid salary first
                     </div>
                   )}
-                  <div className="text-caption text-purple-600 dark:text-purple-400 space-small">
+                  <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                     {partnerships && partnerships.length > 0 
                       ? 'Proportional share based on partnership income split'
-                      : '70% of your base salary disposable income (fallback)'
+                      : 'Based on actual shared expenses'
                     }
                   </div>
                   {partnerships && partnerships.length > 0 && (
-                    <div className="text-caption text-purple-500 dark:text-purple-300 space-small">
+                    <div className="text-xs text-purple-500 dark:text-purple-300 mt-1">
                       Total Shared Expenses: {currencySymbol}{partnerships.find(p => p.status === 'active')?.shared_expenses || 0}
                     </div>
                   )}
                 </div>
                 <div>
-                  <label className="text-heading-4 text-purple-800 dark:text-purple-200 space-small">
+                  <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
                     What You Actually Contributed
                   </label>
                   <input
                     type="number"
                     value={sharedExpensesContributed}
                     onChange={(e) => setSharedExpensesContributed(Number(e.target.value))}
-                    className={`input ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                       getContributionColor(getContributionStatus(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0))
                     }`}
                     placeholder="Enter amount contributed"
                     required
                   />
                   {getContributionMessage(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0, 'Shared Expenses') && (
-                    <div className={`text-caption space-small ${
+                    <div className={`text-xs mt-1 ${
                       getContributionStatus(sharedExpensesContributed, getClearTargets(actualSalary)?.sharedExpenses || 0) === 'close'
                         ? 'text-yellow-600 dark:text-yellow-400'
                         : 'text-red-600 dark:text-red-400'
@@ -841,26 +859,26 @@ export function MonthlyProgress({
             </div>
 
             {/* Savings Reality Section */}
-            <div className="card space-card">
-              <h4 className="text-heading-3 text-green-900 dark:text-green-100 space-item">🎯 What You Need to Save</h4>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-4">🎯 What You Need to Save</h4>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {goals.filter(goal => goal.target_date && new Date(goal.target_date) > new Date()).map((goal) => (
                     <div key={goal.id}>
-                      <label className="text-heading-4 text-green-800 dark:text-green-200 space-small">
+                      <label className="block text-sm font-medium text-green-800 dark:text-green-200 mb-2">
                         {goal.name}
                       </label>
                       {getClearTargets(actualSalary) ? (
-                        <div className="text-body-small text-green-600 dark:text-green-400 space-small">
+                        <div className="text-sm text-green-600 dark:text-green-400 mb-2">
                           <span className="font-medium">Base Target:</span> {currencySymbol}{(getClearTargets(actualSalary) as any)?.[goal.id]?.toFixed(0) || '0'}
-                                                      {getRecommendedSavings(actualSalary) && (getRecommendedSavings(actualSalary) as any)![goal.id] > (getClearTargets(actualSalary) as any)![goal.id] && (
+                          {getRecommendedSavings(actualSalary) && (getRecommendedSavings(actualSalary) as any)![goal.id] > (getClearTargets(actualSalary) as any)![goal.id] && (
                             <span className="ml-2 text-blue-600 dark:text-blue-400">
                               + {currencySymbol}{(getRecommendedSavings(actualSalary) as any)![goal.id] - (getClearTargets(actualSalary) as any)![goal.id]} extra income
                             </span>
                           )}
                         </div>
                       ) : (
-                        <div className="text-body-small text-red-600 dark:text-red-400 space-small">
+                        <div className="text-sm text-red-600 dark:text-red-400 mb-2">
                           <span className="font-medium">Target:</span> Enter valid salary first
                         </div>
                       )}
@@ -871,14 +889,14 @@ export function MonthlyProgress({
                           ...prev,
                           [goal.id]: Number(e.target.value)
                         }))}
-                        className={`input ${
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                           getContributionColor(getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0))
                         }`}
                         placeholder={`Recommended: ${currencySymbol}${(getRecommendedSavings(actualSalary) as any)?.[goal.id]?.toFixed(0) || (getClearTargets(actualSalary) as any)?.[goal.id]?.toFixed(0) || '0'}`}
                         required
                       />
                       {getContributionMessage(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0, goal.name) && (
-                        <div className={`text-caption space-small ${
+                        <div className={`text-xs mt-1 ${
                           getContributionStatus(goalContributions[goal.id] || 0, (getClearTargets(actualSalary) as any)?.[goal.id] || 0) === 'close'
                             ? 'text-yellow-600 dark:text-yellow-400'
                             : 'text-red-600 dark:text-red-400'
