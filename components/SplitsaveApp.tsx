@@ -19,7 +19,6 @@ import { MoneyHub } from './MoneyHub'
 import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
 import { PartnerHub } from './PartnerHub'
 import { LoadingScreen, useLoadingScreen } from './LoadingScreen'
-import { isPrivateMode } from '@/lib/safe-storage'
 import { AuthForm } from './AuthForm'
 import { ProfileManager } from './ProfileManager'
 
@@ -31,7 +30,6 @@ export function SplitsaveApp() {
   const [navigationParams, setNavigationParams] = useState<any>({})
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [isPrivateModeDetected, setIsPrivateModeDetected] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   // State management
@@ -422,10 +420,6 @@ export function SplitsaveApp() {
 
   // Check for existing session on mount
   useEffect(() => {
-    // Check if we're in private mode (only in browser)
-    if (typeof window !== 'undefined') {
-      setIsPrivateModeDetected(isPrivateMode())
-    }
     
     const checkSession = async () => {
       try {
@@ -463,33 +457,6 @@ export function SplitsaveApp() {
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
 
 
-  // Show private mode warning
-  if (isPrivateModeDetected) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-6 bg-yellow-500/20 rounded-full flex items-center justify-center">
-            <span className="text-3xl">🔒</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-4">Private Mode Detected</h1>
-          <p className="text-white/70 mb-6 leading-relaxed">
-            SplitSave works best in regular browsing mode. Private mode can cause issues with data storage and authentication.
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Try Anyway
-            </button>
-            <p className="text-white/50 text-sm">
-              For the best experience, please use regular browsing mode
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   // Show loading state
   if (loading || showLoadingScreen) {

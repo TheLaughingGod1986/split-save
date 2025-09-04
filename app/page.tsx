@@ -6,8 +6,6 @@ import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { ClientOnly } from '@/components/ClientOnly'
 import { StructuredData, structuredDataSchemas } from '@/components/StructuredData'
-import { MobileErrorBoundary } from '@/components/MobileErrorBoundary'
-import { MobileFallback } from '@/components/MobileFallback'
 import { useEffect, useRef } from 'react'
 import { analytics } from '@/lib/analytics'
 
@@ -61,12 +59,5 @@ export default function Home() {
     )
   }
 
-  return (
-    <>
-      <MobileErrorBoundary>
-        <SplitsaveApp />
-      </MobileErrorBoundary>
-      <MobileFallback />
-    </>
-  )
+  return <SplitsaveApp />
 }
