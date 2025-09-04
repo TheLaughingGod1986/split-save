@@ -492,16 +492,36 @@ export function SplitsaveApp() {
 
   // Show loading state
   if (loading || showLoadingScreen) {
-  return (
+    return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 border-4 border-white/20 border-t-blue-400 rounded-full animate-spin"></div>
-          <h1 className="text-2xl font-bold text-white mb-2">SplitSave</h1>
-          <p className="text-white/70">Loading your dashboard...</p>
-          {/* Debug info for mobile */}
-          <div className="mt-4 text-xs text-white/50">
-            Loading: {loading ? 'true' : 'false'} | ShowLoading: {showLoadingScreen ? 'true' : 'false'}
+        <div className="text-center max-w-md">
+          {/* Enhanced loading animation */}
+          <div className="relative mb-8">
+            <div className="w-20 h-20 mx-auto relative">
+              <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-400 border-r-purple-400 animate-spin"></div>
+              <div className="absolute inset-2 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">S</span>
+              </div>
             </div>
+          </div>
+          
+          <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
+            SplitSave
+          </h1>
+          <p className="text-white/80 text-lg mb-2">
+            Building your AI-powered financial dashboard...
+          </p>
+          <p className="text-white/60 text-sm">
+            Analyzing your financial patterns and optimizing your savings strategy
+          </p>
+          
+          {/* Progress dots */}
+          <div className="flex justify-center space-x-2 mt-6">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
         </div>
       </div>
     )

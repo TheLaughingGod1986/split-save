@@ -11,7 +11,7 @@ interface LoadingScreenProps {
 export function LoadingScreen({ 
   userEmail = 'benoats@gmail.com', 
   progress = 0,
-  message = 'Initializing your financial dashboard...'
+  message = 'Building your AI-powered financial dashboard...'
 }: LoadingScreenProps) {
   const [animatedProgress, setAnimatedProgress] = useState(0)
 
@@ -70,8 +70,11 @@ export function LoadingScreen({
           <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
             SplitSave
           </h1>
-          <p className="text-white/70 text-lg font-light">
-            Smart Financial Management
+          <p className="text-white/80 text-lg font-light mb-1">
+            AI-Powered Financial Dashboard
+          </p>
+          <p className="text-white/60 text-sm">
+            Building your personalized savings strategy...
           </p>
         </div>
 
@@ -148,9 +151,9 @@ export function LoadingScreen({
 export function useLoadingScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [progress, setProgress] = useState(0)
-  const [message, setMessage] = useState('Initializing your financial dashboard...')
+  const [message, setMessage] = useState('Building your AI-powered financial dashboard...')
 
-  const startLoading = (initialMessage = 'Initializing your financial dashboard...') => {
+  const startLoading = (initialMessage = 'Building your AI-powered financial dashboard...') => {
     setIsLoading(true)
     setProgress(0)
     setMessage(initialMessage)
