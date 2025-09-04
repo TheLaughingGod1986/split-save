@@ -110,8 +110,8 @@ export function SecuritySettings() {
   return (
     <div className="space-y-6">
       {/* Security Overview */}
-      <div className="card space-card">
-        <h2 className="text-heading-2 text-gray-900 dark:text-white space-item">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
           🔒 Security Overview
         </h2>
         
@@ -151,8 +151,8 @@ export function SecuritySettings() {
       </div>
 
       {/* Multi-Factor Authentication */}
-      <div className="card space-card">
-        <h3 className="text-heading-3 text-gray-900 dark:text-white space-item">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           🔐 Multi-Factor Authentication
         </h3>
         
@@ -164,7 +164,7 @@ export function SecuritySettings() {
             <button
               onClick={handleEnableMFA}
               disabled={isLoading}
-              className="btn-mobile-primary"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? '🔄 Enabling...' : '🔐 Enable MFA'}
             </button>
@@ -187,8 +187,8 @@ export function SecuritySettings() {
       </div>
 
       {/* Biometric Authentication */}
-      <div className="card space-card">
-        <h3 className="text-heading-3 text-gray-900 dark:text-white space-item">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           👆 Biometric Authentication
         </h3>
         
@@ -200,7 +200,7 @@ export function SecuritySettings() {
             <button
               onClick={handleEnableBiometric}
               disabled={isLoading}
-              className="btn-mobile-primary"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? '🔄 Enabling...' : '👆 Enable Biometric'}
             </button>
