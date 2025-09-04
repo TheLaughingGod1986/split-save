@@ -564,7 +564,7 @@ export function SplitsaveApp() {
             </div>
             
                 {/* Navigation Links - Responsive */}
-                <div className="hidden lg:flex items-center space-x-1">
+                <div className="hidden md:flex items-center space-x-1">
             <button
                     onClick={() => handleNavigation('overview')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
