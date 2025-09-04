@@ -126,6 +126,18 @@ export function SplitsaveApp() {
   
   // Loading screen hook
   const { isLoading: showLoadingScreen, progress, message, updateProgress, finishLoading } = useLoadingScreen()
+  
+  // Additional failsafe for loading state
+  useEffect(() => {
+    const loadingFailsafe = setTimeout(() => {
+      if (loading) {
+        console.log('Loading state stuck, forcing to false')
+        setLoading(false)
+      }
+    }, 3000)
+    
+    return () => clearTimeout(loadingFailsafe)
+  }, [loading])
 
   // Navigation handler
   const handleNavigation = useCallback((view: string, params: any = {}) => {
@@ -394,8 +406,10 @@ export function SplitsaveApp() {
 
   // Check for existing session on mount
   useEffect(() => {
-    // Check if we're in private mode
-    setIsPrivateModeDetected(isPrivateMode())
+    // Check if we're in private mode (only in browser)
+    if (typeof window !== 'undefined') {
+      setIsPrivateModeDetected(isPrivateMode())
+    }
     
     const checkSession = async () => {
       try {
@@ -423,10 +437,11 @@ export function SplitsaveApp() {
     
     checkSession()
     
-    // Failsafe: Force loading to false after 10 seconds
+    // Failsafe: Force loading to false after 5 seconds (reduced from 10)
     const failsafeTimeout = setTimeout(() => {
+      console.log('Failsafe timeout: forcing loading to false')
       setLoading(false)
-    }, 10000)
+    }, 5000)
     
     return () => clearTimeout(failsafeTimeout)
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
@@ -468,6 +483,10 @@ export function SplitsaveApp() {
           <div className="w-16 h-16 mx-auto mb-4 border-4 border-white/20 border-t-blue-400 rounded-full animate-spin"></div>
           <h1 className="text-2xl font-bold text-white mb-2">SplitSave</h1>
           <p className="text-white/70">Loading your dashboard...</p>
+          {/* Debug info for mobile */}
+          <div className="mt-4 text-xs text-white/50">
+            Loading: {loading ? 'true' : 'false'} | ShowLoading: {showLoadingScreen ? 'true' : 'false'}
+          </div>
         </div>
       </div>
     )

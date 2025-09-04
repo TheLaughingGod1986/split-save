@@ -96,6 +96,11 @@ export const safeSessionStorage = new SafeSessionStorage()
 
 // Utility function to check if we're in private mode
 export function isPrivateMode(): boolean {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return false
+  }
+  
   try {
     localStorage.setItem('test', 'test')
     localStorage.removeItem('test')
