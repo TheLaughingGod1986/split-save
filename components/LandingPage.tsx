@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { LoginForm } from './LoginForm'
+import { LoginForm } from './auth/LoginForm'
 import { trackEvent } from '@/lib/analytics'
 
 export function LandingPage() {

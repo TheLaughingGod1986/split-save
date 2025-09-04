@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { ErrorBoundary, useErrorHandler, withErrorBoundary, AsyncErrorBoundary } from '@/components/ErrorBoundary'
+import { ErrorBoundary, useErrorHandler, withErrorBoundary, AsyncErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // Component that throws an error for testing
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {

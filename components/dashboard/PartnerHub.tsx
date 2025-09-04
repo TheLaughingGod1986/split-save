@@ -3,10 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
-import { PartnershipManager } from './PartnershipManager'
+import { PartnershipManager } from '../forms/PartnershipManager'
 import { PartnerActivityFeed } from './PartnerActivityFeed'
 import { DashboardContributionSummary } from './DashboardContributionSummary'
-import { TransparencyDashboard } from './TransparencyDashboard'
 
 interface PartnerHubProps {
   partnerships: any[]

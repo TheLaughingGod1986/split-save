@@ -68,7 +68,7 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
           message: 'You have a new partnership invitation',
           timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
           isRead: true,
-          actionUrl: '/partnerships'
+          actionUrl: '/' // Redirect to main app where partnerships view is available
         }
       ]
       

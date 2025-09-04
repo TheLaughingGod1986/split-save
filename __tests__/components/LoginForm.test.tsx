@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { LoginForm } from '@/components/LoginForm'
+import { LoginForm } from '@/components/auth/LoginForm'
 
 // Mock the toast module
 jest.mock('@/lib/toast', () => ({

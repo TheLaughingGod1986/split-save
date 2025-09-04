@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { DashboardContributionSummary } from './DashboardContributionSummary'
-import { QuickCharts } from './QuickCharts'
+import { QuickCharts } from '../analytics/QuickCharts'
 
 interface OverviewHubProps {
   expenses: any[]

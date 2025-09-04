@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react'
 import { toast } from '@/lib/toast'
-import { useAuth } from './AuthProvider'
-import { ProfileManager } from './ProfileManager'
-import { SecurityDashboard } from './SecurityDashboard'
-import { DataExportView } from './DataExportView'
-import { SmartNotifications } from './SmartNotifications'
-import { PushNotificationSettings } from './PushNotificationSettings'
+import { useAuth } from '../auth/AuthProvider'
+import { ProfileManager } from '../forms/ProfileManager'
+import { SecurityDashboard } from '../forms/SecurityDashboard'
+import { DataExportView } from '../forms/DataExportView'
+import { SmartNotifications } from '../notifications/SmartNotifications'
+import { PushNotificationSettings } from '../notifications/PushNotificationSettings'
 
 interface AccountHubProps {
   profile: any

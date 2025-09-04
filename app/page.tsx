@@ -1,12 +1,10 @@
 'use client'
 
-import { useAuth } from '@/components/AuthProvider'
-import { LoginForm } from '@/components/LoginForm'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
-import { ClientOnly } from '@/components/ClientOnly'
-import { StructuredData, structuredDataSchemas } from '@/components/StructuredData'
-import { MobileLoadingFallback } from '@/components/MobileLoadingFallback'
+import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
+import { MobileLoadingFallback } from '@/components/mobile/MobileLoadingFallback'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
@@ -15,23 +13,7 @@ export default function Home() {
   const { user, loading } = useAuth()
   const analyticsTracked = useRef(false)
   const [showMobileFallback, setShowMobileFallback] = useState(false)
-  const [isSafari, setIsSafari] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
-
-  // Detect Safari and redirect to Safari-specific page
-  useEffect(() => {
-    if (isClient) {
-      const userAgent = navigator.userAgent
-      const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
-      setIsSafari(isSafariBrowser)
-      
-      if (isSafariBrowser) {
-        console.log('🍎 Detected Safari, redirecting to Safari-specific page')
-        window.location.href = '/safari'
-        return
-      }
-    }
-  }, [isClient])
 
   useEffect(() => {
     if (!loading && !analyticsTracked.current) {

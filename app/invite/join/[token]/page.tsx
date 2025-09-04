@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/AuthProvider'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 
@@ -49,7 +49,8 @@ export default function JoinInvitationPage({ params }: JoinInvitationPageProps) 
   const handleAcceptInvitation = async () => {
     if (!user) {
       toast.error('Please sign in to accept the invitation')
-      router.push('/auth/signin')
+      // Redirect to main app where user can sign in
+      router.push('/')
       return
     }
 
@@ -61,7 +62,8 @@ export default function JoinInvitationPage({ params }: JoinInvitationPageProps) 
 
       if (response.data?.success) {
         toast.success('Partnership invitation accepted successfully!')
-        router.push('/partnerships')
+        // Redirect to main app where partnerships view will be available
+        router.push('/')
       } else {
         toast.error('Failed to accept invitation')
       }
@@ -185,7 +187,7 @@ export default function JoinInvitationPage({ params }: JoinInvitationPageProps) 
               Please sign in to accept this invitation
             </p>
             <button
-              onClick={() => router.push('/auth/signin')}
+              onClick={() => router.push('/')}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               Sign In to Accept

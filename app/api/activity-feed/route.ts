@@ -73,7 +73,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('❌ Activity feed API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }
@@ -156,7 +160,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Activity feed POST API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }

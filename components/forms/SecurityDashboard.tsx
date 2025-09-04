@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { useAuth } from './AuthProvider'
-import { SecuritySettings } from './SecuritySettings'
+import { useAuth } from '../auth/AuthProvider'
 import { PrivacySettings } from './PrivacySettings'
 
 type SecurityTab = 'overview' | 'security' | 'privacy' | 'activity'

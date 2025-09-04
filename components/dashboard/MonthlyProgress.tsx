@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
-import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
+import { MonthlyContributionRecorder } from '../forms/MonthlyContributionRecorder'
 
 interface MonthlyProgressProps {
   partnerships: any[]

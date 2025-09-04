@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from './AuthProvider'
+import { useAuth } from '../auth/AuthProvider'
 import { toast } from 'react-hot-toast'
 import { apiClient } from '@/lib/api-client'
 

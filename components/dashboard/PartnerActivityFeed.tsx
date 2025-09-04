@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useAuth } from './AuthProvider'
+import { useAuth } from '../auth/AuthProvider'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 import { ActivityFeedItem, ActivityComment } from '@/lib/activity-logger'

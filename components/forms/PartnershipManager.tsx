@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from './AuthProvider'
+import { useAuth } from '../auth/AuthProvider'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 

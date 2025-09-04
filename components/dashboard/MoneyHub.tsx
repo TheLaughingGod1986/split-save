@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { EnhancedSafetyPot } from './EnhancedSafetyPot'
-import ContributionManager from './ContributionManager'
+import ContributionManager from '../forms/ContributionManager'
 import { MonthlyProgress } from './MonthlyProgress'
 
 interface MoneyHubProps {

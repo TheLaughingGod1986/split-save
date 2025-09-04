@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
-import { useAuth } from './AuthProvider'
+import { useAuth } from '../auth/AuthProvider'
 
 interface NotificationSetting {
   id: string

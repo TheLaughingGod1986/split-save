@@ -6,21 +6,21 @@ import { toast } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
 
 // Import components
-import { OverviewHub } from './OverviewHub'
-import { GoalsHub } from './GoalsHub'
-import { AccountHub } from './AccountHub'
-import { AnalyticsView } from './AnalyticsView'
-import { NotificationManager } from './NotificationManager'
-import { NotificationDropdown } from './NotificationDropdown'
-import { MobileNavigation } from './MobileNavigation'
-import { MobileLayout } from './MobileLayout'
-import { ErrorBoundary } from './ErrorBoundary'
-import { MoneyHub } from './MoneyHub'
-import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
-import { PartnerHub } from './PartnerHub'
-import { LoadingScreen, useLoadingScreen } from './LoadingScreen'
-import { AuthForm } from './AuthForm'
-import { ProfileManager } from './ProfileManager'
+import { OverviewHub } from './dashboard/OverviewHub'
+import { GoalsHub } from './dashboard/GoalsHub'
+import { AccountHub } from './dashboard/AccountHub'
+import { AnalyticsView } from './analytics/AnalyticsView'
+import { NotificationManager } from './notifications/NotificationManager'
+import { NotificationDropdown } from './notifications/NotificationDropdown'
+import { MobileNavigation } from './mobile/MobileNavigation'
+import { MobileLayout } from './mobile/MobileLayout'
+import { ErrorBoundary } from './ui/ErrorBoundary'
+import { MoneyHub } from './dashboard/MoneyHub'
+import { MonthlyContributionRecorder } from './forms/MonthlyContributionRecorder'
+import { PartnerHub } from './dashboard/PartnerHub'
+import { LoadingScreen, useLoadingScreen } from './ui/LoadingScreen'
+import { AuthForm } from './auth/AuthForm'
+import { ProfileManager } from './forms/ProfileManager'
 
 // Import types
 import type { Expense, Goal, Partnership, Profile, Approval } from '@/types'
@@ -128,7 +128,7 @@ export function SplitsaveApp() {
 
   
   // Loading screen hook
-  const { isLoading: showLoadingScreen, progress, message, updateProgress, finishLoading } = useLoadingScreen()
+  const { isLoading: showLoadingScreen, progress, message, updateProgress, stopLoading } = useLoadingScreen()
   
   // Additional failsafe for loading state
   useEffect(() => {
@@ -275,14 +275,14 @@ export function SplitsaveApp() {
       await fetchMonthlyProgress()
       
       updateProgress(100, 'Preparing your dashboard...')
-      finishLoading()
+      stopLoading()
       
     } catch (err) {
       console.error('Error loading data:', err)
       setError('Failed to load data. Please try again.')
       setLoading(false)
     }
-  }, [fetchExpenses, fetchGoals, fetchPartnerships, fetchProfile, fetchApprovals, fetchMonthlyProgress, updateProgress, finishLoading])
+  }, [fetchExpenses, fetchGoals, fetchPartnerships, fetchProfile, fetchApprovals, fetchMonthlyProgress, updateProgress, stopLoading])
 
   // Profile update handler
   const handleProfileUpdate = useCallback((updatedProfile: any) => {

@@ -5,8 +5,8 @@ import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { AchievementsView } from './AchievementsView'
 import { GoalPrioritizationEngine, GoalPriority } from '@/lib/goal-prioritization'
-import { GoalRecommendations } from './GoalRecommendations'
-import { GoalAllocationView } from './GoalAllocationView'
+import { GoalRecommendations } from '../forms/GoalRecommendations'
+import { GoalAllocationView } from '../forms/GoalAllocationView'
 import { useLocalization } from '@/lib/localization'
 
 interface GoalsHubProps {
