@@ -45,90 +45,8 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
       
       console.log('📊 API returned activities:', apiActivities.length)
       
-      // If no activities from API, generate some sample activities for demo
-      if (apiActivities.length === 0) {
-        console.log('📝 Generating sample activities for demo')
-        const sampleActivities: ActivityFeedItem[] = [
-          {
-            id: 'sample-1',
-            user_id: user.id,
-            partnership_id: 'sample-partnership',
-            activity_type: 'expense_added',
-            title: 'Added shared expense: Groceries',
-            description: 'Weekly grocery shopping at Tesco',
-            metadata: { category: 'food', location: 'Tesco' },
-            amount: 85.50,
-            currency: 'GBP',
-            entity_type: 'expense',
-            entity_id: 'sample-expense-1',
-            visibility: 'partners',
-            is_milestone: false,
-            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-            user_name: 'You',
-            user_avatar: undefined,
-            type_display_name: 'Expense Added',
-            type_icon: '💰',
-            type_color: 'blue',
-            reaction_count: 0,
-            comment_count: 0,
-            user_has_reacted: false
-          },
-          {
-            id: 'sample-2',
-            user_id: user.id,
-            partnership_id: 'sample-partnership',
-            activity_type: 'goal_contribution',
-            title: 'Contributed to Holiday Fund',
-            description: 'Monthly contribution towards summer holiday',
-            metadata: { goal_name: 'Holiday Fund', contribution_amount: 200 },
-            amount: 200,
-            currency: 'GBP',
-            entity_type: 'goal',
-            entity_id: 'sample-goal-1',
-            visibility: 'partners',
-            is_milestone: false,
-            created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-            user_name: 'You',
-            user_avatar: undefined,
-            type_display_name: 'Goal Contribution',
-            type_icon: '🎯',
-            type_color: 'green',
-            reaction_count: 1,
-            comment_count: 0,
-            user_has_reacted: false
-          },
-          {
-            id: 'sample-3',
-            user_id: user.id,
-            partnership_id: 'sample-partnership',
-            activity_type: 'safety_pot_contribution',
-            title: 'Safety Pot Contribution',
-            description: 'Emergency fund contribution',
-            metadata: { contribution_amount: 150 },
-            amount: 150,
-            currency: 'GBP',
-            entity_type: 'safety_pot',
-            entity_id: 'sample-safety-pot',
-            visibility: 'partners',
-            is_milestone: false,
-            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-            user_name: 'You',
-            user_avatar: undefined,
-            type_display_name: 'Safety Pot Contribution',
-            type_icon: '🛡️',
-            type_color: 'purple',
-            reaction_count: 0,
-            comment_count: 0,
-            user_has_reacted: false
-          }
-        ]
-        
-        console.log('✅ Setting sample activities:', sampleActivities.length)
-        setActivities(sampleActivities)
-      } else {
-        console.log('✅ Setting API activities:', apiActivities.length)
-        setActivities(apiActivities)
-      }
+      console.log('✅ Setting activities from API:', apiActivities.length)
+      setActivities(apiActivities)
       
       // Mark activities as viewed
       const activityIds = (apiActivities.length > 0 ? apiActivities : []).map((a: ActivityFeedItem) => a.id) || []
@@ -153,28 +71,6 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   }
 
   const handleReaction = async (activityId: string, reactionType: string, isAdding: boolean) => {
-    // Skip API calls for sample activities (demo data)
-    if (activityId.startsWith('sample-')) {
-      // Update local state for demo purposes
-      setActivities(prev => prev.map(activity => {
-        if (activity.id === activityId) {
-          return {
-            ...activity,
-            reaction_count: activity.reaction_count + (isAdding ? 1 : -1),
-            user_has_reacted: isAdding
-          }
-        }
-        return activity
-      }))
-
-      if (isAdding) {
-        toast.success('Reaction added! (Demo)')
-      } else {
-        toast.success('Reaction removed! (Demo)')
-      }
-      return
-    }
-
     try {
       await apiClient.post('/activity-feed', {
         action: isAdding ? 'add_reaction' : 'remove_reaction',
@@ -206,16 +102,6 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   }
 
   const loadComments = async (activityId: string) => {
-    // Skip API calls for sample activities (demo data)
-    if (activityId.startsWith('sample-')) {
-      // Set empty comments for demo activities
-      setComments(prev => ({
-        ...prev,
-        [activityId]: []
-      }))
-      return
-    }
-
     try {
       const response = await apiClient.get(`/activity-feed/${activityId}/comments`)
       setComments(prev => ({
@@ -246,29 +132,6 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   const submitComment = async (activityId: string) => {
     const comment = newComment[activityId]?.trim()
     if (!comment || submittingComment) return
-
-    // Skip API calls for sample activities (demo data)
-    if (activityId.startsWith('sample-')) {
-      setSubmittingComment(activityId)
-      
-      // Simulate comment submission for demo
-      setTimeout(() => {
-        // Clear input
-        setNewComment(prev => ({ ...prev, [activityId]: '' }))
-        
-        // Update comment count for demo
-        setActivities(prev => prev.map(activity => {
-          if (activity.id === activityId) {
-            return { ...activity, comment_count: (activity.comment_count || 0) + 1 }
-          }
-          return activity
-        }))
-
-        toast.success('Comment added! (Demo)')
-        setSubmittingComment(null)
-      }, 500)
-      return
-    }
 
     try {
       setSubmittingComment(activityId)
