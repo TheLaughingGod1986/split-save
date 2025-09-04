@@ -15,7 +15,23 @@ export default function Home() {
   const { user, loading } = useAuth()
   const analyticsTracked = useRef(false)
   const [showMobileFallback, setShowMobileFallback] = useState(false)
+  const [isSafari, setIsSafari] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
+
+  // Detect Safari and redirect to Safari-specific page
+  useEffect(() => {
+    if (isClient) {
+      const userAgent = navigator.userAgent
+      const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
+      setIsSafari(isSafariBrowser)
+      
+      if (isSafariBrowser) {
+        console.log('🍎 Detected Safari, redirecting to Safari-specific page')
+        window.location.href = '/safari'
+        return
+      }
+    }
+  }, [isClient])
 
   useEffect(() => {
     if (!loading && !analyticsTracked.current) {
