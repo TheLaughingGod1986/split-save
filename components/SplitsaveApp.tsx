@@ -31,6 +31,7 @@ export function SplitsaveApp() {
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isPrivateModeDetected, setIsPrivateModeDetected] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
@@ -390,7 +391,7 @@ export function SplitsaveApp() {
     loadData()
   }, [loadData])
 
-  // Initialize theme from localStorage
+  // Initialize theme from localStorage and detect mobile
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -402,6 +403,20 @@ export function SplitsaveApp() {
       } else {
       document.documentElement.classList.remove('dark')
     }
+
+    // Detect mobile devices
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
+      const isSmallScreen = window.innerWidth <= 768
+      
+      setIsMobile(isMobileDevice || isSmallScreen)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   // Check for existing session on mount
@@ -477,7 +492,7 @@ export function SplitsaveApp() {
 
   // Show loading state
   if (loading || showLoadingScreen) {
-    return (
+  return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 border-4 border-white/20 border-t-blue-400 rounded-full animate-spin"></div>
@@ -486,7 +501,7 @@ export function SplitsaveApp() {
           {/* Debug info for mobile */}
           <div className="mt-4 text-xs text-white/50">
             Loading: {loading ? 'true' : 'false'} | ShowLoading: {showLoadingScreen ? 'true' : 'false'}
-          </div>
+            </div>
         </div>
       </div>
     )
@@ -770,14 +785,16 @@ export function SplitsaveApp() {
           onAchievementUnlocked={handleAchievementUnlocked}
         />
 
-      {/* Mobile Navigation */}
-        <MobileNavigation
-          currentView={currentView}
-          onNavigate={handleNavigation}
-          isOnline={true}
-          hasNotifications={approvals && approvals.length > 0}
-          notificationCount={approvals ? approvals.length : 0}
-        />
+      {/* Mobile Navigation - Only show on mobile devices */}
+        {isMobile && (
+          <MobileNavigation
+            currentView={currentView}
+            onNavigate={handleNavigation}
+            isOnline={true}
+            hasNotifications={approvals && approvals.length > 0}
+            notificationCount={approvals ? approvals.length : 0}
+          />
+        )}
     </div>
     </ErrorBoundary>
   )
