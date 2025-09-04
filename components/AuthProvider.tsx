@@ -22,16 +22,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     
-    // Detect mobile for debugging
-    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent)
-    const isSmallScreen = window.innerWidth <= 768
-    
-    console.log('🔍 AuthProvider: Mobile detection', {
-      isMobile,
-      isSmallScreen,
-      userAgent: navigator.userAgent,
-      windowWidth: window.innerWidth
-    })
+    // Detect mobile for debugging (only on client side)
+    let isMobile = false
+    if (typeof window !== 'undefined') {
+      isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent)
+      const isSmallScreen = window.innerWidth <= 768
+      
+      console.log('🔍 AuthProvider: Mobile detection', {
+        isMobile,
+        isSmallScreen,
+        userAgent: navigator.userAgent,
+        windowWidth: window.innerWidth
+      })
+    }
     
     // Get initial session with timeout (shorter timeout for mobile)
     const sessionPromise = supabase.auth.getSession()

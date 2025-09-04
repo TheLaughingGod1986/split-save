@@ -10,8 +10,24 @@ interface MobileLoadingFallbackProps {
 export function MobileLoadingFallback({ onTimeout, timeoutMs = 8000 }: MobileLoadingFallbackProps) {
   const [showFallback, setShowFallback] = useState(false)
   const [timeoutReached, setTimeoutReached] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  const [deviceInfo, setDeviceInfo] = useState({
+    userAgent: '',
+    screenSize: '',
+    platform: '',
+    isOnline: false
+  })
 
   useEffect(() => {
+    // Set client-side flag and gather device info
+    setIsClient(true)
+    setDeviceInfo({
+      userAgent: navigator.userAgent,
+      screenSize: `${window.innerWidth}x${window.innerHeight}`,
+      platform: navigator.platform,
+      isOnline: navigator.onLine
+    })
+
     // Show fallback after 3 seconds
     const fallbackTimer = setTimeout(() => {
       setShowFallback(true)
@@ -54,16 +70,16 @@ export function MobileLoadingFallback({ onTimeout, timeoutMs = 8000 }: MobileLoa
         </p>
 
         {/* Mobile Debug Info */}
-        {showFallback && (
+        {showFallback && isClient && (
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6 text-left">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
               Debug Info:
             </h3>
             <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-              <div>User Agent: {navigator.userAgent.substring(0, 60)}...</div>
-              <div>Screen: {window.innerWidth}x{window.innerHeight}</div>
-              <div>Platform: {navigator.platform}</div>
-              <div>Online: {navigator.onLine ? 'Yes' : 'No'}</div>
+              <div>User Agent: {deviceInfo.userAgent.substring(0, 60)}...</div>
+              <div>Screen: {deviceInfo.screenSize}</div>
+              <div>Platform: {deviceInfo.platform}</div>
+              <div>Online: {deviceInfo.isOnline ? 'Yes' : 'No'}</div>
               <div>Loading Time: {timeoutReached ? 'Timeout' : 'In Progress'}</div>
             </div>
           </div>
