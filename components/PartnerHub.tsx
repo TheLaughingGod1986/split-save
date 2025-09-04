@@ -83,6 +83,21 @@ export function PartnerHub({
     }
   }
 
+  const handleRemovePartnership = async (partnershipId: string) => {
+    if (!confirm('Are you sure you want to remove this partnership? This action cannot be undone and will affect all shared goals and expenses.')) {
+      return
+    }
+
+    try {
+      await apiClient.delete(`/partnerships?id=${partnershipId}`)
+      toast.success('Partnership removed successfully')
+      onUpdate() // Refresh data
+    } catch (error) {
+      console.error('Remove partnership error:', error)
+      toast.error('Failed to remove partnership')
+    }
+  }
+
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -165,9 +180,18 @@ export function PartnerHub({
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="w-3 h-3 bg-green-500 rounded-full mb-1"></div>
-                <p className="text-xs text-green-700 dark:text-green-300">Online</p>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mb-1"></div>
+                  <p className="text-xs text-green-700 dark:text-green-300">Online</p>
+                </div>
+                <button
+                  onClick={() => handleRemovePartnership(activePartnership.id)}
+                  className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                  title="Remove Partnership"
+                >
+                  Remove
+                </button>
               </div>
             </div>
           </div>

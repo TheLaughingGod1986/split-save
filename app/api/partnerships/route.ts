@@ -11,7 +11,33 @@ export async function GET(req: NextRequest) {
   try {
     const { data: partnerships, error } = await supabaseAdmin
       .from('partnerships')
-      .select('*')
+      .select(`
+        *,
+        user1:users!partnerships_user1_id_fkey(
+          id,
+          name,
+          email,
+          user_profiles(
+            income,
+            personal_allowance,
+            payday,
+            country_code,
+            currency
+          )
+        ),
+        user2:users!partnerships_user2_id_fkey(
+          id,
+          name,
+          email,
+          user_profiles(
+            income,
+            personal_allowance,
+            payday,
+            country_code,
+            currency
+          )
+        )
+      `)
       .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
       .eq('status', 'active')
 

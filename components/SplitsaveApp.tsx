@@ -53,17 +53,20 @@ export function SplitsaveApp() {
     const partnerUserId = activePartnership.user1_id === user.id ? activePartnership.user2_id : activePartnership.user1_id
     const partnerUser = activePartnership.user1_id === user.id ? activePartnership.user2 : activePartnership.user1
     
+    // Extract partner profile data from the enhanced partnership data
+    const partnerProfileData = (partnerUser as any)?.user_profiles?.[0] || {}
+    
     // Return partner profile from partnership data
     return {
       id: partnerUserId,
       user_id: partnerUserId,
       name: partnerUser?.name || 'Partner',
       email: partnerUser?.email || 'partner@example.com',
-      country_code: 'GB',
-      currency: 'GBP',
-      income: null, // Will be fetched from partner's profile
-      payday: null, // Will be fetched from partner's profile
-      personal_allowance: null, // Will be fetched from partner's profile
+      country_code: partnerProfileData.country_code || 'GB',
+      currency: partnerProfileData.currency || 'GBP',
+      income: partnerProfileData.income || null,
+      payday: partnerProfileData.payday || null,
+      personal_allowance: partnerProfileData.personal_allowance || null,
       partnership_id: activePartnership.id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
