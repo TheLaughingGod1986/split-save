@@ -310,8 +310,10 @@ export function SplitsaveApp() {
   const updateGoal = useCallback(async (goalId: string, updates: any) => {
     try {
       console.log('🔄 Updating goal:', goalId, 'with updates:', updates)
+      console.log('🔄 Priority in updates:', updates.priority, 'type:', typeof updates.priority)
       const response = await apiClient.put(`/goals/${goalId}`, updates)
       console.log('📡 API response:', response.data)
+      console.log('📡 Priority in response:', response.data?.priority, 'type:', typeof response.data?.priority)
       
       if (response.data) {
         setGoals(prev => {
@@ -319,6 +321,7 @@ export function SplitsaveApp() {
             goal.id === goalId ? { ...goal, ...response.data } : goal
           ) : [response.data]
           console.log('🎯 Updated goals state:', updated)
+          console.log('🎯 Priority in updated goal:', updated.find(g => g.id === goalId)?.priority)
           return updated
         })
         toast.success('Goal updated successfully!')

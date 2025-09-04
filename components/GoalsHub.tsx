@@ -208,6 +208,7 @@ export function GoalsHub({
       console.log('🔍 DEBUG: updates.priority type:', typeof updates.priority, 'value:', updates.priority)
       console.log('🔍 DEBUG: GoalPriority.MEDIUM:', GoalPriority.MEDIUM, 'type:', typeof GoalPriority.MEDIUM)
       console.log('🔍 DEBUG: Full updates object:', updates)
+      console.log('🔍 DEBUG: Full editForm object:', editForm)
 
       await onUpdateGoal(editingGoal, updates)
       setEditingGoal(null)
@@ -523,9 +524,10 @@ export function GoalsHub({
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                         >
-                          <option value={GoalPriority.HIGH}>🔥 High - Critical priority</option>
+                          <option value={GoalPriority.CRITICAL}>🔥 Critical - Must achieve</option>
+                          <option value={GoalPriority.HIGH}>⭐ High - Very important</option>
                           <option value={GoalPriority.MEDIUM}>⚡ Medium - Important goal</option>
-                          <option value={GoalPriority.LOW}>📋 Low - Nice to have</option>
+                          <option value={GoalPriority.LOW}>💭 Low - Nice to have</option>
                           <option value={GoalPriority.OPTIONAL}>🤔 Optional - Future consideration</option>
                         </select>
                       </div>
