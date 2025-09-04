@@ -599,8 +599,8 @@ export function MonthlySalaryTracker({
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Your Complete Breakdown */}
-            <div className="bg-white p-4 rounded-lg border border-blue-200">
-              <h5 className="font-semibold text-blue-800 mb-3 flex items-center">
+            <div className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-blue-200 dark:border-blue-600">
+              <h5 className="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
                 <span className="mr-2">👤</span>
                 You - Complete Breakdown
               </h5>
@@ -660,8 +660,8 @@ export function MonthlySalaryTracker({
             </div>
             
             {/* Partner's Complete Breakdown */}
-            <div className="bg-white p-4 rounded-lg border border-green-200">
-              <h5 className="font-semibold text-green-800 mb-3 flex items-center">
+            <div className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-green-200 dark:border-green-600">
+              <h5 className="font-semibold text-green-800 dark:text-green-200 mb-3 flex items-center">
                 <span className="mr-2">👥</span>
                 Partner - Complete Breakdown
               </h5>
@@ -787,8 +787,8 @@ export function MonthlySalaryTracker({
                 </h5>
                 
                 <div className="space-y-3">
-                  <div className="bg-white p-3 rounded-lg border border-blue-200">
-                    <h6 className="font-medium text-blue-800 mb-2">Income & Allowance</h6>
+                  <div className="bg-white dark:bg-gray-600 p-3 rounded-lg border border-blue-200 dark:border-blue-600">
+                    <h6 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Income & Allowance</h6>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <p className="text-gray-600">Base Salary:</p>
@@ -809,8 +809,8 @@ export function MonthlySalaryTracker({
                     </div>
                   </div>
                   
-                  <div className="bg-white p-3 rounded-lg border border-blue-200">
-                    <h6 className="font-medium text-blue-800 mb-2">Your Monthly Contributions</h6>
+                  <div className="bg-white dark:bg-gray-600 p-3 rounded-lg border border-blue-200 dark:border-blue-600">
+                    <h6 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Your Monthly Contributions</h6>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Expenses:</span>
@@ -843,8 +843,8 @@ export function MonthlySalaryTracker({
                 </h5>
                 
                 <div className="space-y-3">
-                  <div className="bg-white p-3 rounded-lg border border-green-200">
-                    <h6 className="font-medium text-green-800 mb-2">Income & Allowance</h6>
+                  <div className="bg-white dark:bg-gray-600 p-3 rounded-lg border border-green-200 dark:border-green-600">
+                    <h6 className="font-medium text-green-800 dark:text-green-200 mb-2">Income & Allowance</h6>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <p className="text-gray-600">Base Salary:</p>
@@ -865,8 +865,8 @@ export function MonthlySalaryTracker({
                     </div>
                   </div>
                   
-                  <div className="bg-white p-3 rounded-lg border border-green-200">
-                    <h6 className="font-medium text-green-800 mb-2">Partner&apos;s Monthly Contributions</h6>
+                  <div className="bg-white dark:bg-gray-600 p-3 rounded-lg border border-green-200 dark:border-green-600">
+                    <h6 className="font-medium text-green-800 dark:text-green-200 mb-2">Partner&apos;s Monthly Contributions</h6>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Expenses:</span>

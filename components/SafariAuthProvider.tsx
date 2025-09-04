@@ -61,7 +61,7 @@ export function SafariAuthProvider({ children }: { children: React.ReactNode }) 
           setTimeout(() => reject(new Error('Safari session timeout')), 8000) // Longer timeout for Safari
         )
         
-        const result = await Promise.race([sessionPromise, timeoutPromise])
+        const result = await Promise.race([sessionPromise, timeoutPromise]) as any
         session = result.data.session
         
         console.log('🍎 SafariAuthProvider: Session result', { 
