@@ -46,7 +46,7 @@ CREATE TABLE activity_feed_views (
 CREATE TABLE activity_reactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     activity_id UUID NOT NULL REFERENCES partner_activities(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     reaction_type VARCHAR(20) NOT NULL, -- 'like', 'cheer', 'celebrate', 'support'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(activity_id, user_id, reaction_type)
@@ -56,7 +56,7 @@ CREATE TABLE activity_reactions (
 CREATE TABLE activity_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     activity_id UUID NOT NULL REFERENCES partner_activities(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     comment TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
