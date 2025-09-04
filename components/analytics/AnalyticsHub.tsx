@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { AnalyticsView } from './AnalyticsView'
 import { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard'
-import { DataExportView } from './DataExportView'
+import { DataExportView } from '../forms/DataExportView'
 import { FinancialCharts } from './FinancialCharts'
 
 interface AnalyticsHubProps {

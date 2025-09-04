@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
-import { SmartNotificationManager } from './SmartNotificationManager'
+import { SmartNotificationManager } from '../notifications/SmartNotificationManager'
 import { ProgressCelebration, useCelebration } from './ProgressCelebration'
 import { formatCurrency } from '@/lib/monthly-progress-utils'
 

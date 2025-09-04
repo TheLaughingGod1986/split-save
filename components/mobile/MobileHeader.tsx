@@ -1,5 +1,5 @@
 import React from 'react'
-import { DarkModeToggle } from './DesignSystem'
+// import { DarkModeToggle } from './DesignSystem' // DesignSystem was removed
 
 interface MobileHeaderProps {
   user: any

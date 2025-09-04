@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { ProfileManager } from './ProfileManager'
+import { ProfileManager } from './forms/ProfileManager'
 import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 

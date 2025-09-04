@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api-client'
 import { PartnershipManager } from '../forms/PartnershipManager'
 import { PartnerActivityFeed } from './PartnerActivityFeed'
 import { DashboardContributionSummary } from './DashboardContributionSummary'
+import { TransparencyDashboard } from './TransparencyDashboard'
 
 interface PartnerHubProps {
   partnerships: any[]
