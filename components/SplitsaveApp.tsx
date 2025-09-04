@@ -417,17 +417,26 @@ export function SplitsaveApp() {
     }
     
     checkSession()
+    
+    // Failsafe: Force loading to false after 10 seconds
+    const failsafeTimeout = setTimeout(() => {
+      setLoading(false)
+    }, 10000)
+    
+    return () => clearTimeout(failsafeTimeout)
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
 
 
   // Show loading state
   if (loading || showLoadingScreen) {
     return (
-      <LoadingScreen 
-        userEmail={user?.email || 'benoats@gmail.com'}
-        progress={progress}
-        message={message}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 border-4 border-white/20 border-t-blue-400 rounded-full animate-spin"></div>
+          <h1 className="text-2xl font-bold text-white mb-2">SplitSave</h1>
+          <p className="text-white/70">Loading your dashboard...</p>
+        </div>
+      </div>
     )
   }
 

@@ -55,9 +55,5 @@ export default function Home() {
     )
   }
 
-  return (
-    <ClientOnly>
-      <SplitsaveApp />
-    </ClientOnly>
-  )
+  return <SplitsaveApp />
 }
