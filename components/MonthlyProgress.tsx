@@ -200,7 +200,8 @@ export function MonthlyProgress({
       
       if (activePartnership && activePartnership.shared_expenses) {
         // Calculate user's proportional share of actual shared expenses
-        const totalIncome = (profile?.income || 0) + (partnerProfile?.income || 0)
+        const partnerIncome = activePartnership.partner_income || 0
+        const totalIncome = (profile?.income || 0) + partnerIncome
         const userIncomeProportion = totalIncome > 0 ? (profile?.income || 0) / totalIncome : 0.5
         sharedExpensesAmount = Math.round(activePartnership.shared_expenses * userIncomeProportion)
       } else {
@@ -1126,7 +1127,10 @@ export function MonthlyProgress({
       <MonthlyContributionRecorder
         partnerships={partnerships}
         profile={profile}
-        partnerProfile={null} // This would need to be passed from parent
+        partnerProfile={partnerships?.find(p => p.status === 'active') ? {
+          name: partnerships.find(p => p.status === 'active')?.partner_name || 'Partner',
+          income: partnerships.find(p => p.status === 'active')?.partner_income || 0
+        } : null}
         currencySymbol={currencySymbol}
         onContributionRecorded={() => {
           // Refresh data when contribution is recorded
