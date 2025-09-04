@@ -29,7 +29,6 @@ export function SplitsaveApp() {
   const [navigationParams, setNavigationParams] = useState<any>({})
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
@@ -259,12 +258,7 @@ export function SplitsaveApp() {
       await fetchMonthlyProgress()
       
       updateProgress(100, 'Preparing your dashboard...')
-      
-      // Small delay to show 100% completion
-      setTimeout(() => {
-        finishLoading()
-        setLoading(false)
-      }, 500)
+      finishLoading()
       
     } catch (err) {
       console.error('Error loading data:', err)
@@ -405,38 +399,14 @@ export function SplitsaveApp() {
           setUser(session.user)
           setLoading(true)
           
-          // Load data with a minimum loading time to show the loading screen
-          const loadDataWithTimeout = async () => {
-            const startTime = Date.now()
-            const minLoadingTime = 2000 // Minimum 2 seconds to show loading screen
-            
-            try {
-              await loadData()
-            } catch (error) {
-              console.warn('Data loading failed, continuing with empty data:', error)
-            }
-            
-            // Ensure minimum loading time
-            const elapsed = Date.now() - startTime
-            const remainingTime = Math.max(0, minLoadingTime - elapsed)
-            
-            setTimeout(() => {
-              setLoading(false)
-
-            }, remainingTime)
+          // Simplified loading - no minimum time requirement
+          try {
+            await loadData()
+          } catch (error) {
+            console.warn('Data loading failed, continuing with empty data:', error)
+          } finally {
+            setLoading(false)
           }
-          
-          loadDataWithTimeout()
-          
-          // Failsafe: If loading takes too long, stop loading
-          const timeout = setTimeout(() => {
-            if (loading) {
-              setLoading(false)
-
-            }
-          }, 5000) // 5 seconds timeout
-          
-          return () => clearTimeout(timeout)
         } else {
           setLoading(false)
         }
@@ -449,22 +419,6 @@ export function SplitsaveApp() {
     checkSession()
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
 
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (mobileMenuOpen) {
-        const target = event.target as Element
-        if (!target.closest('nav')) {
-          setMobileMenuOpen(false)
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [mobileMenuOpen])
 
   // Show loading state
   if (loading || showLoadingScreen) {
@@ -598,17 +552,6 @@ export function SplitsaveApp() {
                   </button>
                 </div>
                 
-                {/* Mobile Menu Button */}
-                <div className="lg:hidden">
-                  <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  </button>
-                </div>
               </div>
               <div className="flex items-center space-x-2">
                 {/* User Info - Show Name */}
@@ -654,104 +597,6 @@ export function SplitsaveApp() {
           </div>
         </nav>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              <button
-                onClick={() => {
-                  handleNavigation('overview')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'overview'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => {
-                  handleNavigation('expenses')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'expenses'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Money
-              </button>
-              <button
-                onClick={() => {
-                  handleNavigation('goals')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'goals'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Goals
-              </button>
-              <button
-                onClick={() => {
-                  handleNavigation('partnerships')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'partnerships'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Partners
-              </button>
-              <button
-                onClick={() => {
-                  handleNavigation('analytics')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'analytics'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Analytics
-              </button>
-              <button
-                onClick={() => {
-                  handleNavigation('monthly-progress')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'monthly-progress'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Forecasting
-              </button>
-              <button
-                onClick={() => {
-                  handleNavigation('account')
-                  setMobileMenuOpen(false)
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentView === 'account'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-              >
-                Profile
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
