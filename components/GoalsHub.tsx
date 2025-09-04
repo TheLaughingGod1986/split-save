@@ -142,7 +142,7 @@ export function GoalsHub({
   const handleAddGoal = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!goalForm.name.trim() || !goalForm.targetAmount || !goalForm.targetDate) {
+    if (!goalForm.name.trim() || !goalForm.targetAmount) {
       toast.error('Please fill in all required fields')
       return
     }
@@ -152,7 +152,7 @@ export function GoalsHub({
         name: goalForm.name.trim(),
         target_amount: parseFloat(goalForm.targetAmount),
         current_amount: 0, // Initialize with 0 for new goals
-        target_date: goalForm.targetDate,
+        target_date: goalForm.targetDate || null, // Allow null for optional target date
         description: goalForm.description.trim(),
         priority: goalForm.priority // Send numeric priority directly
       }
@@ -199,7 +199,7 @@ export function GoalsHub({
         name: editForm.name?.trim() || '',
         target_amount: parseFloat(editForm.targetAmount || '0'),
         current_amount: parseFloat(editForm.currentAmount || '0'),
-        target_date: editForm.targetDate || '',
+        target_date: editForm.targetDate || null,
         description: editForm.description?.trim() || '',
         priority: editForm.priority || GoalPriority.MEDIUM // Send numeric priority directly
       }
@@ -371,7 +371,7 @@ export function GoalsHub({
 
             <div>
               <label className="text-heading-4 text-gray-700 dark:text-gray-300 space-small">
-                Target Date *
+                Target Date (Optional)
               </label>
               <input
                 type="date"
@@ -379,7 +379,6 @@ export function GoalsHub({
                 onChange={(e) => setGoalForm(prev => ({ ...prev, targetDate: e.target.value }))}
                 min={new Date().toISOString().split('T')[0]}
                 className="input"
-                required
               />
             </div>
 
@@ -502,7 +501,7 @@ export function GoalsHub({
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Date</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Date (Optional)</label>
                         <input
                           type="date"
                           value={editForm.targetDate}
