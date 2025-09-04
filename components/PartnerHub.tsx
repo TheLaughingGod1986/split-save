@@ -136,11 +136,11 @@ export function PartnerHub({
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: '👥' },
-    { id: 'approvals', label: 'Approvals', icon: '⏳', count: actionRequiredCount },
-    { id: 'activity', label: 'Activity', icon: '📱' },
-    { id: 'transparency', label: 'Transparency', icon: '🔍' },
-    { id: 'collaboration', label: 'Collaboration', icon: '💬' }
+    { id: 'overview', label: 'Overview', shortLabel: 'Overview', icon: '👥' },
+    { id: 'approvals', label: 'Approvals', shortLabel: 'Approvals', icon: '⏳', count: actionRequiredCount },
+    { id: 'activity', label: 'Activity', shortLabel: 'Activity', icon: '📱' },
+    { id: 'transparency', label: 'Transparency', shortLabel: 'Transparency', icon: '🔍' },
+    { id: 'collaboration', label: 'Collaboration', shortLabel: 'Collaboration', icon: '💬' }
   ]
 
   const renderOverview = () => (
@@ -595,21 +595,22 @@ export function PartnerHub({
       {/* Tab Navigation */}
       <div className="card overflow-hidden">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex overflow-x-auto px-2 sm:px-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                className={`py-4 px-2 sm:px-4 border-b-2 font-medium text-sm flex items-center space-x-1 sm:space-x-2 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span className="text-sm sm:text-base">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`px-2 py-1 text-xs rounded-full ${
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${
                     activeTab === tab.id ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }`}>
                     {tab.count}
