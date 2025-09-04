@@ -22,21 +22,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     
-    // Get initial session with timeout
+    // Detect mobile for debugging
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent)
+    const isSmallScreen = window.innerWidth <= 768
+    
+    console.log('🔍 AuthProvider: Mobile detection', {
+      isMobile,
+      isSmallScreen,
+      userAgent: navigator.userAgent,
+      windowWidth: window.innerWidth
+    })
+    
+    // Get initial session with timeout (shorter timeout for mobile)
     const sessionPromise = supabase.auth.getSession()
+    const timeoutDuration = isMobile ? 3000 : 5000 // Shorter timeout for mobile
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Session timeout')), 5000)
+      setTimeout(() => reject(new Error('Session timeout')), timeoutDuration)
     )
+    
+    console.log('🔍 AuthProvider: Starting session check', { timeoutDuration })
     
     Promise.race([sessionPromise, timeoutPromise])
       .then(({ data: { session } }: any) => {
+        console.log('✅ AuthProvider: Session check successful', { hasUser: !!session?.user })
         if (mounted) {
           setUser(session?.user ?? null)
           setLoading(false)
         }
       })
       .catch((error) => {
-        console.warn('Auth session check failed:', error)
+        console.warn('❌ AuthProvider: Session check failed', error)
         if (mounted) {
           setUser(null)
           setLoading(false)
@@ -46,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔍 AuthProvider: Auth state change', { event, hasUser: !!session?.user })
         if (mounted) {
           if (event === 'SIGNED_IN' && session?.user) {
             // Welcome message is shown in LoadingScreen, no need for duplicate toast
@@ -58,13 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    // Failsafe: force loading to false after 10 seconds
+    // Failsafe: force loading to false after shorter time for mobile
     const failsafeTimeout = setTimeout(() => {
       if (mounted) {
-        console.log('AuthProvider failsafe: forcing loading to false')
+        console.log('⚠️ AuthProvider failsafe: forcing loading to false', { isMobile })
         setLoading(false)
       }
-    }, 10000)
+    }, isMobile ? 5000 : 10000) // Shorter failsafe for mobile
 
     return () => {
       mounted = false

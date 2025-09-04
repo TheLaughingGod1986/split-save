@@ -12,7 +12,26 @@ declare global {
 // Singleton pattern to prevent multiple client instances
 export const supabase = (() => {
   if (!global.__supabaseClient) {
-    global.__supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+    global.__supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        // Mobile-specific auth configuration
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce', // Use PKCE flow for better mobile security
+        // Shorter timeout for mobile
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'splitsave-auth-token',
+        // Mobile-optimized settings
+        debug: process.env.NODE_ENV === 'development'
+      },
+      // Mobile-optimized realtime settings
+      realtime: {
+        params: {
+          eventsPerSecond: 2 // Reduce events for mobile
+        }
+      }
+    })
   }
   return global.__supabaseClient
 })()
