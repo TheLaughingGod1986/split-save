@@ -13,6 +13,7 @@ import { AnalyticsView } from './AnalyticsView'
 import { NotificationManager } from './NotificationManager'
 import { NotificationDropdown } from './NotificationDropdown'
 import { MobileNavigation } from './MobileNavigation'
+import { MobileLayout } from './MobileLayout'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MoneyHub } from './MoneyHub'
 import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
@@ -492,7 +493,7 @@ export function SplitsaveApp() {
 
   // Show loading state
   if (loading || showLoadingScreen) {
-    return (
+  return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-md">
           {/* Enhanced loading animation */}
@@ -504,8 +505,8 @@ export function SplitsaveApp() {
                 <span className="text-2xl font-bold text-white">S</span>
               </div>
             </div>
-          </div>
-          
+            </div>
+            
           <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
             SplitSave
           </h1>
@@ -537,10 +538,10 @@ export function SplitsaveApp() {
               <button
             onClick={loadData}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
+              >
             Retry
               </button>
-        </div>
+            </div>
       </div>
     )
   }
@@ -550,7 +551,7 @@ export function SplitsaveApp() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900 p-4">
         <AuthForm onAuthSuccess={setUser} />
-            </div>
+          </div>
     )
   }
 
@@ -567,10 +568,10 @@ export function SplitsaveApp() {
             <p className="text-lg text-gray-600 dark:text-gray-300">
               Let's set up your financial profile so we can provide you with the best experience
             </p>
-          </div>
+        </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <ProfileManager onProfileUpdate={handleProfileUpdate} />
-        </div>
+      </div>
       </div>
       </div>
     )
@@ -578,7 +579,8 @@ export function SplitsaveApp() {
 
   console.log('✅ Profile complete - showing dashboard')
 
-  return (
+  // Main content components
+  const mainContent = (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Navigation */}
@@ -805,17 +807,25 @@ export function SplitsaveApp() {
           onAchievementUnlocked={handleAchievementUnlocked}
         />
 
-      {/* Mobile Navigation - Only show on mobile devices */}
-        {isMobile && (
-          <MobileNavigation
-            currentView={currentView}
-            onNavigate={handleNavigation}
-            isOnline={true}
-            hasNotifications={approvals && approvals.length > 0}
-            notificationCount={approvals ? approvals.length : 0}
-          />
-        )}
     </div>
+    </ErrorBoundary>
+  )
+
+  return (
+    <ErrorBoundary>
+      {isMobile ? (
+        <MobileLayout
+          currentView={currentView}
+          onNavigate={handleNavigation}
+          isOnline={true}
+          hasNotifications={approvals && approvals.length > 0}
+          notificationCount={approvals ? approvals.length : 0}
+        >
+          {mainContent}
+        </MobileLayout>
+      ) : (
+        mainContent
+      )}
     </ErrorBoundary>
   )
 }
