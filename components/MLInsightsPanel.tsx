@@ -19,18 +19,21 @@ interface BehaviorAnalysis {
 
 interface AdaptiveRecommendation {
   id: string
-  userId: string
-  recommendationType: string
+  user_id: string
+  recommendation_type: string
   title: string
   description: string
-  suggestedAction: string
-  expectedImpact: {
+  suggested_action: string
+  expected_impact_short_term: string
+  expected_impact_long_term: string
+  confidence: number
+  reasoning: string[]
+  created_at: string
+  // Legacy interface for backward compatibility
+  expectedImpact?: {
     shortTerm: string
     longTerm: string
   }
-  confidence: number
-  reasoning: string[]
-  createdAt: Date
 }
 
 interface MLInsightsPanelProps {
@@ -272,70 +275,85 @@ export function MLInsightsPanel({ userId, onInsightAction }: MLInsightsPanelProp
       )}
 
       {/* Adaptive Recommendations */}
-      {recommendations.length > 0 && (
+      {recommendations && recommendations.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">💡 AI Recommendations</h3>
           
           <div className="space-y-4">
-            {recommendations.map((recommendation) => (
-              <div key={recommendation.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{recommendation.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{recommendation.description}</p>
-                  </div>
-                  <div className={`text-sm font-medium ${getConfidenceColor(recommendation.confidence)}`}>
-                    {(recommendation.confidence * 100).toFixed(0)}% confidence
-                  </div>
-                </div>
+            {recommendations.filter(recommendation => recommendation && recommendation.id).map((recommendation) => {
+              try {
+                return (
+                  <div key={recommendation.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{recommendation.title || 'Untitled Recommendation'}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{recommendation.description || 'No description available'}</p>
+                      </div>
+                      <div className={`text-sm font-medium ${getConfidenceColor(recommendation.confidence || 0)}`}>
+                        {((recommendation.confidence || 0) * 100).toFixed(0)}% confidence
+                      </div>
+                    </div>
 
-                <div className="mb-3">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Suggested Action:
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {recommendation.suggestedAction}
-                  </p>
-                </div>
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Suggested Action:
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {recommendation.suggested_action || 'No action specified'}
+                      </p>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  <div className="text-sm">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Short-term:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{recommendation.expectedImpact?.shortTerm || 'Not specified'}</p>
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Long-term:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{recommendation.expectedImpact?.longTerm || 'Not specified'}</p>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Short-term:</span>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {recommendation.expected_impact_short_term || recommendation.expectedImpact?.shortTerm || 'Not specified'}
+                        </p>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Long-term:</span>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {recommendation.expected_impact_long_term || recommendation.expectedImpact?.longTerm || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
 
-                {recommendation.reasoning && recommendation.reasoning.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Why this recommendation:</p>
-                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                      {recommendation.reasoning.map((reason, index) => (
-                        <li key={index}>• {reason}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                    {recommendation.reasoning && Array.isArray(recommendation.reasoning) && recommendation.reasoning.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Why this recommendation:</p>
+                        <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                          {recommendation.reasoning.map((reason, index) => (
+                            <li key={index}>• {reason}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleRecommendationAction(recommendation.id, 'apply')}
-                    className="px-3 py-1 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    Apply
-                  </button>
-                  <button
-                    onClick={() => handleRecommendationAction(recommendation.id, 'dismiss')}
-                    className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleRecommendationAction(recommendation.id, 'apply')}
+                        className="px-3 py-1 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors"
+                      >
+                        Apply
+                      </button>
+                      <button
+                        onClick={() => handleRecommendationAction(recommendation.id, 'dismiss')}
+                        className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )
+              } catch (error) {
+                console.error('Error rendering recommendation:', error, recommendation)
+                return (
+                  <div key={recommendation.id} className="border border-red-200 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
+                    <p className="text-red-600 dark:text-red-400">Error loading recommendation</p>
+                  </div>
+                )
+              }
+            })}
           </div>
         </div>
       )}
