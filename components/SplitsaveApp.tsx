@@ -18,6 +18,7 @@ import { MoneyHub } from './MoneyHub'
 import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
 import { PartnerHub } from './PartnerHub'
 import { LoadingScreen, useLoadingScreen } from './LoadingScreen'
+import { isPrivateMode } from '@/lib/safe-storage'
 import { AuthForm } from './AuthForm'
 import { ProfileManager } from './ProfileManager'
 
@@ -29,6 +30,7 @@ export function SplitsaveApp() {
   const [navigationParams, setNavigationParams] = useState<any>({})
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isPrivateModeDetected, setIsPrivateModeDetected] = useState(false)
 
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
@@ -335,8 +337,8 @@ export function SplitsaveApp() {
       }
     } catch (error) {
       console.error('Error adding expense:', error)
-      toast.error('Failed to add expense')
-    }
+        toast.error('Failed to add expense')
+      }
   }, [loadData])
 
   // Lightweight update function for expenses (no loading screen)
@@ -385,13 +387,16 @@ export function SplitsaveApp() {
     setIsDarkMode(shouldUseDark)
     if (shouldUseDark) {
       document.documentElement.classList.add('dark')
-    } else {
+      } else {
       document.documentElement.classList.remove('dark')
     }
   }, [])
 
   // Check for existing session on mount
   useEffect(() => {
+    // Check if we're in private mode
+    setIsPrivateModeDetected(isPrivateMode())
+    
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -427,6 +432,34 @@ export function SplitsaveApp() {
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
 
 
+  // Show private mode warning
+  if (isPrivateModeDetected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 bg-yellow-500/20 rounded-full flex items-center justify-center">
+            <span className="text-3xl">🔒</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">Private Mode Detected</h1>
+          <p className="text-white/70 mb-6 leading-relaxed">
+            SplitSave works best in regular browsing mode. Private mode can cause issues with data storage and authentication.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Anyway
+            </button>
+            <p className="text-white/50 text-sm">
+              For the best experience, please use regular browsing mode
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Show loading state
   if (loading || showLoadingScreen) {
     return (
@@ -442,17 +475,17 @@ export function SplitsaveApp() {
 
   // Show error state
   if (error) {
-    return (
+  return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button
+              <button
             onClick={loadData}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Retry
-          </button>
+              </button>
         </div>
       </div>
     )
@@ -463,7 +496,7 @@ export function SplitsaveApp() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900 p-4">
         <AuthForm onAuthSuccess={setUser} />
-      </div>
+            </div>
     )
   }
 
@@ -483,8 +516,8 @@ export function SplitsaveApp() {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <ProfileManager onProfileUpdate={handleProfileUpdate} />
-          </div>
         </div>
+      </div>
       </div>
     )
   }
@@ -505,11 +538,11 @@ export function SplitsaveApp() {
                     <span className="text-white font-bold text-sm">S</span>
                   </div>
                   <span className="text-xl font-bold text-gray-900 dark:text-white">SplitSave</span>
-                </div>
-                
+            </div>
+            
                 {/* Navigation Links - Responsive */}
                 <div className="hidden lg:flex items-center space-x-1">
-                  <button
+            <button
                     onClick={() => handleNavigation('overview')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'overview'
@@ -518,8 +551,8 @@ export function SplitsaveApp() {
                     }`}
                   >
                     Dashboard
-                  </button>
-                  <button
+            </button>
+            <button
                     onClick={() => handleNavigation('expenses')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'expenses'
@@ -528,8 +561,8 @@ export function SplitsaveApp() {
                     }`}
                   >
                     Money
-                  </button>
-                  <button
+            </button>
+            <button
                     onClick={() => handleNavigation('goals')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'goals'
@@ -538,8 +571,8 @@ export function SplitsaveApp() {
                     }`}
                   >
                     Goals
-                  </button>
-                  <button
+            </button>
+              <button
                     onClick={() => handleNavigation('partnerships')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'partnerships'
@@ -548,8 +581,8 @@ export function SplitsaveApp() {
                     }`}
                   >
                     Partners
-                  </button>
-                  <button
+              </button>
+              <button
                     onClick={() => handleNavigation('analytics')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'analytics'
@@ -558,27 +591,27 @@ export function SplitsaveApp() {
                     }`}
                   >
                     Analytics
-                  </button>
-                </div>
+              </button>
+          </div>
                 
-              </div>
+        </div>
               <div className="flex items-center space-x-2">
                 {/* User Info - Show Name */}
                 <div className="hidden md:block">
                   <span className="text-sm text-gray-600 dark:text-gray-300">
                     {profile?.name || 'User'}
                   </span>
-                </div>
-                
+      </div>
+
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-1">
-                  <button
+                      <button
                     onClick={() => handleNavigation('account')}
                     className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     title="Settings"
-                  >
+                      >
                     ⚙️
-                  </button>
+                      </button>
                   <NotificationDropdown 
                     userId={user?.id || ''}
                     className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -590,53 +623,53 @@ export function SplitsaveApp() {
                   >
                     🌙
                   </button>
-                </div>
+                    </div>
                 
                 {/* Sign Out - Compact */}
                 <div className="border-l border-gray-200 dark:border-gray-600 pl-2">
-                  <button
+              <button
                     onClick={handleSignOut}
                     className="px-2 py-1 rounded-md text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
+              >
                     Sign out
-                  </button>
-                </div>
-              </div>
+              </button>
             </div>
+          </div>
+        </div>
           </div>
         </nav>
 
-
+        
         {/* Main Content */}
         <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
           <div className="py-4 sm:py-6">
             <ErrorBoundary>
-              {currentView === 'overview' && (
-                <OverviewHub
+        {currentView === 'overview' && (
+          <OverviewHub
                   expenses={expenses || []}
                   goals={goals || []}
-                  partnerships={partnerships}
+            partnerships={partnerships}
                   monthlyProgress={monthlyProgress}
-                  profile={profile}
-                  partnerProfile={partnerProfile}
-                  user={user}
-                  currencySymbol={currencySymbol}
-                  currencyEmoji={currencyEmoji}
-                  onNavigate={handleNavigation}
-                  onNavigateToProfile={() => handleNavigation('account')}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            user={user}
+            currencySymbol={currencySymbol}
+            currencyEmoji={currencyEmoji}
+            onNavigate={handleNavigation}
+            onNavigateToProfile={() => handleNavigation('account')}
                   onNavigateToPartnerships={() => handleNavigation('partnerships')}
                   onSafetyPotUpdate={() => {
                     console.log('🔍 Dashboard: Safety pot update callback triggered')
                   }}
-                />
-              )}
+          />
+        )}
               {currentView === 'expenses' && (
-                <MoneyHub
+          <MoneyHub
                   expenses={expenses || []}
-                  partnerships={partnerships}
-                  profile={profile}
-                  user={user}
-                  currencySymbol={currencySymbol}
+            partnerships={partnerships}
+            profile={profile}
+            user={user}
+            currencySymbol={currencySymbol}
                   goals={goals || []}
                   monthlyProgress={monthlyProgress}
                   onAddExpense={handleAddExpense}
@@ -644,81 +677,81 @@ export function SplitsaveApp() {
                   navigationParams={navigationParams}
                 />
               )}
-              {currentView === 'goals' && (
-                <GoalsHub
+        {currentView === 'goals' && (
+          <GoalsHub
                   goals={goals || []}
-                  partnerships={partnerships}
-                  onAddGoal={addGoal}
+            partnerships={partnerships}
+            onAddGoal={addGoal}
                   onUpdateGoal={updateGoal}
-                  currencySymbol={currencySymbol}
-                  profile={profile}
-                  partnerProfile={partnerProfile}
-                  user={user}
+            currencySymbol={currencySymbol}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            user={user}
                 />
               )}
               {currentView === 'monthly-progress' && (
                 <MonthlyContributionRecorder
-                  partnerships={partnerships}
-                  profile={profile}
-                  partnerProfile={partnerProfile}
-                  currencySymbol={currencySymbol}
+            partnerships={partnerships}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            currencySymbol={currencySymbol}
                   onContributionRecorded={handleContributionRecorded}
-                />
-              )}
+          />
+        )}
               {currentView === 'partnerships' && (
                 <PartnerHub
-                  partnerships={partnerships}
+              partnerships={partnerships}
                   approvals={approvals || []}
-                  profile={profile}
-                  partnerProfile={partnerProfile}
-                  user={user}
+              profile={profile}
+              partnerProfile={partnerProfile}
+            user={user}
                   goals={goals || []}
-                  currencySymbol={currencySymbol}
+            currencySymbol={currencySymbol}
                   onApprove={handleApprove}
                   onDecline={handleDecline}
                   onUpdate={loadData}
                   initialTab={navigationParams.initialTab}
-                />
-              )}
-              {currentView === 'analytics' && (
-                <AnalyticsView
-                  partnerships={partnerships}
-                  profile={profile}
-                  user={user}
-                  currencySymbol={currencySymbol}
+          />
+        )}
+        {currentView === 'analytics' && (
+          <AnalyticsView 
+            partnerships={partnerships}
+            profile={profile}
+            user={user}
+            currencySymbol={currencySymbol}
                   monthlyProgress={monthlyProgress}
                   goals={goals || []}
                 />
               )}
               {currentView === 'account' && (
                 <AccountHub
-                  profile={profile}
-                  partnerProfile={partnerProfile}
+                profile={profile}
+                partnerProfile={partnerProfile}
                   partnerships={partnerships}
                   goals={goals || []}
                   expenses={expenses || []}
-                  user={user}
-                  currencySymbol={currencySymbol}
+                user={user}
+                currencySymbol={currencySymbol}
                   onUpdate={fetchProfile}
                   navigationParams={navigationParams}
-                />
-              )}
+              />
+            )}
             </ErrorBoundary>
           </div>
         </main>
 
         {/* Notification Manager */}
         <NotificationManager
-          profile={profile}
-          partnerships={partnerships}
+                profile={profile}
+            partnerships={partnerships}
           goals={goals || []}
-          approvals={approvals}
+            approvals={approvals} 
           currentView={currentView}
           onNavigateToView={handleNavigation}
           onAchievementUnlocked={handleAchievementUnlocked}
         />
 
-        {/* Mobile Navigation */}
+      {/* Mobile Navigation */}
         <MobileNavigation
           currentView={currentView}
           onNavigate={handleNavigation}
@@ -726,7 +759,7 @@ export function SplitsaveApp() {
           hasNotifications={approvals && approvals.length > 0}
           notificationCount={approvals ? approvals.length : 0}
         />
-      </div>
+    </div>
     </ErrorBoundary>
   )
 }
