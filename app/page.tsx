@@ -6,6 +6,8 @@ import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { ClientOnly } from '@/components/ClientOnly'
 import { StructuredData, structuredDataSchemas } from '@/components/StructuredData'
+import { MobileErrorBoundary } from '@/components/MobileErrorBoundary'
+import { MobileFallback } from '@/components/MobileFallback'
 import { useEffect, useRef } from 'react'
 import { analytics } from '@/lib/analytics'
 
@@ -38,6 +40,10 @@ export default function Home() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          {/* Mobile debug info */}
+          <div className="mt-2 text-xs text-gray-500">
+            Auth Loading: {loading ? 'true' : 'false'}
+          </div>
         </div>
       </div>
     )
@@ -55,5 +61,12 @@ export default function Home() {
     )
   }
 
-  return <SplitsaveApp />
+  return (
+    <>
+      <MobileErrorBoundary>
+        <SplitsaveApp />
+      </MobileErrorBoundary>
+      <MobileFallback />
+    </>
+  )
 }
