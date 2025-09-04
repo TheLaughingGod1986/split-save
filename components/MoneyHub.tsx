@@ -206,10 +206,10 @@ export function MoneyHub({
   }
 
   const tabs = [
-    { id: 'expenses', label: 'Expenses', icon: '💰' },
-    { id: 'contributions', label: 'Contributions', icon: '📊' },
-    { id: 'safety-pot', label: 'Safety Pot', icon: '🛡️' },
-    { id: 'analytics', label: 'Analytics', icon: '📈' }
+    { id: 'expenses', label: 'Expenses', shortLabel: 'Expenses', icon: '💰' },
+    { id: 'contributions', label: 'Contributions', shortLabel: 'Contrib', icon: '📊' },
+    { id: 'safety-pot', label: 'Safety Pot', shortLabel: 'Safety', icon: '🛡️' },
+    { id: 'analytics', label: 'Analytics', shortLabel: 'Analytics', icon: '📈' }
   ]
 
   const renderExpensesTab = () => (
@@ -612,19 +612,20 @@ export function MoneyHub({
       {/* Tab Navigation */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex overflow-x-auto px-2 sm:px-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-2 sm:px-4 border-b-2 font-medium text-sm flex items-center space-x-1 sm:space-x-2 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
+                <span className="text-sm sm:text-base">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
               </button>
             ))}
           </nav>

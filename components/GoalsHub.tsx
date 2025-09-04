@@ -315,10 +315,10 @@ export function GoalsHub({
   }
 
   const tabs = [
-    { id: 'active', label: 'Active Goals', icon: '🎯', count: activeGoals.length },
-    { id: 'prioritization', label: 'Prioritization', icon: '📊', count: recommendations.length },
-    { id: 'completed', label: 'Completed', icon: '🏆', count: completedGoals.length },
-    { id: 'achievements', label: 'Achievements', icon: '🏅', count: 0 }
+    { id: 'active', label: 'Active Goals', shortLabel: 'Active', icon: '🎯', count: activeGoals.length },
+    { id: 'prioritization', label: 'Prioritization', shortLabel: 'Priority', icon: '📊', count: recommendations.length },
+    { id: 'completed', label: 'Completed', shortLabel: 'Done', icon: '🏆', count: completedGoals.length },
+    { id: 'achievements', label: 'Achievements', shortLabel: 'Badges', icon: '🏅', count: 0 }
   ]
 
   const renderActiveGoals = () => (
@@ -786,21 +786,22 @@ export function GoalsHub({
       {/* Tab Navigation */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex overflow-x-auto px-2 sm:px-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                className={`py-4 px-2 sm:px-4 border-b-2 font-medium text-sm flex items-center space-x-1 sm:space-x-2 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span className="text-sm sm:text-base">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
                 {tab.count > 0 && (
-                  <span className={`px-2 py-1 text-xs rounded-full ${
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${
                     activeTab === tab.id ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }`}>
                     {tab.count}
