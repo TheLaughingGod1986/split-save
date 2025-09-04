@@ -408,6 +408,16 @@ export function SplitsaveApp() {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
       const isSmallScreen = window.innerWidth <= 768
+      const isSafari = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
+      
+      console.log('🔍 Mobile detection:', {
+        userAgent,
+        isMobileDevice,
+        isSmallScreen,
+        isSafari,
+        windowWidth: window.innerWidth,
+        finalIsMobile: isMobileDevice || isSmallScreen
+      })
       
       setIsMobile(isMobileDevice || isSmallScreen)
     }
@@ -420,11 +430,16 @@ export function SplitsaveApp() {
 
   // Check for existing session on mount
   useEffect(() => {
+    console.log('🔄 SplitsaveApp: Starting authentication check')
     
     const checkSession = async () => {
       try {
+        console.log('🔍 Checking for existing session...')
         const { data: { session } } = await supabase.auth.getSession()
+        console.log('📊 Session check result:', { hasSession: !!session, hasUser: !!session?.user })
+        
         if (session?.user) {
+          console.log('✅ User found in session:', session.user.id)
           setUser(session.user)
           setLoading(true)
           
@@ -779,6 +794,14 @@ export function SplitsaveApp() {
     </div>
     </ErrorBoundary>
   )
+
+  console.log('🔄 SplitsaveApp render:', {
+    isMobile,
+    currentView,
+    hasUser: !!user,
+    loading,
+    error
+  })
 
   return (
     <ErrorBoundary>

@@ -27,6 +27,8 @@ export function MobileLayout({
   onSignOut,
   onToggleTheme
 }: MobileLayoutProps) {
+  console.log('🔄 MobileLayout render:', { currentView, hasUser: !!user, isOnline })
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 flex flex-col">
       {/* Mobile Header */}
@@ -97,7 +99,7 @@ export function MobileLayout({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center justify-around px-2 py-3">
+        <div className="flex items-center justify-between px-1 py-3">
           {[
             { id: 'overview', label: 'Overview', icon: '🏠' },
             { id: 'expenses', label: 'Money', icon: '💰' },
@@ -113,7 +115,7 @@ export function MobileLayout({
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center space-y-1 px-2 py-1 rounded-lg transition-colors ${
+                className={`flex flex-col items-center space-y-1 px-1 py-1 rounded-lg transition-colors flex-1 min-w-0 ${
                   isActive 
                     ? 'text-blue-600 dark:text-blue-400' 
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -127,7 +129,7 @@ export function MobileLayout({
                     </div>
                   )}
                 </div>
-                <span className="text-xs font-medium">{item.label}</span>
+                <span className="text-xs font-medium truncate">{item.label}</span>
               </button>
             )
           })}
