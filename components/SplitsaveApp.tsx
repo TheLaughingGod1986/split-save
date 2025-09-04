@@ -550,8 +550,9 @@ export function SplitsaveApp() {
   const mainContent = (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-        {/* Navigation */}
-        <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        {/* Desktop Navigation - Only show on desktop */}
+        {!isMobile && (
+          <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
@@ -661,11 +662,12 @@ export function SplitsaveApp() {
         </div>
           </div>
         </nav>
+        )}
 
         
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
-          <div className="py-4 sm:py-6">
+        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isMobile ? 'py-2' : 'py-4 sm:py-6'}`}>
+          <div className={isMobile ? 'py-2' : 'py-4 sm:py-6'}>
             <ErrorBoundary>
         {currentView === 'overview' && (
           <OverviewHub
@@ -787,6 +789,10 @@ export function SplitsaveApp() {
           isOnline={true}
           hasNotifications={approvals && approvals.length > 0}
           notificationCount={approvals ? approvals.length : 0}
+          user={user}
+          profile={profile}
+          onSignOut={handleSignOut}
+          onToggleTheme={toggleTheme}
         >
           {mainContent}
         </MobileLayout>

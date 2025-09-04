@@ -9,6 +9,10 @@ interface MobileLayoutProps {
   isOnline: boolean
   hasNotifications: boolean
   notificationCount: number
+  user?: any
+  profile?: any
+  onSignOut?: () => Promise<void>
+  onToggleTheme?: () => void
 }
 
 export function MobileLayout({
@@ -17,7 +21,11 @@ export function MobileLayout({
   onNavigate,
   isOnline,
   hasNotifications,
-  notificationCount
+  notificationCount,
+  user,
+  profile,
+  onSignOut,
+  onToggleTheme
 }: MobileLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 flex flex-col">
@@ -49,9 +57,19 @@ export function MobileLayout({
                 </div>
               </div>
             )}
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center"
+                title="Toggle Theme"
+              >
+                <span className="text-gray-600 dark:text-gray-300">🌙</span>
+              </button>
+            )}
             <button
               onClick={() => onNavigate('account')}
               className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center"
+              title="Account"
             >
               <span className="text-gray-600 dark:text-gray-300">👤</span>
             </button>
@@ -60,14 +78,14 @@ export function MobileLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-24">
         <div className="p-4">
           {children}
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+      {/* Mobile Bottom Navigation - Fixed */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
         {/* Online/Offline Indicator */}
         <div className={`px-4 py-2 text-center text-xs font-medium ${
           isOnline ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'
