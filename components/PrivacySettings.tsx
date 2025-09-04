@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
 import { toast } from 'react-hot-toast'
+import { apiClient } from '@/lib/api-client'
 
 interface PrivacyPreferences {
   dataSharing: boolean
@@ -27,25 +28,45 @@ export function PrivacySettings() {
     setPreferences(prev => ({ ...prev, [key]: value }))
   }
 
+  // Load existing preferences on component mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        console.log('🔒 Loading existing privacy preferences...')
+        const response = await apiClient.get('/privacy/preferences')
+        
+        if (response.data?.success && response.data?.preferences) {
+          console.log('✅ Loaded existing preferences:', response.data.preferences)
+          setPreferences(response.data.preferences)
+        } else {
+          console.log('📝 No existing preferences found, using defaults')
+        }
+      } catch (error) {
+        console.error('❌ Failed to load preferences:', error)
+        // Keep default preferences if loading fails
+      }
+    }
+
+    if (user) {
+      loadPreferences()
+    }
+  }, [user])
+
   const savePreferences = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/privacy/preferences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('splitsave_session_token')}`
-        },
-        body: JSON.stringify(preferences)
-      })
-
-      if (response.ok) {
+      console.log('🔒 Saving privacy preferences:', preferences)
+      const response = await apiClient.post('/privacy/preferences', preferences)
+      
+      if (response.data?.success) {
         toast.success('Privacy preferences saved successfully!')
+        console.log('✅ Privacy preferences saved successfully')
       } else {
+        console.error('❌ Failed to save preferences:', response.data)
         toast.error('Failed to save preferences')
       }
     } catch (error) {
-      console.error('Save preferences error:', error)
+      console.error('❌ Save preferences error:', error)
       toast.error('Failed to save preferences')
     } finally {
       setIsLoading(false)

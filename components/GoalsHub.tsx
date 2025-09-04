@@ -207,6 +207,7 @@ export function GoalsHub({
       console.log('🔍 DEBUG: editForm.priority type:', typeof editForm.priority, 'value:', editForm.priority)
       console.log('🔍 DEBUG: updates.priority type:', typeof updates.priority, 'value:', updates.priority)
       console.log('🔍 DEBUG: GoalPriority.MEDIUM:', GoalPriority.MEDIUM, 'type:', typeof GoalPriority.MEDIUM)
+      console.log('🔍 DEBUG: Full updates object:', updates)
 
       await onUpdateGoal(editingGoal, updates)
       setEditingGoal(null)
