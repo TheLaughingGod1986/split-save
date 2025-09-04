@@ -153,6 +153,28 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   }
 
   const handleReaction = async (activityId: string, reactionType: string, isAdding: boolean) => {
+    // Skip API calls for sample activities (demo data)
+    if (activityId.startsWith('sample-')) {
+      // Update local state for demo purposes
+      setActivities(prev => prev.map(activity => {
+        if (activity.id === activityId) {
+          return {
+            ...activity,
+            reaction_count: activity.reaction_count + (isAdding ? 1 : -1),
+            user_has_reacted: isAdding
+          }
+        }
+        return activity
+      }))
+
+      if (isAdding) {
+        toast.success('Reaction added! (Demo)')
+      } else {
+        toast.success('Reaction removed! (Demo)')
+      }
+      return
+    }
+
     try {
       await apiClient.post('/activity-feed', {
         action: isAdding ? 'add_reaction' : 'remove_reaction',
@@ -174,6 +196,8 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
 
       if (isAdding) {
         toast.success('Reaction added!')
+      } else {
+        toast.success('Reaction removed!')
       }
     } catch (error) {
       console.error('Error handling reaction:', error)
@@ -182,6 +206,16 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   }
 
   const loadComments = async (activityId: string) => {
+    // Skip API calls for sample activities (demo data)
+    if (activityId.startsWith('sample-')) {
+      // Set empty comments for demo activities
+      setComments(prev => ({
+        ...prev,
+        [activityId]: []
+      }))
+      return
+    }
+
     try {
       const response = await apiClient.get(`/activity-feed/${activityId}/comments`)
       setComments(prev => ({
@@ -212,6 +246,29 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   const submitComment = async (activityId: string) => {
     const comment = newComment[activityId]?.trim()
     if (!comment || submittingComment) return
+
+    // Skip API calls for sample activities (demo data)
+    if (activityId.startsWith('sample-')) {
+      setSubmittingComment(activityId)
+      
+      // Simulate comment submission for demo
+      setTimeout(() => {
+        // Clear input
+        setNewComment(prev => ({ ...prev, [activityId]: '' }))
+        
+        // Update comment count for demo
+        setActivities(prev => prev.map(activity => {
+          if (activity.id === activityId) {
+            return { ...activity, comment_count: (activity.comment_count || 0) + 1 }
+          }
+          return activity
+        }))
+
+        toast.success('Comment added! (Demo)')
+        setSubmittingComment(null)
+      }, 500)
+      return
+    }
 
     try {
       setSubmittingComment(activityId)
