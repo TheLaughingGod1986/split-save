@@ -12,6 +12,7 @@ import { AccountHub } from './AccountHub'
 import { AnalyticsView } from './AnalyticsView'
 import { NotificationManager } from './NotificationManager'
 import { NotificationDropdown } from './NotificationDropdown'
+import { MobileNavigation } from './MobileNavigation'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MoneyHub } from './MoneyHub'
 import { MonthlyContributionRecorder } from './MonthlyContributionRecorder'
@@ -861,6 +862,15 @@ export function SplitsaveApp() {
           currentView={currentView}
           onNavigateToView={handleNavigation}
           onAchievementUnlocked={handleAchievementUnlocked}
+        />
+
+        {/* Mobile Navigation */}
+        <MobileNavigation
+          currentView={currentView}
+          onNavigate={handleNavigation}
+          isOnline={true}
+          hasNotifications={approvals && approvals.length > 0}
+          notificationCount={approvals ? approvals.length : 0}
         />
       </div>
     </ErrorBoundary>

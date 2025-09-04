@@ -35,7 +35,7 @@ export function MobileNavigation({
       description: 'Dashboard & Summary'
     },
     {
-      id: 'money',
+      id: 'expenses',
       label: 'Money',
       icon: '💰',
       description: 'Expenses & Contributions'
@@ -47,22 +47,16 @@ export function MobileNavigation({
       description: 'Savings & Achievements'
     },
     {
-      id: 'gamification',
-      label: 'Rewards',
-      icon: '🏆',
-      description: 'Achievements & Streaks'
-    },
-    {
-      id: 'partner',
-      label: 'Partner',
+      id: 'partnerships',
+      label: 'Partners',
       icon: '🤝',
       description: 'Collaboration Hub'
     },
     {
-      id: 'forecasting',
-      label: 'Forecast',
-      icon: '🔮',
-      description: 'AI Predictions'
+      id: 'analytics',
+      label: 'Analytics',
+      icon: '📊',
+      description: 'Financial Analytics'
     },
     {
       id: 'account',
@@ -151,7 +145,7 @@ export function MobileNavigation({
           <div className="flex items-center justify-around px-2 py-3">
             {navigationItems.map((item) => {
               const isActive = currentView === item.id
-              const hasBadge = item.id === 'partner' && hasNotifications
+              const hasBadge = item.id === 'partnerships' && hasNotifications
 
               return (
                 <button
@@ -199,7 +193,7 @@ export function MobileNavigation({
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}>
         <button
-          onClick={() => onNavigate('money')}
+          onClick={() => onNavigate('expenses')}
           className="w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
           title="Add Expense"
         >
