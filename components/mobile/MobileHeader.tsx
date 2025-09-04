@@ -51,7 +51,22 @@ export function MobileHeader({
           )}
 
           {/* Dark Mode Toggle */}
-          <DarkModeToggle variant="icon" />
+          <button
+            onClick={() => {
+              const isDark = document.documentElement.classList.contains('dark')
+              if (isDark) {
+                document.documentElement.classList.remove('dark')
+                localStorage.setItem('theme', 'light')
+              } else {
+                document.documentElement.classList.add('dark')
+                localStorage.setItem('theme', 'dark')
+              }
+            }}
+            className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Toggle Theme"
+          >
+            🌙
+          </button>
 
           {/* PWA Install */}
           <button
