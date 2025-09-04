@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { financialForecastingEngine } from '@/lib/financial-forecasting-engine'
+import { supabaseAdmin } from '@/lib/supabase'
 import { z } from 'zod'
 
 const generateForecastSchema = z.object({
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
     console.log('🔮 API: Fetching forecasts for user:', user.id)
 
     // Build query
-    let query = supabase
+    let query = supabaseAdmin
       .from('financial_forecasts')
       .select('*')
       .eq('user_id', user.id)

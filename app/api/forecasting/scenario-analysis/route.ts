@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { financialForecastingEngine, ScenarioModification } from '@/lib/financial-forecasting-engine'
+import { supabaseAdmin } from '@/lib/supabase'
 import { z } from 'zod'
 
 const scenarioAnalysisSchema = z.object({
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
     console.log('🔮 API: Fetching scenario analyses for user:', user.id)
 
     // Fetch scenario analyses
-    const { data: scenarios, error } = await supabase
+    const { data: scenarios, error } = await supabaseAdmin
       .from('scenario_analyses')
       .select('*')
       .eq('user_id', user.id)

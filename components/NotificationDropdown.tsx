@@ -82,7 +82,7 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
   // Mark notification as read
   const markAsRead = async (notificationId: string) => {
     try {
-      await apiClient.put(`/notifications/${notificationId}/read`)
+      await apiClient.put(`/notifications/${notificationId}/read`, {})
       setNotifications(prev => 
         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       )
@@ -95,7 +95,7 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      await apiClient.put('/notifications/mark-all-read')
+      await apiClient.put('/notifications/mark-all-read', {})
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
       setUnreadCount(0)
     } catch (error) {

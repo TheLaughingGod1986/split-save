@@ -56,7 +56,7 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
           to_user_id: existingUser!.id,
           status: 'accepted'
         })
-        .eq('id', invitationId)
+        .eq('id', invitation.id)
       
       if (updateError) {
         console.error('7. Invitation update error:', updateError)
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
             const messageDiv = document.getElementById('message');
             
             try {
-              const response = await fetch('/api/invite/accept/${invitationId}', {
+              const response = await fetch('/api/invite/accept/${invitation.id}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, password })
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
           to_user_id: existingUser!.id,
           status: 'accepted'
         })
-        .eq('id', invitationId)
+        .eq('id', invitation.id)
       
       if (updateError) {
         console.error('4. Invitation update error:', updateError)
