@@ -301,15 +301,15 @@ export function MLInsightsPanel({ userId, onInsightAction }: MLInsightsPanelProp
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div className="text-sm">
                     <span className="font-medium text-gray-700 dark:text-gray-300">Short-term:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{recommendation.expectedImpact.shortTerm}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{recommendation.expectedImpact?.shortTerm || 'Not specified'}</p>
                   </div>
                   <div className="text-sm">
                     <span className="font-medium text-gray-700 dark:text-gray-300">Long-term:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{recommendation.expectedImpact.longTerm}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{recommendation.expectedImpact?.longTerm || 'Not specified'}</p>
                   </div>
                 </div>
 
-                {recommendation.reasoning.length > 0 && (
+                {recommendation.reasoning && recommendation.reasoning.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Why this recommendation:</p>
                     <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">

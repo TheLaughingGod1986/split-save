@@ -226,27 +226,30 @@ export function PartnerCollaborationView({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
-        {[
-          { id: 'overview', label: 'Overview', icon: '📊' },
-          { id: 'goals', label: 'Collaborative Goals', icon: '🎯' },
-          { id: 'calendar', label: 'Shared Calendar', icon: '📅' },
-          { id: 'communication', label: 'Communication', icon: '💬' },
-          { id: 'insights', label: 'Partner Insights', icon: '🔍' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === tab.id
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            <span>{tab.icon}</span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 overflow-hidden">
+        <div className="flex overflow-x-auto space-x-1">
+          {[
+            { id: 'overview', label: 'Overview', shortLabel: 'Overview', icon: '📊' },
+            { id: 'goals', label: 'Collaborative Goals', shortLabel: 'Goals', icon: '🎯' },
+            { id: 'calendar', label: 'Shared Calendar', shortLabel: 'Calendar', icon: '📅' },
+            { id: 'communication', label: 'Communication', shortLabel: 'Chat', icon: '💬' },
+            { id: 'insights', label: 'Partner Insights', shortLabel: 'Insights', icon: '🔍' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-2 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 sm:space-x-2 whitespace-nowrap flex-shrink-0 ${
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <span className="text-sm sm:text-base">{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.shortLabel}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
