@@ -61,6 +61,7 @@ export interface ActivityComment {
   updated_at: string
   user_name?: string
   user_avatar?: string
+  is_edited?: boolean
 }
 
 class ActivityLogger {

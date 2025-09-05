@@ -123,13 +123,15 @@ export async function POST(req: NextRequest) {
 
       // Create notification for the partner
       try {
-        await createApprovalRequestNotifications(
-          user.partnershipId!,
-          user.id,
-          'goal',
-          goalData
-        )
-        console.log('✅ Approval request notification sent')
+        if (user.partnershipId) {
+          await createApprovalRequestNotifications(
+            user.partnershipId,
+            user.id,
+            'goal',
+            goalData
+          )
+          console.log('✅ Approval request notification sent')
+        }
       } catch (notificationError) {
         console.warn('⚠️ Failed to send approval request notification:', notificationError)
         // Don't fail the main operation if notification fails
