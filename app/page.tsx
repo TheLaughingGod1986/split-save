@@ -21,6 +21,15 @@ export default function Home() {
     if (!loading && !analyticsTracked.current) {
       analyticsTracked.current = true
       
+      // Hide iPhone fallback when React loads successfully
+      if (typeof window !== 'undefined' && /iPhone/.test(navigator.userAgent)) {
+        const fallback = document.getElementById('iphone-fallback')
+        if (fallback) {
+          console.log('🍎 React loaded successfully, hiding iPhone fallback')
+          fallback.style.display = 'none'
+        }
+      }
+      
       if (user) {
         analytics.session.started()
         analytics.conversion.landingPageView('direct', {
@@ -104,6 +113,62 @@ export default function Home() {
       return () => clearTimeout(mobileTimeout)
     }
   }, [isClient, isMobile, isSmallScreen, loading])
+
+  // iPhone-specific emergency fallback - if we detect iPhone and still loading, show basic HTML
+  if (isClient && /iPhone/.test(navigator.userAgent) && loading) {
+    console.log('🍎 iPhone emergency fallback: showing basic HTML')
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f9fafb', 
+        padding: '20px',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+          <h1 style={{ 
+            fontSize: '2rem', 
+            fontWeight: 'bold', 
+            color: '#1f2937', 
+            marginBottom: '1rem' 
+          }}>
+            SplitSave
+          </h1>
+          <p style={{ 
+            fontSize: '1.125rem', 
+            color: '#6b7280', 
+            marginBottom: '2rem' 
+          }}>
+            Smart financial management for couples
+          </p>
+          <div style={{ 
+            padding: '1rem', 
+            backgroundColor: '#fef3c7', 
+            border: '1px solid #f59e0b', 
+            borderRadius: '8px',
+            marginBottom: '2rem'
+          }}>
+            <p style={{ color: '#92400e', margin: 0 }}>
+              🍎 iPhone Safari detected - Loading optimized version...
+            </p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // If loading for too long, force show landing page
   if (loading && !forceShowLanding) {

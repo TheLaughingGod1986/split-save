@@ -222,6 +222,121 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        {/* iPhone Safari emergency fallback - shows if React fails to load */}
+        <noscript>
+          <div style={{
+            minHeight: '100vh',
+            backgroundColor: '#f9fafb',
+            padding: '20px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ maxWidth: '600px', textAlign: 'center' }}>
+              <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
+                SplitSave
+              </h1>
+              <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
+                Smart financial management for couples
+              </p>
+              <p style={{ color: '#ef4444' }}>
+                JavaScript is required to use this application. Please enable JavaScript in your browser settings.
+              </p>
+            </div>
+          </div>
+        </noscript>
+        
+        {/* iPhone loading fallback - shows immediately on iPhone if React takes too long */}
+        <div id="iphone-fallback" style={{
+          display: 'none',
+          minHeight: '100vh',
+          backgroundColor: '#f9fafb',
+          padding: '20px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999
+        }}>
+          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', paddingTop: '20vh' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
+              SplitSave
+            </h1>
+            <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
+              Smart financial management for couples
+            </p>
+            <div style={{ 
+              padding: '1rem', 
+              backgroundColor: '#fef3c7', 
+              border: '1px solid #f59e0b', 
+              borderRadius: '8px',
+              marginBottom: '2rem'
+            }}>
+              <p style={{ color: '#92400e', margin: 0 }}>
+                🍎 Loading optimized version for iPhone Safari...
+              </p>
+            </div>
+            <button 
+              id="refresh-button"
+              style={{
+                backgroundColor: '#7c3aed',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                border: 'none',
+                fontSize: '1rem',
+                cursor: 'pointer'
+              }}
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // iPhone Safari emergency fallback script
+            (function() {
+              const isIPhone = /iPhone/.test(navigator.userAgent);
+              if (isIPhone) {
+                console.log('🍎 iPhone detected, setting up emergency fallback');
+                
+                // Show fallback immediately
+                const fallback = document.getElementById('iphone-fallback');
+                if (fallback) {
+                  fallback.style.display = 'block';
+                }
+                
+                // Add click handler to refresh button
+                const refreshButton = document.getElementById('refresh-button');
+                if (refreshButton) {
+                  refreshButton.addEventListener('click', function() {
+                    window.location.reload();
+                  });
+                }
+                
+                // Hide fallback when React loads (after 3 seconds)
+                setTimeout(function() {
+                  if (fallback) {
+                    fallback.style.display = 'none';
+                  }
+                }, 3000);
+                
+                // If React still hasn't loaded after 5 seconds, keep fallback visible
+                setTimeout(function() {
+                  if (fallback && !window.React) {
+                    console.log('🍎 React failed to load, keeping fallback visible');
+                    fallback.style.display = 'block';
+                  }
+                }, 5000);
+              }
+            })();
+          `
+        }} />
+
         <SmartAuthProvider>
           <ThemeProvider>
             {children}
