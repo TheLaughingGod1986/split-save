@@ -564,7 +564,7 @@ class MLLearningEngine {
     try {
       const { error } = await supabaseAdmin
         .from('behavior_analysis')
-        .insert({
+        .upsert({
           user_id: analysis.userId,
           analysis_period: analysis.analysisPeriod,
           saving_consistency: analysis.savingConsistency,
@@ -575,6 +575,8 @@ class MLLearningEngine {
           success_patterns: analysis.successPatterns,
           improvement_areas: analysis.improvementAreas,
           last_analyzed: analysis.lastAnalyzed
+        }, {
+          onConflict: 'user_id,analysis_period'
         })
 
       if (error) {

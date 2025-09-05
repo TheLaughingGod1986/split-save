@@ -1,431 +1,176 @@
-/**
- * Smart notification utilities for SplitSave
- * Handles payday reminders, progress alerts, and achievement notifications
- */
+import { supabaseAdmin } from './supabase'
 
-export interface NotificationConfig {
-  id: string
-  type: 'payday' | 'progress' | 'achievement' | 'reminder' | 'alert'
+export interface NotificationData {
+  userId: string
+  type: 'approval_request' | 'approval_approved' | 'approval_declined' | 'goal_created' | 'expense_created'
   title: string
   message: string
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  icon: string
-  actionUrl?: string
-  scheduledFor?: Date
-  expiresAt?: Date
-  requiresAction: boolean
-  metadata?: Record<string, any>
-}
-
-export interface NotificationPreferences {
-  userId: string
-  paydayReminders: boolean
-  progressAlerts: boolean
-  achievementNotifications: boolean
-  weeklyDigests: boolean
-  partnerUpdates: boolean
-  emailNotifications: boolean
-  pushNotifications: boolean
-  quietHours: {
-    enabled: boolean
-    start: string // HH:MM format
-    end: string // HH:MM format
-  }
-}
-
-export interface PaydayReminder {
-  id: string
-  userId: string
-  nextPayday: Date
-  amount: number
-  currency: string
-  reminderDays: number[] // Days before payday to send reminders
-  lastSent?: Date
-  nextReminder?: Date
-}
-
-export interface ProgressAlert {
-  id: string
-  userId: string
-  type: 'goal' | 'streak' | 'contribution' | 'partnership'
-  message: string
-  currentValue: number
-  targetValue: number
-  progress: number
-  alertThreshold: number
-  triggered: boolean
-  triggeredAt?: Date
+  data?: any
+  priority?: 'low' | 'medium' | 'high'
 }
 
 /**
- * Generate payday reminders based on user profile
+ * Create a notification for a user
  */
-export function generatePaydayReminders(
-  userId: string,
-  payday: string,
-  income: number,
-  currency: string = 'GBP'
-): PaydayReminder[] {
-  const reminders: PaydayReminder[] = []
-  const now = new Date()
-  
-  // Calculate next payday
-  const nextPayday = calculateNextPayday(payday, now)
-  
-  // Create reminders for different timeframes
-  const reminderDays = [7, 3, 1] // 1 week, 3 days, 1 day before
-  
-  reminderDays.forEach(days => {
-    const reminderDate = new Date(nextPayday)
-    reminderDate.setDate(reminderDate.getDate() - days)
-    
-    if (reminderDate > now) {
-      reminders.push({
-        id: `payday-${days}-${userId}`,
-        userId,
-        nextPayday,
-        amount: income,
-        currency,
-        reminderDays: [days],
-        nextReminder: reminderDate
+export async function createNotification(notificationData: NotificationData): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin
+      .from('notifications')
+      .insert({
+        user_id: notificationData.userId,
+        type: notificationData.type,
+        title: notificationData.title,
+        message: notificationData.message,
+        data: notificationData.data || {},
+        priority: notificationData.priority || 'medium',
+        read: false,
+        created_at: new Date().toISOString()
       })
+
+    if (error) {
+      console.error('❌ Failed to create notification:', error)
+      throw error
     }
-  })
-  
-  return reminders
+
+    console.log('✅ Notification created for user:', notificationData.userId, 'Type:', notificationData.type)
+  } catch (error) {
+    console.error('❌ Error creating notification:', error)
+    throw error
+  }
 }
 
 /**
- * Calculate next payday based on payday preference
+ * Create approval request notifications for partners
  */
-function calculateNextPayday(payday: string, fromDate: Date = new Date()): Date {
-  const now = new Date(fromDate)
-  let nextPayday = new Date(now)
-  
-  switch (payday) {
-    case 'last-working-day':
-      nextPayday = getLastWorkingDayOfMonth(now)
-      break
-    case 'last-friday':
-      nextPayday = getLastFridayOfMonth(now)
-      break
-    case 'fixed-date':
-      // Assume 25th of month for fixed date
-      nextPayday.setDate(25)
-      break
-    default:
-      // Default to 25th of month
-      nextPayday.setDate(25)
-  }
-  
-  // If this month's payday has passed, move to next month
-  if (nextPayday <= now) {
-    nextPayday.setMonth(nextPayday.getMonth() + 1)
-    nextPayday.setDate(25)
-  }
-  
-  return nextPayday
-}
+export async function createApprovalRequestNotifications(
+  partnershipId: string,
+  requesterId: string,
+  requestType: 'goal' | 'expense',
+  requestData: any
+): Promise<void> {
+  try {
+    // Get partnership details to find the partner
+    const { data: partnership, error: partnershipError } = await supabaseAdmin
+      .from('partnerships')
+      .select('user1_id, user2_id')
+      .eq('id', partnershipId)
+      .single()
 
-/**
- * Get last working day of the month
- */
-function getLastWorkingDayOfMonth(date: Date): Date {
-  const year = date.getFullYear()
-  const month = date.getMonth()
-  const lastDay = new Date(year, month + 1, 0)
-  
-  const workingDay = new Date(lastDay)
-  while (workingDay.getDay() === 0 || workingDay.getDay() === 6) {
-    workingDay.setDate(workingDay.getDate() - 1)
-  }
-  
-  return workingDay
-}
-
-/**
- * Get last Friday of the month
- */
-function getLastFridayOfMonth(date: Date): Date {
-  const year = date.getFullYear()
-  const month = date.getMonth()
-  const lastDay = new Date(year, month + 1, 0)
-  
-  const friday = new Date(lastDay)
-  while (friday.getDay() !== 5) {
-    friday.setDate(friday.getDate() - 1)
-  }
-  
-  return friday
-}
-
-/**
- * Generate progress alerts based on user data
- */
-export function generateProgressAlerts(
-  userId: string,
-  goals: any[],
-  contributions: any[],
-  streaks: any
-): ProgressAlert[] {
-  const alerts: ProgressAlert[] = []
-  
-  // Goal progress alerts
-  goals.forEach(goal => {
-    const progress = (goal.current_amount / goal.target_amount) * 100
-    const monthlyTarget = goal.monthly_target || 0
-    
-    // Alert if behind monthly target
-    if (monthlyTarget > 0) {
-      const monthlyProgress = calculateMonthlyProgress(goal.id, contributions, new Date())
-      const behindThreshold = (monthlyProgress / monthlyTarget) * 100
-      
-      if (behindThreshold < 80) {
-        alerts.push({
-          id: `goal-${goal.id}-${userId}`,
-          userId,
-          type: 'goal',
-          message: `You're behind on your monthly target for "${goal.name}". Consider increasing your contribution.`,
-          currentValue: monthlyProgress,
-          targetValue: monthlyTarget,
-          progress: behindThreshold,
-          alertThreshold: 80,
-          triggered: behindThreshold < 80,
-          triggeredAt: behindThreshold < 80 ? new Date() : undefined
-        })
-      }
+    if (partnershipError || !partnership) {
+      console.error('❌ Failed to fetch partnership for notifications:', partnershipError)
+      return
     }
-    
-    // Alert if goal deadline is approaching
-    if (goal.target_date) {
-      const deadline = new Date(goal.target_date)
-      const now = new Date()
-      const daysUntilDeadline = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      
-      if (daysUntilDeadline <= 30 && progress < 90) {
-        alerts.push({
-          id: `goal-deadline-${goal.id}-${userId}`,
-          userId,
-          type: 'goal',
-          message: `Goal "${goal.name}" deadline is approaching in ${daysUntilDeadline} days. You're ${progress.toFixed(1)}% complete.`,
-          currentValue: progress,
-          targetValue: 100,
-          progress: progress,
-          alertThreshold: 90,
-          triggered: daysUntilDeadline <= 30,
-          triggeredAt: daysUntilDeadline <= 30 ? new Date() : undefined
-        })
-      }
+
+    // Find the partner (not the requester)
+    const partnerId = partnership.user1_id === requesterId ? partnership.user2_id : partnership.user1_id
+
+    if (!partnerId) {
+      console.error('❌ No partner found for notification')
+      return
     }
-  })
-  
-  // Streak alerts
-  if (streaks.currentStreak > 0) {
-    const streakMilestones = [3, 6, 12, 24]
-    const nextMilestone = streakMilestones.find(m => m > streaks.currentStreak)
-    
-    if (nextMilestone) {
-      const monthsToNextMilestone = nextMilestone - streaks.currentStreak
-      
-      if (monthsToNextMilestone <= 2) {
-        alerts.push({
-          id: `streak-${userId}`,
-          userId,
-          type: 'streak',
-          message: `You're ${monthsToNextMilestone} month(s) away from a ${nextMilestone}-month streak! Keep going!`,
-          currentValue: streaks.currentStreak,
-          targetValue: nextMilestone,
-          progress: (streaks.currentStreak / nextMilestone) * 100,
-          alertThreshold: 80,
-          triggered: monthsToNextMilestone <= 2,
-          triggeredAt: monthsToNextMilestone <= 2 ? new Date() : undefined
-        })
-      }
+
+    // Create notification for the partner
+    const title = `${requestType === 'goal' ? 'New Goal' : 'New Expense'} Request`
+    const message = `Your partner has requested approval for a ${requestType === 'goal' ? 'savings goal' : 'expense'}: ${requestData.name || requestData.description || 'Untitled'}`
+
+    await createNotification({
+      userId: partnerId,
+      type: 'approval_request',
+      title,
+      message,
+      data: {
+        requestType,
+        requestData,
+        requesterId,
+        partnershipId
+      },
+      priority: 'high'
+    })
+
+    console.log('✅ Approval request notification sent to partner:', partnerId)
+  } catch (error) {
+    console.error('❌ Error creating approval request notifications:', error)
+    // Don't throw - notification failure shouldn't break the main flow
+  }
+}
+
+/**
+ * Create approval response notifications
+ */
+export async function createApprovalResponseNotifications(
+  requesterId: string,
+  requestType: 'goal' | 'expense',
+  requestData: any,
+  approved: boolean
+): Promise<void> {
+  try {
+    const title = approved ? 'Request Approved!' : 'Request Declined'
+    const message = approved 
+      ? `Your ${requestType === 'goal' ? 'savings goal' : 'expense'} request has been approved: ${requestData.name || requestData.description || 'Untitled'}`
+      : `Your ${requestType === 'goal' ? 'savings goal' : 'expense'} request was declined: ${requestData.name || requestData.description || 'Untitled'}`
+
+    await createNotification({
+      userId: requesterId,
+      type: approved ? 'approval_approved' : 'approval_declined',
+      title,
+      message,
+      data: {
+        requestType,
+        requestData,
+        approved
+      },
+      priority: approved ? 'medium' : 'high'
+    })
+
+    console.log('✅ Approval response notification sent to requester:', requesterId)
+  } catch (error) {
+    console.error('❌ Error creating approval response notifications:', error)
+    // Don't throw - notification failure shouldn't break the main flow
+  }
+}
+
+/**
+ * Get unread notification count for a user
+ */
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  try {
+    const { count, error } = await supabaseAdmin
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false)
+
+    if (error) {
+      console.error('❌ Failed to get notification count:', error)
+      return 0
     }
-  }
-  
-  return alerts
-}
 
-/**
- * Calculate monthly progress for a specific goal
- */
-function calculateMonthlyProgress(goalId: string, contributions: any[], date: Date): number {
-  const month = date.toISOString().substring(0, 7) // YYYY-MM
-  
-  return contributions
-    .filter(c => c.goal_id === goalId && c.created_at?.startsWith(month))
-    .reduce((sum, c) => sum + (c.amount || 0), 0)
-}
-
-/**
- * Generate weekly digest summary
- */
-export function generateWeeklyDigest(
-  userId: string,
-  weeklyData: {
-    contributions: any[]
-    goals: any[]
-    achievements: any[]
-    partnerUpdates: any[]
-  }
-): NotificationConfig {
-  const totalContributions = weeklyData.contributions.reduce((sum, c) => sum + (c.amount || 0), 0)
-  const newAchievements = weeklyData.achievements.length
-  const goalsProgress = weeklyData.goals.length
-  
-  let message = `This week you contributed ${formatCurrency(totalContributions)}`
-  
-  if (newAchievements > 0) {
-    message += `, unlocked ${newAchievements} achievement${newAchievements > 1 ? 's' : ''}`
-  }
-  
-  if (goalsProgress > 0) {
-    message += `, and made progress on ${goalsProgress} goal${goalsProgress > 1 ? 's' : ''}`
-  }
-  
-  message += '. Keep up the great work!'
-  
-  return {
-    id: `weekly-digest-${userId}-${Date.now()}`,
-    type: 'reminder',
-    title: '📊 Your Weekly Progress Summary',
-    message,
-    priority: 'low',
-    icon: '📊',
-    requiresAction: false,
-    scheduledFor: new Date(),
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    return count || 0
+  } catch (error) {
+    console.error('❌ Error getting notification count:', error)
+    return 0
   }
 }
 
 /**
- * Check if notification should be sent based on quiet hours
+ * Mark notification as read
  */
-export function shouldSendNotification(
-  preferences: NotificationPreferences,
-  notificationPriority: NotificationConfig['priority']
-): boolean {
-  // Always send urgent notifications
-  if (notificationPriority === 'urgent') return true
-  
-  // Check quiet hours
-  if (preferences.quietHours.enabled) {
-    const now = new Date()
-    const currentTime = now.getHours() * 60 + now.getMinutes()
-    const startTime = parseTime(preferences.quietHours.start)
-    const endTime = parseTime(preferences.quietHours.end)
-    
-    if (startTime <= endTime) {
-      // Same day quiet hours (e.g., 22:00 to 08:00)
-      if (currentTime >= startTime || currentTime <= endTime) {
-        return false
-      }
-    } else {
-      // Overnight quiet hours (e.g., 22:00 to 08:00)
-      if (currentTime >= startTime || currentTime <= endTime) {
-        return false
-      }
+export async function markNotificationAsRead(userId: string, notificationId: string): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin
+      .from('notifications')
+      .update({ read: true, read_at: new Date().toISOString() })
+      .eq('id', notificationId)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('❌ Failed to mark notification as read:', error)
+      throw error
     }
-  }
-  
-  return true
-}
 
-/**
- * Parse time string (HH:MM) to minutes since midnight
- */
-function parseTime(timeString: string): number {
-  const [hours, minutes] = timeString.split(':').map(Number)
-  return hours * 60 + minutes
-}
-
-/**
- * Format currency for notifications
- */
-function formatCurrency(amount: number, currency: string = 'GBP'): string {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: currency
-  }).format(amount)
-}
-
-/**
- * Generate partner update notifications
- */
-export function generatePartnerUpdates(
-  userId: string,
-  partnerActions: any[]
-): NotificationConfig[] {
-  const notifications: NotificationConfig[] = []
-  
-  partnerActions.forEach(action => {
-    switch (action.type) {
-      case 'contribution':
-        notifications.push({
-          id: `partner-contribution-${action.id}`,
-          type: 'reminder',
-          title: '🤝 Partner Update',
-          message: `Your partner contributed ${formatCurrency(action.amount)} to ${action.goalName}`,
-          priority: 'low',
-          icon: '🤝',
-          actionUrl: `/goals/${action.goalId}`,
-          requiresAction: false,
-          scheduledFor: new Date()
-        })
-        break
-        
-      case 'goal_completion':
-        notifications.push({
-          id: `partner-goal-${action.id}`,
-          type: 'achievement',
-          title: '🎉 Goal Completed!',
-          message: `Congratulations! You and your partner completed the goal "${action.goalName}"`,
-          priority: 'medium',
-          icon: '🎉',
-          actionUrl: `/goals/${action.goalId}`,
-          requiresAction: false,
-          scheduledFor: new Date()
-        })
-        break
-        
-      case 'streak_milestone':
-        notifications.push({
-          id: `partner-streak-${action.id}`,
-          type: 'achievement',
-          title: '🔥 Streak Milestone!',
-          message: `You and your partner reached a ${action.months} month contribution streak!`,
-          priority: 'medium',
-          icon: '🔥',
-          requiresAction: false,
-          scheduledFor: new Date()
-        })
-        break
-    }
-  })
-  
-  return notifications
-}
-
-/**
- * Get notification priority based on type and context
- */
-export function getNotificationPriority(
-  type: NotificationConfig['type'],
-  context?: Record<string, any>
-): NotificationConfig['priority'] {
-  switch (type) {
-    case 'payday':
-      return context?.daysUntilPayday <= 1 ? 'high' : 'medium'
-    case 'progress':
-      return context?.behindTarget ? 'high' : 'medium'
-    case 'achievement':
-      return 'medium'
-    case 'reminder':
-      return 'low'
-    case 'alert':
-      return context?.urgent ? 'urgent' : 'high'
-    default:
-      return 'medium'
+    console.log('✅ Notification marked as read:', notificationId)
+  } catch (error) {
+    console.error('❌ Error marking notification as read:', error)
+    throw error
   }
 }

@@ -3,7 +3,7 @@ import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 interface NotificationPreference {
-  type: 'payday' | 'goal_deadline' | 'streak_risk' | 'achievement' | 'approval' | 'partner_activity'
+  type: 'payday' | 'goal_deadline' | 'streak_risk' | 'achievement' | 'approval' | 'partner_activity' | 'approval_request' | 'approval_approved' | 'approval_declined'
   enabled: boolean
   method: 'push' | 'email' | 'both'
   timing: number
@@ -30,12 +30,20 @@ export async function GET(req: NextRequest) {
       .eq('read', false)
       .order('created_at', { ascending: false })
 
+    // Get unread count
+    const { count: unreadCount } = await supabaseAdmin
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('read', false)
+
     // Generate smart reminders based on user data
     const smartReminders = await generateSmartReminders(user.id)
 
     return NextResponse.json({
       preferences: preferences || [],
       notifications: notifications || [],
+      unreadCount: unreadCount || 0,
       smartReminders
     })
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { createApprovalResponseNotifications } from '@/lib/notification-utils'
 
 export async function POST(
   req: NextRequest,
@@ -134,6 +135,20 @@ export async function POST(
     }
 
     console.log('✅ Approval API - Approval process completed successfully')
+    
+    // Send notification to the requester
+    try {
+      await createApprovalResponseNotifications(
+        approval.requested_by_user_id,
+        approval.request_type,
+        approval.request_data,
+        true // approved
+      )
+      console.log('✅ Approval notification sent to requester')
+    } catch (notificationError) {
+      console.warn('⚠️ Failed to send approval notification:', notificationError)
+      // Don't fail the main operation if notification fails
+    }
     
     // Verify the approval request was updated
     const { data: updatedApproval, error: verifyError } = await supabaseAdmin

@@ -23,6 +23,10 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
   const [comments, setComments] = useState<Record<string, ActivityComment[]>>({})
   const [newComment, setNewComment] = useState<Record<string, string>>({})
   const [submittingComment, setSubmittingComment] = useState<string | null>(null)
+  const [reactionDetails, setReactionDetails] = useState<Record<string, any[]>>({})
+  const [showReactionDetails, setShowReactionDetails] = useState<Set<string>>(new Set())
+  const [editingComment, setEditingComment] = useState<Record<string, string>>({})
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
 
   const loadActivities = useCallback(async (showLoading = true) => {
     if (!user) {
@@ -162,6 +166,98 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
       toast.error('Failed to add comment')
     } finally {
       setSubmittingComment(null)
+    }
+  }
+
+  const loadReactionDetails = async (activityId: string) => {
+    try {
+      const response = await apiClient.post('/activity-feed', {
+        action: 'get_reaction_details',
+        activityId
+      })
+      
+      setReactionDetails(prev => ({
+        ...prev,
+        [activityId]: response.data?.reactions || []
+      }))
+    } catch (error) {
+      console.error('Error loading reaction details:', error)
+      toast.error('Failed to load reaction details')
+    }
+  }
+
+  const toggleReactionDetails = async (activityId: string) => {
+    if (showReactionDetails.has(activityId)) {
+      setShowReactionDetails(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(activityId)
+        return newSet
+      })
+    } else {
+      setShowReactionDetails(prev => new Set(prev).add(activityId))
+      if (!reactionDetails[activityId]) {
+        await loadReactionDetails(activityId)
+      }
+    }
+  }
+
+  const editComment = async (commentId: string, newText: string) => {
+    try {
+      await apiClient.post('/activity-feed', {
+        action: 'edit_comment',
+        commentId,
+        newComment: newText
+      })
+
+      // Update local state
+      setComments(prev => {
+        const updated = { ...prev }
+        Object.keys(updated).forEach(activityId => {
+          updated[activityId] = updated[activityId].map(comment => 
+            comment.id === commentId 
+              ? { ...comment, comment: newText, is_edited: true }
+              : comment
+          )
+        })
+        return updated
+      })
+
+      setEditingCommentId(null)
+      setEditingComment(prev => ({ ...prev, [commentId]: '' }))
+      toast.success('Comment updated!')
+    } catch (error) {
+      console.error('Error editing comment:', error)
+      toast.error('Failed to update comment')
+    }
+  }
+
+  const deleteComment = async (commentId: string, activityId: string) => {
+    if (!confirm('Are you sure you want to delete this comment?')) return
+
+    try {
+      await apiClient.post('/activity-feed', {
+        action: 'delete_comment',
+        commentId
+      })
+
+      // Update local state
+      setComments(prev => ({
+        ...prev,
+        [activityId]: prev[activityId]?.filter(comment => comment.id !== commentId) || []
+      }))
+
+      // Update comment count
+      setActivities(prev => prev.map(activity => {
+        if (activity.id === activityId) {
+          return { ...activity, comment_count: Math.max(0, activity.comment_count - 1) }
+        }
+        return activity
+      }))
+
+      toast.success('Comment deleted!')
+    } catch (error) {
+      console.error('Error deleting comment:', error)
+      toast.error('Failed to delete comment')
     }
   }
 
@@ -310,17 +406,28 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
                 {/* Actions */}
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                   <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => handleReaction(activity.id, 'like', !activity.user_has_reacted)}
-                      className={`flex items-center space-x-1 text-sm transition-colors ${
-                        activity.user_has_reacted 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      <span>{activity.user_has_reacted ? '👍' : '👍'}</span>
-                      <span>{activity.reaction_count || 0}</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleReaction(activity.id, 'like', !activity.user_has_reacted)}
+                        className={`flex items-center space-x-1 text-sm transition-colors ${
+                          activity.user_has_reacted 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                      >
+                        <span>{activity.user_has_reacted ? '👍' : '👍'}</span>
+                        <span>{activity.reaction_count || 0}</span>
+                      </button>
+                      
+                      {activity.reaction_count > 0 && (
+                        <button
+                          onClick={() => toggleReactionDetails(activity.id)}
+                          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        >
+                          {showReactionDetails.has(activity.id) ? 'Hide' : 'Show'} who
+                        </button>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => toggleComments(activity.id)}
@@ -336,6 +443,20 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
                   </span>
                 </div>
 
+                {/* Reaction Details */}
+                {showReactionDetails.has(activity.id) && reactionDetails[activity.id] && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex flex-wrap gap-2">
+                      {reactionDetails[activity.id].map((reaction, index) => (
+                        <div key={index} className="flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                          <span className="text-gray-600 dark:text-gray-300">{reaction.user_name}</span>
+                          <span>{reaction.reaction_type === 'like' ? '👍' : reaction.reaction_type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Comments Section */}
                 {expandedComments.has(activity.id) && (
                   <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -343,14 +464,77 @@ export function PartnerActivityFeed({ className = '', user: propUser, partnershi
                     {comments[activity.id] && comments[activity.id].length > 0 && (
                       <div className="space-y-3 mb-4">
                         {comments[activity.id].map((comment) => (
-                          <div key={comment.id} className="flex items-start space-x-3">
+                          <div key={comment.id} className="flex items-start space-x-3 group">
                             <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0"></div>
                             <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">{comment.user_name}</span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">{getRelativeTime(comment.created_at)}</span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">{comment.user_name}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{getRelativeTime(comment.created_at)}</span>
+                                  {comment.is_edited && (
+                                    <span className="text-xs text-gray-400 italic">(edited)</span>
+                                  )}
+                                </div>
+                                
+                                {/* Edit/Delete buttons for own comments */}
+                                {comment.user_id === user?.id && (
+                                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => {
+                                        setEditingCommentId(comment.id)
+                                        setEditingComment(prev => ({ ...prev, [comment.id]: comment.comment }))
+                                      }}
+                                      className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                    >
+                                      Edit
+                                    </button>
+                                    <span className="text-gray-300">•</span>
+                                    <button
+                                      onClick={() => deleteComment(comment.id, activity.id)}
+                                      className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
                               </div>
-                              <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{comment.comment}</p>
+                              
+                              {editingCommentId === comment.id ? (
+                                <div className="mt-2">
+                                  <textarea
+                                    value={editingComment[comment.id] || ''}
+                                    onChange={(e) => setEditingComment(prev => ({ ...prev, [comment.id]: e.target.value }))}
+                                    className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                    rows={2}
+                                    maxLength={500}
+                                  />
+                                  <div className="flex items-center justify-between mt-2">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      {500 - (editingComment[comment.id]?.length || 0)} characters remaining
+                                    </span>
+                                    <div className="flex items-center space-x-2">
+                                      <button
+                                        onClick={() => {
+                                          setEditingCommentId(null)
+                                          setEditingComment(prev => ({ ...prev, [comment.id]: '' }))
+                                        }}
+                                        className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() => editComment(comment.id, editingComment[comment.id] || '')}
+                                        disabled={!editingComment[comment.id]?.trim()}
+                                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                      >
+                                        Save
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{comment.comment}</p>
+                              )}
                             </div>
                           </div>
                         ))}

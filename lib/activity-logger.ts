@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabaseAdmin } from './supabase'
 
 export interface ActivityMetadata {
   [key: string]: any
@@ -70,7 +70,7 @@ class ActivityLogger {
    */
   async logActivity(entry: ActivityLogEntry): Promise<{ success: boolean; activityId?: string; error?: string }> {
     try {
-      const { data, error } = await supabase.rpc('log_partner_activity', {
+      const { data, error } = await supabaseAdmin.rpc('log_partner_activity', {
         p_user_id: entry.userId,
         p_partnership_id: entry.partnershipId,
         p_activity_type: entry.activityType,
@@ -104,7 +104,7 @@ class ActivityLogger {
     try {
       // First try the main database function
       console.log('🔄 Trying main activity feed function...')
-      const { data, error } = await supabase.rpc('get_partnership_activity_feed', {
+      const { data, error } = await supabaseAdmin.rpc('get_partnership_activity_feed', {
         p_user_id: userId,
         p_limit: limit,
         p_offset: offset
@@ -115,7 +115,7 @@ class ActivityLogger {
         
         // Try the fallback function
         console.log('🔄 Trying fallback function...')
-        const { data: fallbackData, error: fallbackError } = await supabase.rpc('get_partnership_activity_feed_fallback', {
+        const { data: fallbackData, error: fallbackError } = await supabaseAdmin.rpc('get_partnership_activity_feed_fallback', {
           p_user_id: userId,
           p_limit: limit,
           p_offset: offset
@@ -143,7 +143,7 @@ class ActivityLogger {
               is_milestone: false,
               created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
               user_name: 'Ben',
-              user_avatar: null,
+              user_avatar: undefined,
               type_display_name: 'Added an Expense',
               type_icon: '💳',
               type_color: 'blue',
@@ -167,7 +167,7 @@ class ActivityLogger {
               is_milestone: false,
               created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
               user_name: 'Ben',
-              user_avatar: null,
+              user_avatar: undefined,
               type_display_name: 'Made a Contribution',
               type_icon: '💰',
               type_color: 'green',
@@ -195,7 +195,7 @@ class ActivityLogger {
    */
   async addReaction(activityId: string, userId: string, reactionType: 'like' | 'cheer' | 'celebrate' | 'support'): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('activity_reactions')
         .upsert({
           activity_id: activityId,
@@ -222,7 +222,7 @@ class ActivityLogger {
    */
   async removeReaction(activityId: string, userId: string, reactionType: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('activity_reactions')
         .delete()
         .match({
@@ -248,7 +248,7 @@ class ActivityLogger {
    */
   async addComment(activityId: string, userId: string, comment: string): Promise<{ success: boolean; commentId?: string; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('activity_comments')
         .insert({
           activity_id: activityId,
@@ -275,7 +275,7 @@ class ActivityLogger {
    */
   async getActivityComments(activityId: string): Promise<{ success: boolean; comments?: ActivityComment[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('activity_comments')
         .select(`
           id,
@@ -325,7 +325,7 @@ class ActivityLogger {
         activity_id: activityId
       }))
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('activity_feed_views')
         .upsert(viewRecords, {
           onConflict: 'viewer_user_id,activity_id'
@@ -340,6 +340,190 @@ class ActivityLogger {
     } catch (error) {
       console.error('Error marking activities as viewed:', error)
       return { success: false, error: 'Failed to mark activities as viewed' }
+    }
+  }
+
+  /**
+   * Add a comment to an activity (with optional parent for replies)
+   */
+  async addCommentWithParent(activityId: string, userId: string, comment: string, parentCommentId?: string): Promise<{ success: boolean; commentId?: string; error?: string }> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('activity_comments')
+        .insert({
+          activity_id: activityId,
+          user_id: userId,
+          comment: comment.trim(),
+          parent_comment_id: parentCommentId || null
+        })
+        .select('id')
+        .single()
+
+      if (error) {
+        console.error('Error adding comment:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true, commentId: data.id }
+    } catch (error) {
+      console.error('Error adding comment:', error)
+      return { success: false, error: 'Failed to add comment' }
+    }
+  }
+
+  /**
+   * Update a comment (edit)
+   */
+  async updateComment(commentId: string, userId: string, newComment: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // First check if the comment exists and belongs to the user
+      const { data: existingComment, error: checkError } = await supabaseAdmin
+        .from('activity_comments')
+        .select('id, user_id')
+        .eq('id', commentId)
+        .eq('user_id', userId)
+        .single()
+
+      if (checkError || !existingComment) {
+        return { success: false, error: 'Comment not found or you do not have permission to edit it' }
+      }
+
+      // Update the comment
+      const { error } = await supabaseAdmin
+        .from('activity_comments')
+        .update({
+          comment: newComment.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('user_id', userId)
+
+      if (error) {
+        console.error('Error updating comment:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating comment:', error)
+      return { success: false, error: 'Failed to update comment' }
+    }
+  }
+
+  /**
+   * Delete a comment
+   */
+  async deleteComment(commentId: string, userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // First check if the comment exists and belongs to the user
+      const { data: existingComment, error: checkError } = await supabaseAdmin
+        .from('activity_comments')
+        .select('id, user_id')
+        .eq('id', commentId)
+        .eq('user_id', userId)
+        .single()
+
+      if (checkError || !existingComment) {
+        return { success: false, error: 'Comment not found or you do not have permission to delete it' }
+      }
+
+      // Delete the comment
+      const { error } = await supabaseAdmin
+        .from('activity_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', userId)
+
+      if (error) {
+        console.error('Error deleting comment:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting comment:', error)
+      return { success: false, error: 'Failed to delete comment' }
+    }
+  }
+
+  /**
+   * Get reaction details with user information
+   */
+  async getReactionDetails(activityId: string): Promise<{ success: boolean; reactions?: any[]; error?: string }> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('activity_reactions')
+        .select(`
+          reaction_type,
+          user_id,
+          created_at,
+          users!inner(name, email, avatar_url)
+        `)
+        .eq('activity_id', activityId)
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Error getting reaction details:', error)
+        return { success: false, error: error.message }
+      }
+
+      // Transform the data to match the expected format
+      const reactions = data?.map(reaction => ({
+        reaction_type: reaction.reaction_type,
+        user_id: reaction.user_id,
+        user_name: reaction.users?.name || reaction.users?.email,
+        user_avatar: reaction.users?.avatar_url,
+        created_at: reaction.created_at
+      })) || []
+
+      return { success: true, reactions }
+    } catch (error) {
+      console.error('Error getting reaction details:', error)
+      return { success: false, error: 'Failed to get reaction details' }
+    }
+  }
+
+  /**
+   * Get comments with nested replies
+   */
+  async getCommentsWithReplies(activityId: string): Promise<{ success: boolean; comments?: any[]; error?: string }> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .rpc('get_activity_comments_with_replies', {
+          p_activity_id: activityId
+        })
+
+      if (error) {
+        console.error('Error getting comments with replies:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true, comments: data || [] }
+    } catch (error) {
+      console.error('Error getting comments with replies:', error)
+      return { success: false, error: 'Failed to get comments' }
+    }
+  }
+
+  /**
+   * Get replies for a specific comment
+   */
+  async getCommentReplies(commentId: string): Promise<{ success: boolean; replies?: any[]; error?: string }> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .rpc('get_comment_replies', {
+          p_comment_id: commentId
+        })
+
+      if (error) {
+        console.error('Error getting comment replies:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true, replies: data || [] }
+    } catch (error) {
+      console.error('Error getting comment replies:', error)
+      return { success: false, error: 'Failed to get replies' }
     }
   }
 }

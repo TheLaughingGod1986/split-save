@@ -54,6 +54,8 @@ export function PartnerHub({
   const [sharedNotes, setSharedNotes] = useState<any[]>([])
   const [newNote, setNewNote] = useState('')
   const [showAddNote, setShowAddNote] = useState(false)
+  const [editingNote, setEditingNote] = useState<any>(null)
+  const [editContent, setEditContent] = useState('')
 
   const activePartnership = partnerships.find(p => p.status === 'active')
   const pendingApprovals = approvals?.filter(approval => approval.status === 'pending') || []
@@ -124,6 +126,65 @@ export function PartnerHub({
       console.error('❌ Failed to add note:', error)
       toast.error('Failed to add note')
     }
+  }
+
+  const handleEditNote = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!editContent.trim()) {
+      toast.error('Please enter note content')
+      return
+    }
+
+    try {
+      console.log('📝 Editing shared note:', editingNote.id)
+      const response = await apiClient.put('/shared-notes', {
+        id: editingNote.id,
+        content: editContent.trim()
+      })
+      
+      const updatedNote = response.data
+      console.log('✅ Note edited successfully:', updatedNote.id)
+      
+      // Update local state
+      setSharedNotes(prev => prev.map(note => 
+        note.id === editingNote.id ? updatedNote : note
+      ))
+      setEditingNote(null)
+      setEditContent('')
+      toast.success('Note updated successfully!')
+    } catch (error) {
+      console.error('❌ Failed to edit note:', error)
+      toast.error('Failed to update note')
+    }
+  }
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      console.log('🗑️ Deleting shared note:', noteId)
+      await apiClient.delete(`/shared-notes?id=${noteId}`)
+      
+      // Remove from local state
+      setSharedNotes(prev => prev.filter(note => note.id !== noteId))
+      toast.success('Note deleted successfully!')
+    } catch (error) {
+      console.error('❌ Failed to delete note:', error)
+      toast.error('Failed to delete note')
+    }
+  }
+
+  const startEditing = (note: any) => {
+    setEditingNote(note)
+    setEditContent(note.content)
+  }
+
+  const cancelEditing = () => {
+    setEditingNote(null)
+    setEditContent('')
   }
 
   const formatDate = (dateString: string) => {
@@ -568,15 +629,68 @@ export function PartnerHub({
       {/* Shared Notes List */}
       <div className="space-y-3">
         {sharedNotes.length > 0 ? (
-          sharedNotes.map((note) => (
-            <div key={note.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-medium text-sm text-gray-900 dark:text-white">{note.author}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(note.created_at)}</span>
+          sharedNotes.map((note) => {
+            const isAuthor = note.author_id === user.id
+            const isEditing = editingNote?.id === note.id
+            
+            return (
+              <div key={note.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-medium text-sm text-gray-900 dark:text-white">{note.author}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(note.created_at)}</span>
+                    {isAuthor && !isEditing && (
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={() => startEditing(note)}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          title="Edit note"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteNote(note.id)}
+                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          title="Delete note"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {isEditing ? (
+                  <form onSubmit={handleEditNote} className="space-y-3">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      rows={3}
+                      required
+                    />
+                    <div className="flex space-x-2">
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditing}
+                        className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="text-gray-700 dark:text-gray-300">{note.content}</p>
+                )}
               </div>
-              <p className="text-gray-700 dark:text-gray-300">{note.content}</p>
-            </div>
-          ))
+            )
+          })
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <div className="text-4xl mb-4">💬</div>

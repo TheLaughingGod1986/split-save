@@ -36,9 +36,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
     }
     
+    // Immediate failsafe timeout to prevent infinite loading
+    const immediateFailsafe = setTimeout(() => {
+      if (mounted) {
+        console.log('⚠️ AuthProvider immediate failsafe: forcing loading to false')
+        setLoading(false)
+      }
+    }, 3000) // Very short timeout to prevent infinite loading
+    
     // Get initial session with timeout (shorter timeout for mobile)
     const sessionPromise = supabase.auth.getSession()
-    const timeoutDuration = isMobile ? 3000 : 5000 // Shorter timeout for mobile
+    const timeoutDuration = isMobile ? 2000 : 3000 // Even shorter timeout
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Session timeout')), timeoutDuration)
     )
@@ -49,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(({ data: { session } }: any) => {
         console.log('✅ AuthProvider: Session check successful', { hasUser: !!session?.user })
         if (mounted) {
+          clearTimeout(immediateFailsafe)
           setUser(session?.user ?? null)
           setLoading(false)
         }
@@ -56,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch((error) => {
         console.warn('❌ AuthProvider: Session check failed', error)
         if (mounted) {
+          clearTimeout(immediateFailsafe)
           setUser(null)
           setLoading(false)
         }
@@ -66,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event, session) => {
         console.log('🔍 AuthProvider: Auth state change', { event, hasUser: !!session?.user })
         if (mounted) {
+          clearTimeout(immediateFailsafe)
           if (event === 'SIGNED_IN' && session?.user) {
             // Welcome message is shown in LoadingScreen, no need for duplicate toast
           } else if (event === 'SIGNED_OUT') {
@@ -77,17 +88,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    // Failsafe: force loading to false after shorter time for mobile
+    // Additional failsafe: force loading to false after shorter time
     const failsafeTimeout = setTimeout(() => {
       if (mounted) {
         console.log('⚠️ AuthProvider failsafe: forcing loading to false', { isMobile })
         setLoading(false)
       }
-    }, isMobile ? 5000 : 10000) // Shorter failsafe for mobile
+    }, isMobile ? 3000 : 5000) // Shorter failsafe
 
     return () => {
       mounted = false
       subscription.unsubscribe()
+      clearTimeout(immediateFailsafe)
       clearTimeout(failsafeTimeout)
     }
   }, [])

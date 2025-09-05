@@ -45,8 +45,7 @@ export const safariSupabase = (() => {
       debug: process.env.NODE_ENV === 'development',
       
       // Longer timeouts for Safari
-      refreshTokenRetryAttempts: 3,
-      refreshTokenRetryDelay: 2000
+      // Note: refreshTokenRetryAttempts and refreshTokenRetryDelay are not valid options in current Supabase version
     },
     
     // Safari-optimized realtime settings

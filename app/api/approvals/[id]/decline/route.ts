@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { createApprovalResponseNotifications } from '@/lib/notification-utils'
 
 export async function POST(
   req: NextRequest,
@@ -58,6 +59,20 @@ export async function POST(
 
     if (updateError) {
       return NextResponse.json({ error: 'Failed to decline request' }, { status: 400 })
+    }
+
+    // Send notification to the requester
+    try {
+      await createApprovalResponseNotifications(
+        approval.requested_by_user_id,
+        approval.request_type,
+        approval.request_data,
+        false // declined
+      )
+      console.log('✅ Decline notification sent to requester')
+    } catch (notificationError) {
+      console.warn('⚠️ Failed to send decline notification:', notificationError)
+      // Don't fail the main operation if notification fails
     }
 
     return NextResponse.json({ success: true })

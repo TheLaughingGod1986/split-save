@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { apiClient } from '@/lib/api-client'
 
 interface MobileLayoutProps {
   children: React.ReactNode
@@ -27,7 +28,31 @@ export function MobileLayout({
   onSignOut,
   onToggleTheme
 }: MobileLayoutProps) {
-  console.log('🔄 MobileLayout render:', { currentView, hasUser: !!user, isOnline })
+  const [realNotificationCount, setRealNotificationCount] = useState(0)
+  const [showNotifications, setShowNotifications] = useState(false)
+
+  // Fetch real notification count
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await apiClient.get('/notifications')
+        setRealNotificationCount(response.data.unreadCount || 0)
+      } catch (error) {
+        console.error('Failed to fetch notification count:', error)
+        // Fallback to the passed notificationCount
+        setRealNotificationCount(notificationCount)
+      }
+    }
+
+    if (user?.id) {
+      fetchNotificationCount()
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchNotificationCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [user?.id, notificationCount])
+
+  console.log('🔄 MobileLayout render:', { currentView, hasUser: !!user, isOnline, realNotificationCount })
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 flex flex-col">
@@ -52,13 +77,33 @@ export function MobileLayout({
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-2">
-            {hasNotifications && (
-              <div className="relative">
-                <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                  {notificationCount}
+            {/* Bell Notification Icon */}
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-lg"
+              aria-label={`Notifications (${realNotificationCount} unread)`}
+            >
+              <svg 
+                className="w-6 h-6" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 0 1 6 6v4.5l2.25 2.25a2.25 2.25 0 0 1-2.25 2.25H4.5a2.25 2.25 0 0 1-2.25-2.25L4.5 14.25V9.75a6 6 0 0 1 6-6z" 
+                />
+              </svg>
+              
+              {/* Unread count badge */}
+              {realNotificationCount > 0 && (
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                  {realNotificationCount > 99 ? '99+' : realNotificationCount}
                 </div>
-              </div>
-            )}
+              )}
+            </button>
             {onToggleTheme && (
               <button
                 onClick={onToggleTheme}
@@ -78,6 +123,43 @@ export function MobileLayout({
           </div>
         </div>
       </div>
+
+      {/* Notification Dropdown */}
+      {showNotifications && (
+        <div className="absolute top-16 right-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-w-sm w-80">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+              <button
+                onClick={() => setShowNotifications(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                ✕
+              </button>
+            </div>
+            {realNotificationCount > 0 ? (
+              <div className="space-y-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  You have {realNotificationCount} unread notification{realNotificationCount !== 1 ? 's' : ''}
+                </div>
+                <button
+                  onClick={() => {
+                    onNavigate('partners')
+                    setShowNotifications(false)
+                  }}
+                  className="w-full text-left p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                >
+                  View in Partner Hub →
+                </button>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                No new notifications
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto pb-24">

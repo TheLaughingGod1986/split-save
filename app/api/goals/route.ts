@@ -3,6 +3,7 @@ import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { goalSchema } from '@/lib/validation'
 import { ActivityHelpers } from '@/lib/activity-logger'
+import { createApprovalRequestNotifications } from '@/lib/notification-utils'
 
 export async function GET(req: NextRequest) {
   const user = await authenticateRequest(req)
@@ -118,6 +119,20 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error('Approval request creation error:', error)
         return NextResponse.json({ error: 'Failed to create approval request' }, { status: 400 })
+      }
+
+      // Create notification for the partner
+      try {
+        await createApprovalRequestNotifications(
+          user.partnershipId!,
+          user.id,
+          'goal',
+          goalData
+        )
+        console.log('✅ Approval request notification sent')
+      } catch (notificationError) {
+        console.warn('⚠️ Failed to send approval request notification:', notificationError)
+        // Don't fail the main operation if notification fails
       }
 
       return NextResponse.json({

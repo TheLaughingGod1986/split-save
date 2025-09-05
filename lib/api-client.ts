@@ -11,8 +11,17 @@ class ApiClient {
     
     // Get the current session from Supabase
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.access_token) {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error) {
+        console.warn('Session error:', error)
+        // Try to refresh the session
+        const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Failed to refresh session:', refreshError)
+        } else if (refreshedSession?.access_token) {
+          headers['Authorization'] = `Bearer ${refreshedSession.access_token}`
+        }
+      } else if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
     } catch (error) {

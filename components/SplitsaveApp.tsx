@@ -201,7 +201,9 @@ export function SplitsaveApp() {
 
   const fetchGoals = useCallback(async () => {
     try {
+      console.log('🎯 Fetching goals...')
       const response = await apiClient.get('/goals')
+      console.log('🎯 Goals response:', response)
       setGoals(response.data || [])
     } catch (err) {
       console.error('Error fetching goals:', err)
@@ -297,17 +299,20 @@ export function SplitsaveApp() {
   // Add goal handler
   const addGoal = useCallback(async (data: any) => {
     try {
+      console.log('🎯 Adding goal with data:', data)
       const response = await apiClient.post('/goals', data)
+      console.log('🎯 Goal creation response:', response)
+      
       if (response.data) {
-        setGoals(prev => prev ? [...prev, response.data] : [response.data])
+        // Refresh the goals list to ensure we have the latest data
+        await fetchGoals()
         toast.success('Goal added successfully!')
-        // No need to refresh data - local state is already updated
       }
     } catch (err) {
       console.error('Error adding goal:', err)
       toast.error('Failed to add goal. Please try again.')
     }
-  }, [])
+  }, [fetchGoals])
 
   // Update goal handler
   const updateGoal = useCallback(async (goalId: string, updates: any) => {
@@ -434,7 +439,7 @@ export function SplitsaveApp() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Check for existing session on mount
+  // Check for existing session on mount and listen for auth changes
   useEffect(() => {
     console.log('🔄 SplitsaveApp: Starting authentication check')
     
@@ -468,13 +473,53 @@ export function SplitsaveApp() {
     
     checkSession()
     
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event, session?.user?.id)
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('✅ User signed in:', session.user.id)
+        setUser(session.user)
+        setLoading(true)
+        try {
+          await loadData()
+        } catch (error) {
+          console.warn('Data loading failed after sign in:', error)
+        } finally {
+          setLoading(false)
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('❌ User signed out')
+        setUser(null)
+        setExpenses([])
+        setGoals([])
+        setPartnerships([])
+        setProfile(null)
+        setApprovals([])
+        setMonthlyProgress(null)
+        setCurrentView('overview')
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        console.log('🔄 Token refreshed for user:', session.user.id)
+        setUser(session.user)
+        // Optionally refresh data when token is refreshed
+        try {
+          await fetchGoals()
+        } catch (error) {
+          console.warn('Failed to refresh goals after token refresh:', error)
+        }
+      }
+    })
+    
     // Failsafe: Force loading to false after 5 seconds (reduced from 10)
     const failsafeTimeout = setTimeout(() => {
       console.log('Failsafe timeout: forcing loading to false')
       setLoading(false)
     }, 5000)
     
-    return () => clearTimeout(failsafeTimeout)
+    return () => {
+      clearTimeout(failsafeTimeout)
+      subscription.unsubscribe()
+    }
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
 
 

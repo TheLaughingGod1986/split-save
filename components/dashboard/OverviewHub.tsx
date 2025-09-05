@@ -163,51 +163,29 @@ export function OverviewHub({
 
   const loadRecentActivity = useCallback(async () => {
     try {
+      // Fetch real activity from the activity feed API
+      const response = await apiClient.get('/activity-feed?limit=5&offset=0&filter=all')
+      const activities = response.data?.activities || []
       
-      // In a real app, this would fetch from activity API
-      // For now, generate activity from existing data
-      const activities: any[] = []
-      
-      // Add recent expenses
-      if (Array.isArray(expenses) && expenses.length > 0) {
-        expenses.slice(0, 3).forEach(expense => {
-          activities.push({
-            id: `expense-${expense.id}`,
-            type: 'expense',
-            title: `Expense: ${expense.description}`,
-            amount: expense.amount,
-            timestamp: new Date(expense.created_at || Date.now()),
-            icon: '💰',
-            user: 'You'
-          })
-        })
-      }
+      // Transform the API response to match our display format
+      const transformedActivities = activities.map((activity: any) => ({
+        id: activity.id,
+        type: activity.type,
+        title: activity.title,
+        amount: activity.amount,
+        timestamp: new Date(activity.created_at),
+        icon: activity.type_icon || '📱',
+        user: activity.user_name || 'Unknown',
+        description: activity.description
+      }))
 
-      // Add recent goals (both new and with progress)
-      if (Array.isArray(goals) && goals.length > 0) {
-        goals.slice(0, 3).forEach(goal => {
-          // Show all goals, but with different messages based on progress
-          const hasProgress = goal.current_amount > 0
-          activities.push({
-            id: `goal-${goal.id}`,
-            type: 'goal',
-            title: hasProgress ? `Progress: ${goal.name}` : `New Goal: ${goal.name}`,
-            amount: goal.target_amount, // Show target amount instead of current amount
-            timestamp: new Date(goal.created_at || goal.updated_at || Date.now()),
-            icon: hasProgress ? '🎯' : '✨',
-            user: 'You'
-          })
-        })
-      }
-
-      // Sort by timestamp and limit to 5 most recent
-      activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-
-      setRecentActivity(activities.slice(0, 5))
+      setRecentActivity(transformedActivities)
     } catch (error) {
-      // Silently handle error - show empty activity list
+      console.error('Failed to load recent activity:', error)
+      // Fallback to empty activity list
+      setRecentActivity([])
     }
-  }, [expenses, goals])
+  }, [])
 
   const loadMonthlyProgress = async () => {
     try {
@@ -1058,6 +1036,9 @@ export function OverviewHub({
                   <div className="text-lg">{activity.icon}</div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.title}</p>
+                    {activity.description && (
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">{activity.description}</p>
+                    )}
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {activity.user} • {formatTimestamp(activity.timestamp)}
                     </p>

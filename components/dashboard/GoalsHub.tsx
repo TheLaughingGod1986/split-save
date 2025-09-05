@@ -46,6 +46,7 @@ export function GoalsHub({
   const [activeTab, setActiveTab] = useState<'active' | 'prioritization' | 'completed' | 'achievements'>('active')
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<string | null>(null)
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([])
   const [editForm, setEditForm] = useState<{
     name?: string
     targetAmount?: string
@@ -93,6 +94,25 @@ export function GoalsHub({
     
     return { activeGoals: active, completedGoals: completed }
   }, [goals])
+
+  // Fetch pending approvals for goals
+  useEffect(() => {
+    const fetchPendingApprovals = async () => {
+      try {
+        const response = await apiClient.get('/approvals')
+        const goalApprovals = response.data.filter((approval: any) => 
+          approval.type === 'goal' && approval.requester_id === user.id
+        )
+        setPendingApprovals(goalApprovals)
+      } catch (error) {
+        console.error('Failed to fetch pending approvals:', error)
+      }
+    }
+
+    if (user?.id && partnerships?.length > 0) {
+      fetchPendingApprovals()
+    }
+  }, [user?.id, partnerships])
 
   // Calculate overall progress
   const overallProgress = useMemo(() => {
@@ -325,6 +345,35 @@ export function GoalsHub({
 
   const renderActiveGoals = () => (
     <div className="space-y-4">
+      {/* Pending Approvals Section */}
+      {pendingApprovals.length > 0 && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <h4 className="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-3 flex items-center">
+            <span className="mr-2">⏳</span>
+            Goals Awaiting Approval
+          </h4>
+          <div className="space-y-3">
+            {pendingApprovals.map((approval) => (
+              <div key={approval.id} className="bg-white dark:bg-gray-800 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-medium text-gray-900 dark:text-white">{approval.title}</h5>
+                  <span className="text-sm text-yellow-600 dark:text-yellow-400">Pending</span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{approval.description}</p>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Target: {currencySymbol}{approval.amount?.toFixed(2) || '0.00'}
+                  </span>
+                  <span className="text-yellow-600 dark:text-yellow-400">
+                    Waiting for partner approval
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Add Goal Button */}
       <div className="flex justify-between items-center">
         <h3 className="text-heading-3 text-gray-900 dark:text-white">Active Savings Goals</h3>

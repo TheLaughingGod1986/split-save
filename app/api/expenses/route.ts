@@ -3,6 +3,7 @@ import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { expenseSchema } from '@/lib/validation'
 import { ActivityHelpers } from '@/lib/activity-logger'
+import { createApprovalRequestNotifications } from '@/lib/notification-utils'
 import { z } from 'zod'
 
 export async function GET(req: NextRequest) {
@@ -119,6 +120,21 @@ export async function POST(req: NextRequest) {
       }
 
       console.log('✅ Expenses API - Approval request created:', approval.id)
+
+      // Create notification for the partner
+      try {
+        await createApprovalRequestNotifications(
+          partnershipId,
+          user.id,
+          'expense',
+          expenseData
+        )
+        console.log('✅ Expense approval request notification sent')
+      } catch (notificationError) {
+        console.warn('⚠️ Failed to send expense approval request notification:', notificationError)
+        // Don't fail the main operation if notification fails
+      }
+
       return NextResponse.json({
         requiresApproval: true,
         approvalRequestId: approval.id
