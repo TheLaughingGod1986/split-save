@@ -21,12 +21,17 @@ export default function Home() {
     if (!loading && !analyticsTracked.current) {
       analyticsTracked.current = true
       
-      // Hide iPhone fallback when React loads successfully
+      // Hide iPhone fallback when React loads successfully AND we have content to show
       if (typeof window !== 'undefined' && /iPhone/.test(navigator.userAgent)) {
         const fallback = document.getElementById('iphone-fallback')
+        const minimalTest = document.getElementById('minimal-test')
         if (fallback) {
           console.log('🍎 React loaded successfully, hiding iPhone fallback')
           fallback.style.display = 'none'
+        }
+        if (minimalTest) {
+          console.log('🍎 React loaded successfully, hiding minimal test')
+          minimalTest.style.display = 'none'
         }
       }
       
@@ -172,16 +177,26 @@ export default function Home() {
 
   // If loading for too long, force show landing page
   if (loading && !forceShowLanding) {
-    // Use mobile fallback for mobile devices (only after client-side detection)
+    // For mobile devices, show landing page immediately instead of loading fallback
     if (isClient && (isMobile || isSmallScreen)) {
+      console.log('📱 Mobile device detected during loading, showing landing page immediately')
       return (
-        <MobileLoadingFallback 
-          onTimeout={() => {
-            setShowMobileFallback(true)
-            setForceShowLanding(true) // Force show landing page on timeout
-          }}
-          timeoutMs={3000} // Shorter timeout for mobile
-        />
+        <>
+          <StructuredData type="website" data={structuredDataSchemas.website} />
+          <StructuredData type="organization" data={structuredDataSchemas.organization} />
+          <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+          <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+          <LandingPage />
+          {/* Debug overlay for mobile */}
+          <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded z-50">
+            <div>Mobile: {isMobile ? 'Yes' : 'No'}</div>
+            <div>Small: {isSmallScreen ? 'Yes' : 'No'}</div>
+            <div>Loading: {loading ? 'Yes' : 'No'}</div>
+            <div>User: {user ? 'Yes' : 'No'}</div>
+            <div>Force: {forceShowLanding ? 'Yes' : 'No'}</div>
+            <div>Emergency: {emergencyFallback ? 'Yes' : 'No'}</div>
+          </div>
+        </>
       )
     }
     

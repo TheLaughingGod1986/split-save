@@ -40,7 +40,7 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
     setIsSafari(isSafariBrowser || isIOS)
   }, [])
 
-  // Show loading while detecting browser
+  // Show loading while detecting browser, but don't hide children
   if (!isClient || isSafari === null) {
     console.log('🔄 SmartAuthProvider: Still detecting browser', { isClient, isSafari })
     return (
