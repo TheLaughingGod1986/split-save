@@ -124,6 +124,9 @@ export function SmartNotificationManager({
             title: '💰 Payday Reminder',
             message: `Your next payday is in ${daysUntilPayday} day${daysUntilPayday > 1 ? 's' : ''}. Expected amount: ${formatCurrency(reminder.amount, reminder.currency)}`,
             priority: daysUntilPayday <= 1 ? 'high' : 'medium',
+            userId: userId,
+            read: false,
+            createdAt: new Date(),
             icon: '💰',
             requiresAction: false,
             scheduledFor: new Date(),
@@ -147,6 +150,9 @@ export function SmartNotificationManager({
             title: '⚠️ Progress Alert',
             message: alert.message,
             priority: 'high',
+            userId: userId,
+            read: false,
+            createdAt: new Date(),
             icon: '⚠️',
             requiresAction: true,
             scheduledFor: new Date(),
@@ -162,7 +168,7 @@ export function SmartNotificationManager({
     }
     
     // Achievement notifications
-    if (preferences.achievementNotifications && achievements.length > 0) {
+    if (preferences.streakAchievements && achievements.length > 0) {
       achievements.forEach(achievement => {
         if (achievement.unlocked && !achievement.notified) {
           newNotifications.push({
@@ -171,6 +177,9 @@ export function SmartNotificationManager({
             title: '🏆 Achievement Unlocked!',
             message: `Congratulations! You've unlocked "${achievement.name}" - ${achievement.description}`,
             priority: 'medium',
+            userId: userId,
+            read: false,
+            createdAt: new Date(),
             icon: '🏆',
             requiresAction: false,
             scheduledFor: new Date(),

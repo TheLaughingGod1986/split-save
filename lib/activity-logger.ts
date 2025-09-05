@@ -472,8 +472,8 @@ class ActivityLogger {
       const reactions = data?.map(reaction => ({
         reaction_type: reaction.reaction_type,
         user_id: reaction.user_id,
-        user_name: reaction.users?.name || reaction.users?.email,
-        user_avatar: reaction.users?.avatar_url,
+        user_name: reaction.users?.[0]?.name || reaction.users?.[0]?.email,
+        user_avatar: reaction.users?.[0]?.avatar_url,
         created_at: reaction.created_at
       })) || []
 
