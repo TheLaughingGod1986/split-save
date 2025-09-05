@@ -222,45 +222,39 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        {/* Pure HTML test - shows immediately for mobile devices */}
-        <div id="pure-html-test" style={{
-          display: 'block',
-          minHeight: '100vh',
-          backgroundColor: '#1f2937',
-          color: 'white',
-          padding: '20px',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+        {/* ABSOLUTE MINIMAL TEST - No CSS, no JavaScript, just raw HTML */}
+        <div id="minimal-test" style={{
           position: 'fixed',
           top: 0,
           left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 10000
+          width: '100vw',
+          height: '100vh',
+          background: 'red',
+          color: 'white',
+          fontSize: '50px',
+          fontWeight: 'bold',
+          display: 'block',
+          zIndex: 99999,
+          padding: '20px',
+          boxSizing: 'border-box',
+          margin: 0,
+          border: 0,
+          overflow: 'visible'
         }}>
-          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', paddingTop: '20vh' }}>
-            <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '1rem', color: '#10b981' }}>
-              🚀 SPLITSAVE TEST
-            </h1>
-            <p style={{ fontSize: '1.5rem', marginBottom: '2rem', color: '#f3f4f6' }}>
-              Pure HTML Test - No JavaScript Required
-            </p>
-            <div style={{ 
-              padding: '2rem', 
-              backgroundColor: '#374151', 
-              border: '2px solid #10b981', 
-              borderRadius: '12px',
-              marginBottom: '2rem'
-            }}>
-              <p style={{ color: '#10b981', margin: 0, fontSize: '1.2rem' }}>
-                ✅ If you can see this, the page is loading!
-              </p>
-              <p style={{ color: '#f3f4f6', margin: '1rem 0 0 0', fontSize: '1rem' }}>
-                This is a pure HTML test without any JavaScript or React dependencies.
-              </p>
-            </div>
-            <div style={{ fontSize: '1rem', color: '#9ca3af' }}>
-              <p>Testing mobile rendering...</p>
-              <p>Time: <span id="current-time">Loading...</span></p>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            background: 'red'
+          }}>
+            <div>
+              <div style={{ fontSize: '80px', marginBottom: '20px' }}>🚨</div>
+              <div style={{ fontSize: '40px', marginBottom: '20px' }}>EMERGENCY TEST</div>
+              <div style={{ fontSize: '30px', marginBottom: '20px' }}>RED BACKGROUND</div>
+              <div style={{ fontSize: '25px' }}>If you see this, HTML works!</div>
             </div>
           </div>
         </div>
@@ -416,11 +410,15 @@ export default function RootLayout({
                 console.log('🖥️ Desktop device detected, hiding all fallbacks');
                 const fallback = document.getElementById('iphone-fallback');
                 const pureTest = document.getElementById('pure-html-test');
+                const minimalTest = document.getElementById('minimal-test');
                 if (fallback) {
                   fallback.style.display = 'none';
                 }
                 if (pureTest) {
                   pureTest.style.display = 'none';
+                }
+                if (minimalTest) {
+                  minimalTest.style.display = 'none';
                 }
               }
             })();
