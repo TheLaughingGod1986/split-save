@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useAuth } from '@/components/auth/SmartAuthProvider'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
@@ -39,10 +39,20 @@ export default function Home() {
   // Force show landing page after shorter time if still loading (especially on mobile)
   useEffect(() => {
     if (loading) {
-      // Shorter timeout for mobile devices
-      const timeoutDuration = isClient && (isMobile || isSmallScreen) ? 3000 : 5000
+      // Even shorter timeout for iPhone Safari
+      const isIPhone = isClient && /iPhone/.test(navigator.userAgent)
+      const timeoutDuration = isIPhone ? 2000 : (isClient && (isMobile || isSmallScreen) ? 3000 : 5000)
+      
+      console.log('⏰ Setting page timeout', { 
+        isIPhone, 
+        isMobile, 
+        isSmallScreen, 
+        timeoutDuration,
+        userAgent: isClient ? navigator.userAgent.substring(0, 50) : 'N/A'
+      })
+      
       const timeout = setTimeout(() => {
-        console.log('⚠️ Page timeout: forcing landing page display', { isMobile, isSmallScreen, timeoutDuration })
+        console.log('⚠️ Page timeout: forcing landing page display', { isMobile, isSmallScreen, isIPhone, timeoutDuration })
         setForceShowLanding(true)
       }, timeoutDuration)
       
@@ -55,11 +65,20 @@ export default function Home() {
   // Emergency fallback for mobile devices - if nothing else works, show landing page
   useEffect(() => {
     if (isClient && (isMobile || isSmallScreen)) {
+      const isIPhone = /iPhone/.test(navigator.userAgent)
+      const emergencyTimeoutDuration = isIPhone ? 4000 : 6000 // Even shorter for iPhone
+      
+      console.log('🚨 Setting emergency fallback timeout', { 
+        isIPhone, 
+        emergencyTimeoutDuration,
+        userAgent: navigator.userAgent.substring(0, 50)
+      })
+      
       const emergencyTimeout = setTimeout(() => {
-        console.log('🚨 Emergency fallback: forcing landing page for mobile')
+        console.log('🚨 Emergency fallback: forcing landing page for mobile', { isIPhone })
         setEmergencyFallback(true)
         setForceShowLanding(true)
-      }, 6000) // 6 seconds emergency timeout
+      }, emergencyTimeoutDuration)
       
       return () => clearTimeout(emergencyTimeout)
     }
@@ -68,10 +87,19 @@ export default function Home() {
   // Additional mobile-specific timeout - if we're on mobile and still loading after 4 seconds, force show landing
   useEffect(() => {
     if (isClient && (isMobile || isSmallScreen) && loading) {
+      const isIPhone = /iPhone/.test(navigator.userAgent)
+      const mobileTimeoutDuration = isIPhone ? 2500 : 4000 // Even shorter for iPhone
+      
+      console.log('📱 Setting mobile timeout', { 
+        isIPhone, 
+        mobileTimeoutDuration,
+        userAgent: navigator.userAgent.substring(0, 50)
+      })
+      
       const mobileTimeout = setTimeout(() => {
-        console.log('📱 Mobile timeout: forcing landing page after 4 seconds')
+        console.log('📱 Mobile timeout: forcing landing page', { isIPhone })
         setForceShowLanding(true)
-      }, 4000)
+      }, mobileTimeoutDuration)
       
       return () => clearTimeout(mobileTimeout)
     }
