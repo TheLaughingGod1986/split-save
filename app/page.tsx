@@ -17,20 +17,12 @@ export default function Home() {
   const [emergencyFallback, setEmergencyFallback] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
 
-  // EMERGENCY FIX: For mobile devices, redirect to dedicated mobile page
+  // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
   // Use direct user agent check instead of mobile detection hook
   const isMobileDevice = typeof window !== 'undefined' && (
     /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent) ||
     window.innerWidth <= 768
   )
-
-  // Redirect mobile devices to dedicated mobile page
-  useEffect(() => {
-    if (isMobileDevice && typeof window !== 'undefined') {
-      console.log('🚨 MOBILE DETECTED: Redirecting to /mobile')
-      window.location.href = '/mobile'
-    }
-  }, [isMobileDevice])
 
   useEffect(() => {
     if (!loading && !analyticsTracked.current) {
