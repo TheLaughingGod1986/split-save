@@ -222,6 +222,49 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        {/* Pure HTML test - shows immediately for mobile devices */}
+        <div id="pure-html-test" style={{
+          display: 'block',
+          minHeight: '100vh',
+          backgroundColor: '#1f2937',
+          color: 'white',
+          padding: '20px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 10000
+        }}>
+          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', paddingTop: '20vh' }}>
+            <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '1rem', color: '#10b981' }}>
+              🚀 SPLITSAVE TEST
+            </h1>
+            <p style={{ fontSize: '1.5rem', marginBottom: '2rem', color: '#f3f4f6' }}>
+              Pure HTML Test - No JavaScript Required
+            </p>
+            <div style={{ 
+              padding: '2rem', 
+              backgroundColor: '#374151', 
+              border: '2px solid #10b981', 
+              borderRadius: '12px',
+              marginBottom: '2rem'
+            }}>
+              <p style={{ color: '#10b981', margin: 0, fontSize: '1.2rem' }}>
+                ✅ If you can see this, the page is loading!
+              </p>
+              <p style={{ color: '#f3f4f6', margin: '1rem 0 0 0', fontSize: '1rem' }}>
+                This is a pure HTML test without any JavaScript or React dependencies.
+              </p>
+            </div>
+            <div style={{ fontSize: '1rem', color: '#9ca3af' }}>
+              <p>Testing mobile rendering...</p>
+              <p>Time: <span id="current-time">Loading...</span></p>
+            </div>
+          </div>
+        </div>
+
         {/* iPhone Safari emergency fallback - shows if React fails to load */}
         <noscript>
           <div style={{
@@ -370,13 +413,27 @@ export default function RootLayout({
                   }
                 }, 4000);
               } else {
-                console.log('🖥️ Desktop device detected, hiding fallback');
+                console.log('🖥️ Desktop device detected, hiding all fallbacks');
                 const fallback = document.getElementById('iphone-fallback');
+                const pureTest = document.getElementById('pure-html-test');
                 if (fallback) {
                   fallback.style.display = 'none';
                 }
+                if (pureTest) {
+                  pureTest.style.display = 'none';
+                }
               }
             })();
+            
+            // Update time in pure HTML test
+            function updateTime() {
+              const timeElement = document.getElementById('current-time');
+              if (timeElement) {
+                timeElement.textContent = new Date().toLocaleTimeString();
+              }
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
           `
         }} />
 
