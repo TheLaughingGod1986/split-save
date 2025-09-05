@@ -247,9 +247,9 @@ export default function RootLayout({
           </div>
         </noscript>
         
-        {/* iPhone loading fallback - shows immediately on iPhone if React takes too long */}
+        {/* Mobile loading fallback - shows immediately on mobile devices if React takes too long */}
         <div id="iphone-fallback" style={{
-          display: 'none',
+          display: 'block', // Show by default for mobile
           minHeight: '100vh',
           backgroundColor: '#f9fafb',
           padding: '20px',
@@ -276,7 +276,7 @@ export default function RootLayout({
               marginBottom: '2rem'
             }}>
               <p style={{ color: '#92400e', margin: 0 }}>
-                🍎 Loading optimized version for iPhone Safari...
+                📱 Loading optimized version for mobile...
               </p>
             </div>
             <button 
@@ -293,45 +293,88 @@ export default function RootLayout({
             >
               Refresh Page
             </button>
+            <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+              <p>If this page doesn't load properly, try:</p>
+              <ul style={{ textAlign: 'left', display: 'inline-block' }}>
+                <li>Refreshing the page</li>
+                <li>Clearing your browser cache</li>
+                <li>Using a different browser</li>
+              </ul>
+            </div>
           </div>
         </div>
 
         <script dangerouslySetInnerHTML={{
           __html: `
-            // iPhone Safari emergency fallback script
+            // Comprehensive mobile debugging and fallback script
             (function() {
+              console.log('🚀 Script starting - User Agent:', navigator.userAgent);
+              
               const isIPhone = /iPhone/.test(navigator.userAgent);
-              if (isIPhone) {
-                console.log('🍎 iPhone detected, setting up emergency fallback');
+              const isIPad = /iPad/.test(navigator.userAgent);
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+              
+              console.log('📱 Device Detection:', {
+                isIPhone,
+                isIPad,
+                isMobile,
+                isSafari,
+                userAgent: navigator.userAgent.substring(0, 100),
+                screenWidth: window.innerWidth,
+                screenHeight: window.innerHeight
+              });
+              
+              // Show fallback for any mobile device, not just iPhone
+              if (isMobile || isIPhone || isIPad) {
+                console.log('📱 Mobile device detected, setting up emergency fallback');
                 
                 // Show fallback immediately
                 const fallback = document.getElementById('iphone-fallback');
                 if (fallback) {
+                  console.log('✅ Fallback element found, showing it');
                   fallback.style.display = 'block';
+                } else {
+                  console.error('❌ Fallback element not found!');
                 }
                 
                 // Add click handler to refresh button
                 const refreshButton = document.getElementById('refresh-button');
                 if (refreshButton) {
+                  console.log('✅ Refresh button found, adding click handler');
                   refreshButton.addEventListener('click', function() {
+                    console.log('🔄 Refresh button clicked');
                     window.location.reload();
                   });
+                } else {
+                  console.error('❌ Refresh button not found!');
                 }
                 
-                // Hide fallback when React loads (after 3 seconds)
+                // Hide fallback when React loads (after 2 seconds for mobile)
                 setTimeout(function() {
-                  if (fallback) {
+                  console.log('⏰ 2s timeout - checking if React loaded');
+                  if (fallback && window.React) {
+                    console.log('✅ React detected, hiding fallback');
                     fallback.style.display = 'none';
+                  } else {
+                    console.log('⚠️ React not detected, keeping fallback visible');
                   }
-                }, 3000);
+                }, 2000);
                 
-                // If React still hasn't loaded after 5 seconds, keep fallback visible
+                // If React still hasn't loaded after 4 seconds, keep fallback visible
                 setTimeout(function() {
+                  console.log('⏰ 4s timeout - final check');
                   if (fallback && !window.React) {
-                    console.log('🍎 React failed to load, keeping fallback visible');
+                    console.log('❌ React failed to load, keeping fallback visible');
                     fallback.style.display = 'block';
                   }
-                }, 5000);
+                }, 4000);
+              } else {
+                console.log('🖥️ Desktop device detected, hiding fallback');
+                const fallback = document.getElementById('iphone-fallback');
+                if (fallback) {
+                  fallback.style.display = 'none';
+                }
               }
             })();
           `

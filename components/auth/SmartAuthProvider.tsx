@@ -42,6 +42,7 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
 
   // Show loading while detecting browser
   if (!isClient || isSafari === null) {
+    console.log('🔄 SmartAuthProvider: Still detecting browser', { isClient, isSafari })
     return (
       <AuthContext.Provider value={{ user: null, loading: true, signOut: async () => {} }}>
         {children}
