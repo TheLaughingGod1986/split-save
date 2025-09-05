@@ -17,6 +17,9 @@ export default function Home() {
   const [emergencyFallback, setEmergencyFallback] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
 
+  // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
+  const isMobileDevice = isClient && (isMobile || isSmallScreen)
+
   useEffect(() => {
     if (!loading && !analyticsTracked.current) {
       analyticsTracked.current = true
@@ -118,6 +121,30 @@ export default function Home() {
       return () => clearTimeout(mobileTimeout)
     }
   }, [isClient, isMobile, isSmallScreen, loading])
+
+  // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
+  if (isMobileDevice) {
+    console.log('🚨 EMERGENCY: Mobile device detected, showing landing page immediately without auth')
+    return (
+      <>
+        <StructuredData type="website" data={structuredDataSchemas.website} />
+        <StructuredData type="organization" data={structuredDataSchemas.organization} />
+        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+        <LandingPage />
+        {/* Debug overlay for mobile */}
+        <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded z-50">
+          <div>Mobile: {isMobile ? 'Yes' : 'No'}</div>
+          <div>Small: {isSmallScreen ? 'Yes' : 'No'}</div>
+          <div>Loading: {loading ? 'Yes' : 'No'}</div>
+          <div>User: {user ? 'Yes' : 'No'}</div>
+          <div>Force: {forceShowLanding ? 'Yes' : 'No'}</div>
+          <div>Emergency: {emergencyFallback ? 'Yes' : 'No'}</div>
+          <div>EMERGENCY MODE: ACTIVE</div>
+        </div>
+      </>
+    )
+  }
 
   // iPhone-specific emergency fallback - if we detect iPhone and still loading, show basic HTML
   if (isClient && /iPhone/.test(navigator.userAgent) && loading) {
