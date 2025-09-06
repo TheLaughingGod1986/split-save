@@ -17,6 +17,15 @@ export default function Home() {
   const [emergencyFallback, setEmergencyFallback] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
 
+  // DEBUG: Log auth state changes
+  useEffect(() => {
+    console.log('🏠 Home: Auth state changed', { 
+      user: user ? { id: user.id, email: user.email } : null, 
+      loading,
+      hasUser: !!user 
+    })
+  }, [user, loading])
+
   // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
   // Use direct user agent check instead of mobile detection hook
   const isMobileDevice = typeof window !== 'undefined' && (
@@ -254,6 +263,12 @@ export default function Home() {
 
   // Show landing page if no user or if forced due to loading timeout
   if (!user || forceShowLanding) {
+    console.log('🏠 Home: Showing landing page', { 
+      hasUser: !!user, 
+      forceShowLanding, 
+      userEmail: user?.email,
+      userId: user?.id 
+    })
     return (
       <>
         <StructuredData type="website" data={structuredDataSchemas.website} />
@@ -280,6 +295,13 @@ export default function Home() {
   if (isClient && (isMobile || isSmallScreen)) {
     console.log('🔍 Mobile device detected, rendering SplitsaveApp', { isMobile, isSmallScreen, hasUser: !!user })
   }
+
+  console.log('🏠 Home: Rendering SplitsaveApp', { 
+    hasUser: !!user, 
+    userEmail: user?.email,
+    userId: user?.id,
+    loading 
+  })
 
   return (
     <>
