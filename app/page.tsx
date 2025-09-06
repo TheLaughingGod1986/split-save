@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/components/auth/SmartAuthProvider'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { SmartAuthProvider } from '@/components/auth/SmartAuthProvider'
+import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
@@ -396,13 +396,13 @@ export default function RootLayout({
           `
         }} />
 
-        <SmartAuthProvider>
+        <AuthProvider>
           <ThemeProvider>
             {children}
             <Analytics />
             <SpeedInsights />
           </ThemeProvider>
-        </SmartAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   )
