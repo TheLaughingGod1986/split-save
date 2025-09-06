@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { AuthProvider } from './AuthProvider'
-import { SafariAuthProvider } from './SafariAuthProvider'
+// import { SafariAuthProvider } from './SafariAuthProvider' // TEMPORARILY DISABLED
 import type { User } from '@supabase/supabase-js'
 
 const AuthContext = createContext<{
@@ -59,14 +59,8 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Use Safari-specific provider for Safari browsers (including iPhone Safari)
-  if (isSafari) {
-    console.log('🍎 SmartAuthProvider: Using SafariAuthProvider')
-    return <SafariAuthProvider>{children}</SafariAuthProvider>
-  }
-
-  // Use regular provider for other browsers
-  console.log('🌐 SmartAuthProvider: Using regular AuthProvider')
+  // TEMPORARY FIX: Always use regular provider to completely eliminate Safari client
+  console.log('🌐 SmartAuthProvider: FORCING regular AuthProvider (Safari detection disabled)')
   return <AuthProvider>{children}</AuthProvider>
 }
 
