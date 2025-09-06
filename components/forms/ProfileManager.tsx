@@ -175,9 +175,10 @@ export function ProfileManager({ onProfileUpdate, allowEditing = false }: { onPr
       console.log('Personal allowance value:', formData.personalAllowance)
       console.log('Parsed personal allowance:', updates.personal_allowance)
 
-      const updatedProfile = await apiClient.put('/auth/profile', updates)
-      console.log('Received updated profile:', updatedProfile)
+      const response = await apiClient.put('/auth/profile', updates)
+      console.log('Received updated profile response:', response)
       
+      const updatedProfile = response.data || response
       setProfile(updatedProfile)
       if (onProfileUpdate) {
         onProfileUpdate(updatedProfile)

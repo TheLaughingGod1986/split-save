@@ -12,20 +12,30 @@ class ApiClient {
     // Get the current session from Supabase
     try {
       const { data: { session }, error } = await supabase.auth.getSession()
+      console.log('🔍 API Client - Session check:', { 
+        hasSession: !!session, 
+        hasAccessToken: !!session?.access_token,
+        error: error?.message 
+      })
+      
       if (error) {
-        console.warn('Session error:', error)
+        console.warn('🔍 API Client - Session error:', error)
         // Try to refresh the session
         const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
         if (refreshError) {
-          console.warn('Failed to refresh session:', refreshError)
+          console.warn('🔍 API Client - Failed to refresh session:', refreshError)
         } else if (refreshedSession?.access_token) {
           headers['Authorization'] = `Bearer ${refreshedSession.access_token}`
+          console.log('🔍 API Client - Using refreshed token')
         }
       } else if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
+        console.log('🔍 API Client - Using existing token')
+      } else {
+        console.warn('🔍 API Client - No session or access token found')
       }
     } catch (error) {
-      console.warn('Failed to get auth session:', error)
+      console.warn('🔍 API Client - Failed to get auth session:', error)
     }
     
     return headers
@@ -62,19 +72,31 @@ class ApiClient {
     
     try {
       const headers = await this.getAuthHeaders()
+      console.log(`🔍 API GET ${endpoint} - Headers:`, { 
+        hasAuth: !!headers.Authorization,
+        contentType: headers['Content-Type']
+      })
+      
       const response = await fetch(`/api${endpoint}`, { headers })
       
       if (!response.ok) {
-        console.warn(`API GET ${endpoint} failed with status: ${response.status}`)
+        console.warn(`🔍 API GET ${endpoint} failed with status: ${response.status}`)
         const errorText = await response.text()
-        console.warn(`API GET ${endpoint} error response:`, errorText)
+        console.warn(`🔍 API GET ${endpoint} error response:`, errorText)
+        
+        // Special handling for 401 errors
+        if (response.status === 401) {
+          console.error(`🔍 API GET ${endpoint} - 401 Unauthorized. This usually means the user is not logged in or the session has expired.`)
+        }
+        
         throw new Error(`API GET ${endpoint} failed with status: ${response.status}`)
       }
       
       const data = await response.json()
+      console.log(`🔍 API GET ${endpoint} - Success:`, { hasData: !!data })
       return { data }
     } catch (error) {
-      console.warn(`API GET ${endpoint} failed:`, error)
+      console.warn(`🔍 API GET ${endpoint} failed:`, error)
       throw error
     }
   }
