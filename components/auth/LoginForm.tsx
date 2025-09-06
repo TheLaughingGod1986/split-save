@@ -23,6 +23,8 @@ export function LoginForm({ onBack }: LoginFormProps) {
   const [passwordStrength, setPasswordStrength] = useState('')
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [resetEmailSent, setResetEmailSent] = useState(false)
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false)
+  const [confirmationEmailSent, setConfirmationEmailSent] = useState(false)
 
   // Auto-focus email field on mobile for better UX
   useEffect(() => {
@@ -70,14 +72,54 @@ export function LoginForm({ onBack }: LoginFormProps) {
 
     try {
       const sanitizedEmail = sanitizeInput.email(email)
+      // Use production URL for password reset redirect
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://www.splitsave.community' 
+        : window.location.origin
+      
       const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/auth/reset-password`,
+        redirectTo: `${baseUrl}/auth/reset-password`,
       })
       
       if (error) throw error
       
       setResetEmailSent(true)
       toast.success('Password reset email sent! Check your inbox.')
+    } catch (error: any) {
+      setError(error.message)
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email || !validationRules.email(email).isValid) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const sanitizedEmail = sanitizeInput.email(email)
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://www.splitsave.community' 
+        : window.location.origin
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: sanitizedEmail,
+        options: {
+          emailRedirectTo: `${baseUrl}/auth/callback`
+        }
+      })
+      
+      if (error) throw error
+      
+      setConfirmationEmailSent(true)
+      toast.success('Confirmation email sent! Check your inbox.')
     } catch (error: any) {
       setError(error.message)
       toast.error(error.message)
@@ -114,13 +156,21 @@ export function LoginForm({ onBack }: LoginFormProps) {
       const sanitizedEmail = sanitizeInput.email(email)
       
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password,
+          options: {
+            emailRedirectTo: `${process.env.NODE_ENV === 'production' ? 'https://www.splitsave.community' : window.location.origin}/auth/callback`
+          }
         })
         if (error) throw error
-        // Show success message for sign up
-        toast.success('Check your email for the confirmation link!')
+        
+        // Check if email confirmation is required
+        if (data.user && !data.user.email_confirmed_at) {
+          toast.success('Account created! Please check your email for the confirmation link.')
+        } else {
+          toast.success('Account created successfully! You can now sign in.')
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: sanitizedEmail,
@@ -334,25 +384,6 @@ export function LoginForm({ onBack }: LoginFormProps) {
 
             </div>
 
-            {/* Password strength indicator for sign up */}
-            {isSignUp && password && (
-              <div>
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  <span>Password strength:</span>
-                  <span className={password.length >= 8 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400'}>
-                    {password.length >= 8 ? 'Strong' : 'Weak'}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      password.length >= 8 ? 'bg-green-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${Math.min((password.length / 8) * 100, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
 
             <button
               type="submit"
@@ -379,6 +410,19 @@ export function LoginForm({ onBack }: LoginFormProps) {
                   className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors duration-200"
                 >
                   Forgot your password?
+                </button>
+              </div>
+            )}
+
+            {/* Resend confirmation email for sign up */}
+            {isSignUp && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowResendConfirmation(true)}
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors duration-200"
+                >
+                  Didn't receive confirmation email?
                 </button>
               </div>
             )}
@@ -477,6 +521,104 @@ export function LoginForm({ onBack }: LoginFormProps) {
                       onClick={() => {
                         setShowForgotPassword(false)
                         setResetEmailSent(false)
+                        setError('')
+                      }}
+                      className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Got it
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Resend Confirmation Modal */}
+          {showResendConfirmation && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Resend Confirmation Email
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowResendConfirmation(false)
+                      setConfirmationEmailSent(false)
+                      setError('')
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-100 rounded-lg flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {error}
+                  </div>
+                )}
+
+                {!confirmationEmailSent ? (
+                  <>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      Enter your email address and we'll send you a new confirmation link.
+                    </p>
+                    <div className="mb-4">
+                      <label htmlFor="resend-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email address
+                      </label>
+                      <input
+                        id="resend-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => handleEmailChange(e.target.value)}
+                        className="input w-full"
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => {
+                          setShowResendConfirmation(false)
+                          setError('')
+                        }}
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleResendConfirmation}
+                        disabled={loading || !email || !validationRules.email(email).isValid}
+                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {loading ? 'Sending...' : 'Send Confirmation'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Check your email
+                    </h4>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      We've sent a confirmation link to <strong>{email}</strong>
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowResendConfirmation(false)
+                        setConfirmationEmailSent(false)
                         setError('')
                       }}
                       className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
