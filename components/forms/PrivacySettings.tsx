@@ -405,12 +405,12 @@ export function PrivacySettings() {
           </p>
           
           <div className="flex space-x-4">
-            <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
+            <a href="/privacy" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
               Privacy Policy
-            </button>
-            <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
+            </a>
+            <a href="/terms" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
               Terms of Service
-            </button>
+            </a>
             <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
               Cookie Policy
             </button>

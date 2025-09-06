@@ -387,12 +387,12 @@ export function AccountHub({
 
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+            <a href="/privacy" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
               Privacy Policy
-            </button>
-            <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+            </a>
+            <a href="/terms" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
               Terms of Service
-            </button>
+            </a>
             <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
               Support Center
             </button>

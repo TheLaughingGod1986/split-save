@@ -251,7 +251,7 @@ export default function RootLayout({
         
         {/* Mobile loading fallback - shows immediately on mobile devices if React takes too long */}
         <div id="iphone-fallback" style={{
-          display: 'block', // Show by default for mobile
+          display: 'none', // Hidden by default, shown by JavaScript for mobile
           minHeight: '100vh',
           backgroundColor: '#f9fafb',
           padding: '20px',

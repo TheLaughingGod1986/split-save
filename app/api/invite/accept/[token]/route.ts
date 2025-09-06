@@ -46,8 +46,41 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
       const existingUser = existingAuthUser.users.find(user => user.email === invitation.to_email)
       console.log('6a. Existing user found:', existingUser?.id, existingUser?.email)
       
-      console.log('6b. About to update invitation with token:', token)
-      console.log('6c. Invitation data:', invitation)
+      // Ensure user exists in public.users table (required for foreign key constraint)
+      const { data: publicUser, error: publicUserError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('id', existingUser!.id)
+        .single()
+      
+      if (publicUserError && publicUserError.code === 'PGRST116') {
+        // User doesn't exist in public.users, create them
+        console.log('6b. Creating user in public.users table')
+        const { error: createUserError } = await supabaseAdmin
+          .from('users')
+          .insert({
+            id: existingUser!.id,
+            email: existingUser!.email!,
+            name: existingUser!.user_metadata?.name || 'User'
+          })
+        
+        if (createUserError) {
+          console.error('6c. Failed to create user in public.users:', createUserError)
+          return NextResponse.json({ 
+            error: 'Failed to create user profile',
+            details: createUserError.message
+          }, { status: 500 })
+        }
+      } else if (publicUserError) {
+        console.error('6d. Error checking public user:', publicUserError)
+        return NextResponse.json({ 
+          error: 'Failed to verify user',
+          details: publicUserError.message
+        }, { status: 500 })
+      }
+      
+      console.log('6e. About to update invitation with token:', token)
+      console.log('6f. Invitation data:', invitation)
       
       // Update invitation with user_id and mark as accepted
       const { error: updateError } = await supabaseAdmin
@@ -270,6 +303,39 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       
       // Find the existing user
       const existingUser = existingAuthUser.users.find(user => user.email === invitation.to_email)
+      
+      // Ensure user exists in public.users table (required for foreign key constraint)
+      const { data: publicUser, error: publicUserError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('id', existingUser!.id)
+        .single()
+      
+      if (publicUserError && publicUserError.code === 'PGRST116') {
+        // User doesn't exist in public.users, create them
+        console.log('3a. Creating user in public.users table')
+        const { error: createUserError } = await supabaseAdmin
+          .from('users')
+          .insert({
+            id: existingUser!.id,
+            email: existingUser!.email!,
+            name: existingUser!.user_metadata?.name || 'User'
+          })
+        
+        if (createUserError) {
+          console.error('3b. Failed to create user in public.users:', createUserError)
+          return NextResponse.json({ 
+            error: 'Failed to create user profile',
+            details: createUserError.message
+          }, { status: 500 })
+        }
+      } else if (publicUserError) {
+        console.error('3c. Error checking public user:', publicUserError)
+        return NextResponse.json({ 
+          error: 'Failed to verify user',
+          details: publicUserError.message
+        }, { status: 500 })
+      }
       
       // Update invitation with user_id and mark as accepted
       const { error: updateError } = await supabaseAdmin

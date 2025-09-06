@@ -21,6 +21,8 @@ export function LoginForm({ onBack }: LoginFormProps) {
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [passwordStrength, setPasswordStrength] = useState('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmailSent, setResetEmailSent] = useState(false)
 
   // Auto-focus email field on mobile for better UX
   useEffect(() => {
@@ -54,6 +56,33 @@ export function LoginForm({ onBack }: LoginFormProps) {
     } else {
       setPasswordError('')
       setPasswordStrength('')
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (!email || !validationRules.email(email).isValid) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const sanitizedEmail = sanitizeInput.email(email)
+      const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      
+      if (error) throw error
+      
+      setResetEmailSent(true)
+      toast.success('Password reset email sent! Check your inbox.')
+    } catch (error: any) {
+      setError(error.message)
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -151,7 +180,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
         </div>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg">
         <div className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm py-8 px-6 shadow-xl rounded-2xl border border-white/20 dark:border-gray-700/50">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -341,6 +370,19 @@ export function LoginForm({ onBack }: LoginFormProps) {
               )}
             </button>
 
+            {/* Forgot Password Link - only show on sign in */}
+            {!isSignUp && (
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors duration-200"
+                >
+                  Forgot your password?
+                </button>
+              </div>
+            )}
+
             {/* Trust indicators */}
             <div className="text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -349,9 +391,107 @@ export function LoginForm({ onBack }: LoginFormProps) {
             </div>
           </form>
 
+          {/* Forgot Password Modal */}
+          {showForgotPassword && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Reset Password
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowForgotPassword(false)
+                      setResetEmailSent(false)
+                      setError('')
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {!resetEmailSent ? (
+                  <>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      Enter your email address and we'll send you a link to reset your password.
+                    </p>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email address
+                      </label>
+                      <input
+                        id="reset-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => handleEmailChange(e.target.value)}
+                        className="input w-full"
+                        placeholder="Enter your email"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    {error && (
+                      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-100 px-4 py-3 rounded-lg mb-4">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => {
+                          setShowForgotPassword(false)
+                          setError('')
+                        }}
+                        className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        disabled={loading}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handlePasswordReset}
+                        disabled={loading || !email || !validationRules.email(email).isValid}
+                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {loading ? 'Sending...' : 'Send Reset Link'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Check your email
+                    </h4>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      We've sent a password reset link to <strong>{email}</strong>
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowForgotPassword(false)
+                        setResetEmailSent(false)
+                        setError('')
+                      }}
+                      className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Got it
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {isSignUp ? 'Already have an account?' : "Don&apos;t have an account?"}{' '}
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 onClick={() => {
                   setIsSignUp(!isSignUp)
@@ -369,7 +509,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
           {/* Additional CRO elements */}
           {isSignUp && (
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">✨ What you&apos;ll get:</h3>
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">✨ What you'll get:</h3>
               <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
                 <li>• Free shared expense tracking</li>
                 <li>• Collaborative savings goals</li>
@@ -385,9 +525,9 @@ export function LoginForm({ onBack }: LoginFormProps) {
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           By continuing, you agree to our{' '}
-          <a href="#" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300">Terms of Service</a>
+          <a href="/terms" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300">Terms of Service</a>
           {' '}and{' '}
-          <a href="#" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300">Privacy Policy</a>
+          <a href="/privacy" className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300">Privacy Policy</a>
         </p>
       </div>
     </div>

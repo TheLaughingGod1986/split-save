@@ -680,7 +680,7 @@ export function LandingPage() {
                 <li><button onClick={handleGetStarted} className="hover:text-white text-left">Try SplitSave Free</button></li>
                 <li><button onClick={handleLearnMore} className="hover:text-white text-left">Learn More</button></li>
                 <li><a href="#features" className="hover:text-white">Features</a></li>
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+                <li><a href="/privacy" className="hover:text-white">Privacy Policy</a></li>
               </ul>
             </div>
           </div>

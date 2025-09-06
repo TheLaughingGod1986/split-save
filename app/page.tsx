@@ -62,7 +62,7 @@ export default function Home() {
     if (loading) {
       // Even shorter timeout for iPhone Safari
       const isIPhone = isClient && /iPhone/.test(navigator.userAgent)
-      const timeoutDuration = isIPhone ? 2000 : (isClient && (isMobile || isSmallScreen) ? 3000 : 5000)
+      const timeoutDuration = isIPhone ? 1500 : (isClient && (isMobile || isSmallScreen) ? 2000 : 3000)
       
       console.log('⏰ Setting page timeout', { 
         isIPhone, 

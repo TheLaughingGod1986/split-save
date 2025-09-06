@@ -3,9 +3,15 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'example-anon-key'
 
-// Safari-specific Supabase client configuration
+// Use global variables to persist across hot reloads
+declare global {
+  var __safariSupabaseClient: SupabaseClient | undefined
+}
+
+// Safari-specific Supabase client configuration with singleton pattern
 export const safariSupabase = (() => {
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  if (!global.__safariSupabaseClient) {
+    global.__safariSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       // Safari-specific auth configuration
       autoRefreshToken: true,
@@ -62,4 +68,6 @@ export const safariSupabase = (() => {
       }
     }
   })
+  }
+  return global.__safariSupabaseClient
 })()
