@@ -13,6 +13,8 @@ import { AnalyticsView } from './analytics/AnalyticsView'
 import { NotificationManager } from './notifications/NotificationManager'
 import { NotificationDropdown } from './notifications/NotificationDropdown'
 import { MobileNavigation } from './mobile/MobileNavigation'
+import { MobileNavigation as PWAMobileNavigation } from './pwa/MobileNavigation'
+import { useMobilePWA } from './pwa/MobilePWA'
 import { MobileLayout } from './mobile/MobileLayout'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { MoneyHub } from './dashboard/MoneyHub'
@@ -31,6 +33,9 @@ export function SplitsaveApp() {
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  
+  // PWA mobile detection
+  const { isMobile: isPWAMobile, isPWA, isStandalone } = useMobilePWA()
 
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
@@ -841,6 +846,14 @@ export function SplitsaveApp() {
           onNavigateToView={handleNavigation}
           onAchievementUnlocked={handleAchievementUnlocked}
         />
+
+        {/* PWA Mobile Navigation */}
+        {isPWAMobile && (
+          <PWAMobileNavigation
+            currentView={currentView}
+            onViewChange={handleNavigation}
+          />
+        )}
 
     </div>
     </ErrorBoundary>

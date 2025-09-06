@@ -5,6 +5,8 @@ import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
+import { MobilePWA } from '@/components/pwa/MobilePWA'
+import { PWAProvider } from '@/components/pwa/PWAProvider'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -396,13 +398,17 @@ export default function RootLayout({
           `
         }} />
 
-        <AuthProvider>
-          <ThemeProvider>
-            {children}
-            <Analytics />
-            <SpeedInsights />
-          </ThemeProvider>
-        </AuthProvider>
+        <PWAProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <MobilePWA>
+                {children}
+                <Analytics />
+                <SpeedInsights />
+              </MobilePWA>
+            </ThemeProvider>
+          </AuthProvider>
+        </PWAProvider>
       </body>
     </html>
   )
