@@ -8,67 +8,9 @@ declare global {
   var __safariSupabaseClient: SupabaseClient | undefined
 }
 
-// Safari-specific Supabase client configuration with singleton pattern
-// Use the same storage key as the main client to prevent multiple GoTrueClient instances
+// TEMPORARY FIX: Return the regular client to prevent dual instances
 export const safariSupabase = (() => {
-  if (!global.__safariSupabaseClient) {
-    global.__safariSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      // Safari-specific auth configuration
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce', // Use PKCE flow for better Safari security
-      
-      // Safari-specific storage handling
-      storage: typeof window !== 'undefined' ? {
-        getItem: (key: string) => {
-          try {
-            return window.localStorage.getItem(key)
-          } catch (error) {
-            console.warn('🍎 Safari localStorage access failed:', error)
-            return null
-          }
-        },
-        setItem: (key: string, value: string) => {
-          try {
-            window.localStorage.setItem(key, value)
-          } catch (error) {
-            console.warn('🍎 Safari localStorage write failed:', error)
-          }
-        },
-        removeItem: (key: string) => {
-          try {
-            window.localStorage.removeItem(key)
-          } catch (error) {
-            console.warn('🍎 Safari localStorage remove failed:', error)
-          }
-        }
-      } : undefined,
-      
-      storageKey: 'splitsave-auth-token', // Use same storage key as main client
-      
-      // Safari-specific settings
-      debug: false, // Disable debug logging to reduce console noise
-      
-      // Longer timeouts for Safari
-      // Note: refreshTokenRetryAttempts and refreshTokenRetryDelay are not valid options in current Supabase version
-    },
-    
-    // Safari-optimized realtime settings
-    realtime: {
-      params: {
-        eventsPerSecond: 1 // Even fewer events for Safari
-      }
-    },
-    
-    // Safari-specific global settings
-    global: {
-      headers: {
-        'X-Client-Info': 'safari-splitsave'
-      }
-    }
-  })
-  }
-  return global.__safariSupabaseClient
+  // Import the regular client instead of creating a new one
+  const { supabase } = require('./supabase')
+  return supabase
 })()
