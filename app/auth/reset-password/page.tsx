@@ -26,11 +26,23 @@ function ResetPasswordContent() {
       if (session) {
         setIsValidSession(true)
       } else {
-        // Check if we have access token in URL
+        // Check if we have a code parameter (PKCE flow)
+        const code = searchParams.get('code')
         const accessToken = searchParams.get('access_token')
         const refreshToken = searchParams.get('refresh_token')
         
-        if (accessToken && refreshToken) {
+        if (code) {
+          // Handle PKCE flow - exchange code for session
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          
+          if (!error) {
+            setIsValidSession(true)
+          } else {
+            console.error('Code exchange error:', error)
+            setError('Invalid or expired reset link. Please request a new password reset.')
+          }
+        } else if (accessToken && refreshToken) {
+          // Handle legacy flow
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
