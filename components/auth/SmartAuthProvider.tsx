@@ -30,15 +30,14 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
     const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
     const isIOS = /iPad|iPhone|iPod/.test(userAgent)
     
-    // Reduced logging to clean up console
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🍎 SmartAuthProvider: Browser detection', {
-        userAgent: userAgent.substring(0, 100),
-        isSafari: isSafariBrowser,
-        isIOS,
-        shouldUseSafariProvider: isSafariBrowser || isIOS
-      })
-    }
+    // Always log browser detection for debugging
+    console.log('🍎 SmartAuthProvider: Browser detection', {
+      userAgent: userAgent.substring(0, 100),
+      isSafari: isSafariBrowser,
+      isIOS,
+      shouldUseSafariProvider: isSafariBrowser || isIOS,
+      isChrome: /chrome/i.test(userAgent)
+    })
     
     setIsSafari(isSafariBrowser || isIOS)
   }, [])
@@ -57,16 +56,12 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
 
   // Use Safari-specific provider for Safari browsers (including iPhone Safari)
   if (isSafari) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🍎 SmartAuthProvider: Using SafariAuthProvider')
-    }
+    console.log('🍎 SmartAuthProvider: Using SafariAuthProvider')
     return <SafariAuthProvider>{children}</SafariAuthProvider>
   }
 
   // Use regular provider for other browsers
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🌐 SmartAuthProvider: Using regular AuthProvider')
-  }
+  console.log('🌐 SmartAuthProvider: Using regular AuthProvider')
   return <AuthProvider>{children}</AuthProvider>
 }
 

@@ -29,12 +29,10 @@ export function SafariAuthProvider({ children }: { children: React.ReactNode }) 
       const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
       setIsSafari(isSafariBrowser)
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🍎 SafariAuthProvider: Safari detection', {
-          isSafari: isSafariBrowser,
-          userAgent: userAgent.substring(0, 100)
-        })
-      }
+      console.log('🍎 SafariAuthProvider: Safari detection', {
+        isSafari: isSafariBrowser,
+        userAgent: userAgent.substring(0, 100)
+      })
     }
     
     // Safari-specific authentication flow

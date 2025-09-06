@@ -173,12 +173,27 @@ export function LoginForm({ onBack }: LoginFormProps) {
         }
       } else {
         console.log('🔐 Attempting login with:', { email: sanitizedEmail, password: '***' })
+        console.log('🔐 Supabase client info:', {
+          clientType: 'regular',
+          environment: process.env.NODE_ENV
+        })
+        
         const { data, error } = await supabase.auth.signInWithPassword({
           email: sanitizedEmail,
           password,
         })
-        console.log('🔐 Login result:', { success: !!data.user, error: error?.message })
-        if (error) throw error
+        
+        console.log('🔐 Login result:', { 
+          success: !!data.user, 
+          error: error?.message,
+          errorCode: error?.status,
+          userId: data.user?.id 
+        })
+        
+        if (error) {
+          console.error('🔐 Login error details:', error)
+          throw error
+        }
       }
     } catch (error: any) {
       setError(error.message)
