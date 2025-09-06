@@ -172,10 +172,12 @@ export function LoginForm({ onBack }: LoginFormProps) {
           toast.success('Account created successfully! You can now sign in.')
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('🔐 Attempting login with:', { email: sanitizedEmail, password: '***' })
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: sanitizedEmail,
           password,
         })
+        console.log('🔐 Login result:', { success: !!data.user, error: error?.message })
         if (error) throw error
       }
     } catch (error: any) {
