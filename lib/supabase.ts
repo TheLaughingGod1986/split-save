@@ -32,6 +32,17 @@ export const supabase = (() => {
         }
       }
     })
+    
+    // Add global error handler for auth errors
+    global.__supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        console.warn('🔍 Token refresh failed, clearing session')
+        // Clear invalid session
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('splitsave-auth-token')
+        }
+      }
+    })
   }
   return global.__supabaseClient
 })()

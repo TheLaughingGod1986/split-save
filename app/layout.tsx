@@ -7,6 +7,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
 import { MobilePWA } from '@/components/pwa/MobilePWA'
 import { PWAProvider } from '@/components/pwa/PWAProvider'
+import '@/lib/auth-cleanup'
 
 const inter = Inter({ 
   subsets: ['latin'],

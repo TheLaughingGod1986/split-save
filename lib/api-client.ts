@@ -24,6 +24,13 @@ class ApiClient {
         const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
         if (refreshError) {
           console.warn('🔍 API Client - Failed to refresh session:', refreshError)
+          // If refresh fails, clear the session and redirect to login
+          if (refreshError.message?.includes('Invalid Refresh Token') || refreshError.message?.includes('Refresh Token Not Found')) {
+            console.log('🔍 API Client - Invalid refresh token, clearing session')
+            await supabase.auth.signOut()
+            // Don't set authorization header for invalid tokens
+            return headers
+          }
         } else if (refreshedSession?.access_token) {
           headers['Authorization'] = `Bearer ${refreshedSession.access_token}`
           console.log('🔍 API Client - Using refreshed token')
