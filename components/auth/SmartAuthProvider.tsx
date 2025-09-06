@@ -30,19 +30,24 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
     const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
     const isIOS = /iPad|iPhone|iPod/.test(userAgent)
     
-    console.log('🍎 SmartAuthProvider: Browser detection', {
-      userAgent: userAgent.substring(0, 100),
-      isSafari: isSafariBrowser,
-      isIOS,
-      shouldUseSafariProvider: isSafariBrowser || isIOS
-    })
+    // Reduced logging to clean up console
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🍎 SmartAuthProvider: Browser detection', {
+        userAgent: userAgent.substring(0, 100),
+        isSafari: isSafariBrowser,
+        isIOS,
+        shouldUseSafariProvider: isSafariBrowser || isIOS
+      })
+    }
     
     setIsSafari(isSafariBrowser || isIOS)
   }, [])
 
   // Show loading while detecting browser, but don't hide children
   if (!isClient || isSafari === null) {
-    console.log('🔄 SmartAuthProvider: Still detecting browser', { isClient, isSafari })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 SmartAuthProvider: Still detecting browser', { isClient, isSafari })
+    }
     return (
       <AuthContext.Provider value={{ user: null, loading: true, signOut: async () => {} }}>
         {children}
@@ -52,12 +57,16 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
 
   // Use Safari-specific provider for Safari browsers (including iPhone Safari)
   if (isSafari) {
-    console.log('🍎 SmartAuthProvider: Using SafariAuthProvider')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🍎 SmartAuthProvider: Using SafariAuthProvider')
+    }
     return <SafariAuthProvider>{children}</SafariAuthProvider>
   }
 
   // Use regular provider for other browsers
-  console.log('🌐 SmartAuthProvider: Using regular AuthProvider')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🌐 SmartAuthProvider: Using regular AuthProvider')
+  }
   return <AuthProvider>{children}</AuthProvider>
 }
 

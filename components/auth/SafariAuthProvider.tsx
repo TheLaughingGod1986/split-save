@@ -29,16 +29,20 @@ export function SafariAuthProvider({ children }: { children: React.ReactNode }) 
       const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
       setIsSafari(isSafariBrowser)
       
-      console.log('🍎 SafariAuthProvider: Safari detection', {
-        isSafari: isSafariBrowser,
-        userAgent: userAgent.substring(0, 100)
-      })
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🍎 SafariAuthProvider: Safari detection', {
+          isSafari: isSafariBrowser,
+          userAgent: userAgent.substring(0, 100)
+        })
+      }
     }
     
     // Safari-specific authentication flow
     const initializeAuth = async () => {
       try {
-        console.log('🍎 SafariAuthProvider: Starting Safari-specific auth flow')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🍎 SafariAuthProvider: Starting Safari-specific auth flow')
+        }
         
         // For Safari, we need to be more careful with localStorage access
         let session = null

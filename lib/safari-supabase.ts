@@ -9,6 +9,7 @@ declare global {
 }
 
 // Safari-specific Supabase client configuration with singleton pattern
+// Use the same storage key as the main client to prevent multiple GoTrueClient instances
 export const safariSupabase = (() => {
   if (!global.__safariSupabaseClient) {
     global.__safariSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -45,10 +46,10 @@ export const safariSupabase = (() => {
         }
       } : undefined,
       
-      storageKey: 'splitsave-safari-auth-token',
+      storageKey: 'splitsave-auth-token', // Use same storage key as main client
       
       // Safari-specific settings
-      debug: process.env.NODE_ENV === 'development',
+      debug: false, // Disable debug logging to reduce console noise
       
       // Longer timeouts for Safari
       // Note: refreshTokenRetryAttempts and refreshTokenRetryDelay are not valid options in current Supabase version

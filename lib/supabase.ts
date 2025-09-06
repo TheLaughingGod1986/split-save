@@ -23,7 +23,7 @@ export const supabase = (() => {
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         storageKey: 'splitsave-auth-token',
         // Mobile-optimized settings
-        debug: process.env.NODE_ENV === 'development'
+        debug: false // Disable debug logging to reduce console noise
       },
       // Mobile-optimized realtime settings
       realtime: {
