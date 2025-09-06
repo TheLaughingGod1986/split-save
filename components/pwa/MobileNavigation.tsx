@@ -48,7 +48,7 @@ export function MobileNavigation({ currentView, onViewChange }: MobileNavigation
       </div>
 
       {/* Mobile Top Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 ${isStandalone ? 'pt-safe' : ''}`}>
+      <div className={`fixed top-0 left-0 right-0 z-30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 ${isStandalone ? 'pt-safe' : ''}`}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">

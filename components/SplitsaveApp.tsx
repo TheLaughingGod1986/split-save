@@ -517,12 +517,19 @@ export function SplitsaveApp() {
     
     // Failsafe: Force loading to false after 5 seconds (reduced from 10)
     const failsafeTimeout = setTimeout(() => {
-      console.log('Failsafe timeout: forcing loading to false')
+      console.log('🔍 Failsafe timeout: forcing loading to false')
       setLoading(false)
     }, 5000)
     
+    // Mobile-specific failsafe: Force loading to false after 3 seconds on mobile
+    const mobileFailsafeTimeout = isPWAMobile ? setTimeout(() => {
+      console.log('🔍 Mobile failsafe: forcing loading to false')
+      setLoading(false)
+    }, 3000) : null
+    
     return () => {
       clearTimeout(failsafeTimeout)
+      if (mobileFailsafeTimeout) clearTimeout(mobileFailsafeTimeout)
       subscription.unsubscribe()
     }
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
@@ -530,6 +537,14 @@ export function SplitsaveApp() {
 
 
   // Show loading state
+  console.log('🔍 SplitsaveApp loading check:', { 
+    loading, 
+    showLoadingScreen, 
+    hasUser: !!user,
+    isProfileComplete,
+    profileCompletionShown
+  })
+  
   if (loading || showLoadingScreen) {
   return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex flex-col items-center justify-center p-4">

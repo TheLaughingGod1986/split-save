@@ -168,6 +168,8 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+          /* Ensure no white overlay */
+          background: transparent !important;
         }
         
         .mobile-device input,
@@ -199,6 +201,17 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
           }
+          
+          /* Ensure main content is visible */
+          .mobile-device main {
+            background: transparent !important;
+            z-index: 1;
+          }
+          
+          /* Fix any potential white overlays */
+          .mobile-device > div {
+            background: transparent !important;
+          }
         }
         
         /* iOS specific fixes */
@@ -206,6 +219,16 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           .mobile-device {
             -webkit-overflow-scrolling: touch;
           }
+        }
+        
+        /* Ensure PWA components don't create white overlays */
+        .pwa-mobile-navigation {
+          background: transparent !important;
+        }
+        
+        /* Fix any white background issues */
+        .mobile-device .bg-white {
+          background: transparent !important;
         }
       `
       document.head.appendChild(style)
