@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { safariSupabase as supabase } from '@/lib/safari-supabase'
+import { supabase } from '@/lib/supabase' // Use regular client instead of Safari client
 import type { User } from '@supabase/supabase-js'
 import { toast } from '@/lib/toast'
 

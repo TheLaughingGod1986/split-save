@@ -30,16 +30,21 @@ export function SmartAuthProvider({ children }: { children: React.ReactNode }) {
     const isSafariBrowser = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
     const isIOS = /iPad|iPhone|iPod/.test(userAgent)
     
+    // TEMPORARY FIX: Force use of regular auth provider to avoid dual clients
+    const forceRegularProvider = true
+    
     // Always log browser detection for debugging
     console.log('🍎 SmartAuthProvider: Browser detection', {
       userAgent: userAgent.substring(0, 100),
       isSafari: isSafariBrowser,
       isIOS,
       shouldUseSafariProvider: isSafariBrowser || isIOS,
-      isChrome: /chrome/i.test(userAgent)
+      isChrome: /chrome/i.test(userAgent),
+      forceRegularProvider
     })
     
-    setIsSafari(isSafariBrowser || isIOS)
+    // TEMPORARY FIX: Always use regular provider to avoid dual clients
+    setIsSafari(false)
   }, [])
 
   // Show loading while detecting browser, but don't hide children
