@@ -521,15 +521,22 @@ export function SplitsaveApp() {
       setLoading(false)
     }, 5000)
     
-    // Mobile-specific failsafe: Force loading to false after 3 seconds on mobile
+    // Mobile-specific failsafe: Force loading to false after 2 seconds on mobile
     const mobileFailsafeTimeout = isPWAMobile ? setTimeout(() => {
       console.log('🔍 Mobile failsafe: forcing loading to false')
       setLoading(false)
-    }, 3000) : null
+    }, 2000) : null
+    
+    // Ultra-aggressive mobile failsafe: Force loading to false after 1 second
+    const ultraMobileFailsafeTimeout = isPWAMobile ? setTimeout(() => {
+      console.log('🔍 Ultra mobile failsafe: forcing loading to false')
+      setLoading(false)
+    }, 1000) : null
     
     return () => {
       clearTimeout(failsafeTimeout)
       if (mobileFailsafeTimeout) clearTimeout(mobileFailsafeTimeout)
+      if (ultraMobileFailsafeTimeout) clearTimeout(ultraMobileFailsafeTimeout)
       subscription.unsubscribe()
     }
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops

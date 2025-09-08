@@ -130,28 +130,22 @@ interface MobileOptimizationsProps {
 
 function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizationsProps) {
   useEffect(() => {
-    // Add mobile-specific event listeners
+    // Add mobile-specific event listeners (disabled to allow scrolling)
     const handleTouchStart = (e: TouchEvent) => {
-      // Prevent zoom on double tap
+      // Only prevent zoom on multi-touch, allow single touch scrolling
       if (e.touches.length > 1) {
         e.preventDefault()
       }
     }
 
-    const handleTouchMove = (e: TouchEvent) => {
-      // Prevent pull-to-refresh on mobile
-      if (e.touches.length === 1 && e.touches[0].clientY > 100) {
-        e.preventDefault()
-      }
-    }
+    // Remove touchmove handler that was preventing scrolling
+    // Allow natural scrolling behavior
 
     // Add passive event listeners for better performance
-    document.addEventListener('touchstart', handleTouchStart, { passive: false })
-    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+    document.addEventListener('touchstart', handleTouchStart, { passive: true })
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart)
-      document.removeEventListener('touchmove', handleTouchMove)
     }
   }, [])
 
@@ -163,6 +157,7 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
         /* Mobile-specific styles */
         .mobile-device {
           -webkit-touch-callout: none;
+          /* Allow text selection for inputs and textareas */
           -webkit-user-select: none;
           -khtml-user-select: none;
           -moz-user-select: none;
@@ -170,6 +165,9 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           user-select: none;
           /* Ensure no white overlay */
           background: transparent !important;
+          /* Enable scrolling */
+          overflow: auto !important;
+          -webkit-overflow-scrolling: touch !important;
         }
         
         .mobile-device input,
@@ -229,6 +227,27 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
         /* Fix any white background issues */
         .mobile-device .bg-white {
           background: transparent !important;
+        }
+        
+        /* Ensure body and html allow scrolling */
+        .mobile-device body,
+        .mobile-device html {
+          overflow: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          height: auto !important;
+          min-height: 100vh !important;
+        }
+        
+        /* Fix any fixed positioning issues */
+        .mobile-device .fixed {
+          position: fixed !important;
+        }
+        
+        /* Ensure main content is scrollable */
+        .mobile-device main {
+          overflow: visible !important;
+          height: auto !important;
+          min-height: calc(100vh - 120px) !important;
         }
       `
       document.head.appendChild(style)
