@@ -223,6 +223,28 @@ export default function RootLayout({
             })
           }}
         />
+        
+        {/* IMMEDIATE MOBILE FIX - Prevent white screen */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* IMMEDIATE FIX - Prevent white screen on mobile */
+            html, body {
+              background: #f9fafb !important;
+              background-color: #f9fafb !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            
+            /* Force immediate background for mobile */
+            @media screen and (max-width: 768px) {
+              html, body, body > div {
+                background: #f9fafb !important;
+                background-color: #f9fafb !important;
+                min-height: 100vh !important;
+              }
+            }
+          `
+        }} />
       </head>
       <body className="antialiased">
         {/* EMERGENCY TEST REMOVED - Using direct mobile bypass instead */}

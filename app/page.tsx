@@ -69,20 +69,24 @@ export default function Home() {
   // Force show landing page after shorter time if still loading (especially on mobile)
   useEffect(() => {
     if (loading) {
-      // Even shorter timeout for iPhone Safari
+      // ULTRA-AGGRESSIVE timeout for mobile devices
       const isIPhone = isClient && /iPhone/.test(navigator.userAgent)
-      const timeoutDuration = isIPhone ? 1500 : (isClient && (isMobile || isSmallScreen) ? 2000 : 3000)
+      const isMobileDevice = isClient && (isMobile || isSmallScreen)
       
-      console.log('⏰ Setting page timeout', { 
+      // Ultra-short timeouts for mobile
+      const timeoutDuration = isIPhone ? 500 : (isMobileDevice ? 800 : 3000)
+      
+      console.log('⏰ Setting ULTRA-AGGRESSIVE page timeout', { 
         isIPhone, 
         isMobile, 
-        isSmallScreen, 
+        isSmallScreen,
+        isMobileDevice,
         timeoutDuration,
         userAgent: isClient ? navigator.userAgent.substring(0, 50) : 'N/A'
       })
       
       const timeout = setTimeout(() => {
-        console.log('⚠️ Page timeout: forcing landing page display', { isMobile, isSmallScreen, isIPhone, timeoutDuration })
+        console.log('⚠️ ULTRA-AGGRESSIVE timeout: forcing landing page display', { isMobile, isSmallScreen, isIPhone, isMobileDevice, timeoutDuration })
         setForceShowLanding(true)
       }, timeoutDuration)
       

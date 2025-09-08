@@ -149,10 +149,52 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
     }
   }, [])
 
-  // Add mobile-specific styles
+  // Add mobile-specific styles - IMMEDIATE injection to prevent white screen
   useEffect(() => {
     if (typeof document !== 'undefined') {
+      // IMMEDIATE CSS injection to prevent white screen
+      const immediateStyle = document.createElement('style')
+      immediateStyle.id = 'mobile-immediate-fix'
+      immediateStyle.textContent = `
+        /* IMMEDIATE MOBILE FIX - Prevent white screen */
+        html, body {
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+        }
+        
+        /* Force body to show content immediately */
+        body > div {
+          background: #f9fafb !important;
+          min-height: 100vh !important;
+        }
+        
+        /* Mobile device specific fixes */
+        .mobile-device {
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
+        }
+        
+        .mobile-device * {
+          background-color: transparent !important;
+        }
+        
+        .mobile-device .bg-white,
+        .mobile-device .bg-gray-50,
+        .mobile-device .bg-slate-50 {
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
+        }
+      `
+      document.head.appendChild(immediateStyle)
+
+      // Main mobile styles
       const style = document.createElement('style')
+      style.id = 'mobile-main-styles'
       style.textContent = `
         /* Mobile-specific styles */
         .mobile-device {
@@ -164,7 +206,8 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           -ms-user-select: none;
           user-select: none;
           /* Ensure no white overlay */
-          background: transparent !important;
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
           /* Enable scrolling */
           overflow: auto !important;
           -webkit-overflow-scrolling: touch !important;
@@ -198,17 +241,27 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           .mobile-device {
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
+            background: #f9fafb !important;
+            background-color: #f9fafb !important;
           }
           
           /* Ensure main content is visible */
           .mobile-device main {
-            background: transparent !important;
+            background: #f9fafb !important;
+            background-color: #f9fafb !important;
             z-index: 1;
           }
           
           /* Fix any potential white overlays */
           .mobile-device > div {
-            background: transparent !important;
+            background: #f9fafb !important;
+            background-color: #f9fafb !important;
+          }
+          
+          /* Force all containers to have proper background */
+          .mobile-device .min-h-screen {
+            background: #f9fafb !important;
+            background-color: #f9fafb !important;
           }
         }
         
@@ -216,6 +269,8 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
         @supports (-webkit-touch-callout: none) {
           .mobile-device {
             -webkit-overflow-scrolling: touch;
+            background: #f9fafb !important;
+            background-color: #f9fafb !important;
           }
         }
         
@@ -226,7 +281,8 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
         
         /* Fix any white background issues */
         .mobile-device .bg-white {
-          background: transparent !important;
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
         }
         
         /* Ensure body and html allow scrolling */
@@ -236,6 +292,8 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           -webkit-overflow-scrolling: touch !important;
           height: auto !important;
           min-height: 100vh !important;
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
         }
         
         /* Fix any fixed positioning issues */
@@ -248,12 +306,23 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           overflow: visible !important;
           height: auto !important;
           min-height: calc(100vh - 120px) !important;
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
+        }
+        
+        /* Force loading screens to have proper background */
+        .mobile-device .bg-gradient-to-br {
+          background: #f9fafb !important;
+          background-color: #f9fafb !important;
         }
       `
       document.head.appendChild(style)
 
       return () => {
-        document.head.removeChild(style)
+        const immediateStyleEl = document.getElementById('mobile-immediate-fix')
+        const mainStyleEl = document.getElementById('mobile-main-styles')
+        if (immediateStyleEl) document.head.removeChild(immediateStyleEl)
+        if (mainStyleEl) document.head.removeChild(mainStyleEl)
       }
     }
   }, [])
