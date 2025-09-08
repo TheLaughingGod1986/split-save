@@ -145,16 +145,6 @@ export default function Home() {
         <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
         <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
         <LandingPage />
-        {/* Debug overlay for mobile */}
-        <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded z-50">
-          <div>Mobile: {isMobile ? 'Yes' : 'No'}</div>
-          <div>Small: {isSmallScreen ? 'Yes' : 'No'}</div>
-          <div>Loading: {loading ? 'Yes' : 'No'}</div>
-          <div>User: {user ? 'Yes' : 'No'}</div>
-          <div>Force: {forceShowLanding ? 'Yes' : 'No'}</div>
-          <div>Emergency: {emergencyFallback ? 'Yes' : 'No'}</div>
-          <div>EMERGENCY MODE: ACTIVE</div>
-        </div>
       </>
     )
   }
@@ -227,15 +217,6 @@ export default function Home() {
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
           <LandingPage />
-          {/* Debug overlay for mobile */}
-          <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded z-50">
-            <div>Mobile: {isMobile ? 'Yes' : 'No'}</div>
-            <div>Small: {isSmallScreen ? 'Yes' : 'No'}</div>
-            <div>Loading: {loading ? 'Yes' : 'No'}</div>
-            <div>User: {user ? 'Yes' : 'No'}</div>
-            <div>Force: {forceShowLanding ? 'Yes' : 'No'}</div>
-            <div>Emergency: {emergencyFallback ? 'Yes' : 'No'}</div>
-          </div>
         </>
       )
     }
@@ -276,17 +257,6 @@ export default function Home() {
         <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
         <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
         <LandingPage />
-        {/* Debug overlay for mobile */}
-        {isClient && (isMobile || isSmallScreen) && (
-          <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded z-50">
-            <div>Mobile: {isMobile ? 'Yes' : 'No'}</div>
-            <div>Small: {isSmallScreen ? 'Yes' : 'No'}</div>
-            <div>Loading: {loading ? 'Yes' : 'No'}</div>
-            <div>User: {user ? 'Yes' : 'No'}</div>
-            <div>Force: {forceShowLanding ? 'Yes' : 'No'}</div>
-            <div>Emergency: {emergencyFallback ? 'Yes' : 'No'}</div>
-          </div>
-        )}
       </>
     )
   }
@@ -306,17 +276,6 @@ export default function Home() {
   return (
     <>
       <SplitsaveApp />
-      {/* Debug overlay for mobile */}
-      {isClient && (isMobile || isSmallScreen) && (
-        <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded z-50">
-          <div>Mobile: {isMobile ? 'Yes' : 'No'}</div>
-          <div>Small: {isSmallScreen ? 'Yes' : 'No'}</div>
-          <div>Loading: {loading ? 'Yes' : 'No'}</div>
-          <div>User: {user ? 'Yes' : 'No'}</div>
-          <div>Force: {forceShowLanding ? 'Yes' : 'No'}</div>
-          <div>Emergency: {emergencyFallback ? 'Yes' : 'No'}</div>
-        </div>
-      )}
     </>
   )
 }
