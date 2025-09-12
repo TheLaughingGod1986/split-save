@@ -27,11 +27,16 @@ export default function Home() {
   }, [user, loading])
 
   // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
-  // Use direct user agent check instead of mobile detection hook
-  const isMobileDevice = typeof window !== 'undefined' && (
-    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent) ||
-    window.innerWidth <= 768
-  )
+  // Use state to prevent hydration mismatches
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mobileCheck = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent) ||
+        window.innerWidth <= 768
+      setIsMobileDevice(mobileCheck)
+    }
+  }, [])
 
   useEffect(() => {
     if (!loading && !analyticsTracked.current) {

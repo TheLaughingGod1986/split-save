@@ -1,7 +1,4 @@
--- Create a demo user for easy testing
--- This user will have a simple email and password for testing purposes
-
--- First, create the user in auth.users
+-- Create a test user for development
 INSERT INTO auth.users (
   id,
   email,
@@ -17,20 +14,20 @@ INSERT INTO auth.users (
   email_change_token_new,
   recovery_token
 ) VALUES (
-  '12345678-1234-1234-1234-123456789012',
-  'demo@splitsave.com',
-  crypt('demo123', gen_salt('bf')),
+  gen_random_uuid(),
+  'test@splitsave.com',
+  crypt('test123', gen_salt('bf')),
   now(),
   now(),
   now(),
   '{"provider":"email","providers":["email"]}',
-  '{"name":"Demo User"}',
+  '{"name":"Test User"}',
   false,
   '',
   '',
   '',
   ''
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT (email) DO NOTHING;
 
 -- Create corresponding public.users record
 INSERT INTO public.users (
@@ -40,14 +37,17 @@ INSERT INTO public.users (
   created_at,
   updated_at,
   last_seen
-) VALUES (
-  '12345678-1234-1234-1234-123456789012',
-  'Demo User',
-  'demo@splitsave.com',
+) 
+SELECT 
+  id,
+  'Test User',
+  email,
   now(),
   now(),
   now()
-) ON CONFLICT (id) DO NOTHING;
+FROM auth.users 
+WHERE email = 'test@splitsave.com'
+ON CONFLICT (id) DO NOTHING;
 
 -- Create user profile
 INSERT INTO public.user_profiles (
@@ -56,10 +56,13 @@ INSERT INTO public.user_profiles (
   currency,
   created_at,
   updated_at
-) VALUES (
-  '12345678-1234-1234-1234-123456789012',
+) 
+SELECT 
+  id,
   'US',
   'USD',
   now(),
   now()
-) ON CONFLICT (user_id) DO NOTHING;
+FROM auth.users 
+WHERE email = 'test@splitsave.com'
+ON CONFLICT (user_id) DO NOTHING;

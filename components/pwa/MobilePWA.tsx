@@ -13,12 +13,25 @@ export function MobilePWA({ children }: MobilePWAProps) {
   const [isPWA, setIsPWA] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
   const [showMobileOptimizations, setShowMobileOptimizations] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    setIsClient(true)
+
     const checkMobile = () => {
       const userAgent = navigator.userAgent.toLowerCase()
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
       setIsMobile(isMobileDevice)
+      
+      // Show mobile optimizations for mobile users
+      if (isMobileDevice) {
+        setShowMobileOptimizations(true)
+      }
     }
 
     const checkPWA = () => {
@@ -28,16 +41,11 @@ export function MobilePWA({ children }: MobilePWAProps) {
 
     checkMobile()
     checkPWA()
-
-    // Show mobile optimizations for mobile users
-    if (isMobile) {
-      setShowMobileOptimizations(true)
-    }
-  }, [isMobile])
+  }, []) // Remove dependencies to prevent infinite re-renders
 
   // Add mobile-specific meta tags and viewport settings
   useEffect(() => {
-    if (isMobile && typeof document !== 'undefined') {
+    if (isMobile && typeof window !== 'undefined' && typeof document !== 'undefined') {
       // Set viewport meta tag for mobile
       let viewport = document.querySelector('meta[name="viewport"]')
       if (!viewport) {
@@ -105,10 +113,15 @@ export function MobilePWA({ children }: MobilePWAProps) {
       {children}
       
       {/* PWA Status Indicator */}
-      <PWAStatus />
-      
-      {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
+      {/* Only render PWA components on client side */}
+      {isClient && (
+        <>
+          <PWAStatus />
+          
+          {/* PWA Install Prompt */}
+          <PWAInstallPrompt />
+        </>
+      )}
       
       {/* Mobile-specific optimizations */}
       {showMobileOptimizations && (
@@ -335,8 +348,16 @@ export function useMobilePWA() {
   const [isMobile, setIsMobile] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    setIsClient(true)
+
     const checkMobile = () => {
       const userAgent = navigator.userAgent.toLowerCase()
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
@@ -356,6 +377,7 @@ export function useMobilePWA() {
     isMobile,
     isPWA,
     isStandalone,
-    isMobilePWA: isMobile && isPWA
+    isMobilePWA: isMobile && isPWA,
+    isClient
   }
 }

@@ -408,6 +408,11 @@ export function SplitsaveApp() {
 
   // Initialize theme from localStorage and detect mobile
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return
+    }
+
     const savedTheme = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const shouldUseDark = savedTheme === 'dark' || (!savedTheme && prefersDark)

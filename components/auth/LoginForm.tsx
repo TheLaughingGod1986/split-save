@@ -26,6 +26,16 @@ export function LoginForm({ onBack }: LoginFormProps) {
   const [showResendConfirmation, setShowResendConfirmation] = useState(false)
   const [confirmationEmailSent, setConfirmationEmailSent] = useState(false)
 
+  // Check if Supabase is configured
+  const [supabaseConfigured, setSupabaseConfigured] = useState(true)
+  
+  useEffect(() => {
+    // Check if we're using placeholder Supabase configuration
+    const isConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && 
+                        process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co')
+    setSupabaseConfigured(isConfigured)
+  }, [])
+
   // Auto-focus email field on mobile for better UX
   useEffect(() => {
     const emailInput = document.getElementById('email')
@@ -196,8 +206,17 @@ export function LoginForm({ onBack }: LoginFormProps) {
         }
       }
     } catch (error: any) {
-      setError(error.message)
-      toast.error(error.message)
+      console.error('🔐 Login error details:', error)
+      
+      // Handle specific Supabase configuration errors
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+        const errorMessage = 'Supabase is not configured. Please check your environment variables.'
+        setError(errorMessage)
+        toast.error(errorMessage)
+      } else {
+        setError(error.message)
+        toast.error(error.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -229,6 +248,29 @@ export function LoginForm({ onBack }: LoginFormProps) {
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
           The smart way for couples and partners to manage shared expenses and build financial harmony together
         </p>
+        
+        {/* Development Notice */}
+        {!supabaseConfigured && (
+          <div className="mt-6 max-w-md mx-auto">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Development Mode
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                    <p>Supabase is not configured. Authentication will not work until you set up your environment variables.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Social Proof */}
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500 dark:text-gray-400">
