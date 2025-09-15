@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Session Data</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 20px; background: #f3f4f6; 
+            display: flex; align-items: center; justify-content: center; min-height: 100vh;
+        }
+        .container { 
+            text-align: center; background: white; padding: 40px; 
+            border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+        .icon { font-size: 48px; margin-bottom: 20px; }
+        h1 { color: #374151; margin-bottom: 16px; }
+        p { color: #6b7280; margin-bottom: 24px; }
+        .button { 
+            background: #3b82f6; color: white; border: none; 
+            padding: 12px 24px; border-radius: 8px; cursor: pointer;
+            font-size: 16px; margin: 8px;
+        }
+        .button.danger { background: #ef4444; }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .info { color: #6b7280; font-size: 14px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🧹</div>
+        <h1>Clear Session Data</h1>
+        <p>This will clear all authentication data and force a fresh login with the local development server.</p>
+        
+        <button class="button" id="clearButton">Clear All Data</button>
+        <button class="button danger" id="nuclearButton">Nuclear Clear (All Sites)</button>
+        
+        <p id="status"></p>
+        
+        <div class="info">
+            <strong>What this clears:</strong><br>
+            • Local Storage<br>
+            • Session Storage<br>
+            • Cookies<br>
+            • Service Worker Cache<br>
+            • IndexedDB
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('clearButton').addEventListener('click', () => {
+            clearSessionData(false)
+        })
+        
+        document.getElementById('nuclearButton').addEventListener('click', () => {
+            clearSessionData(true)
+        })
+        
+        async function clearSessionData(nuclear = false) {
+            const statusEl = document.getElementById('status')
+            statusEl.className = ''
+            statusEl.textContent = 'Clearing data...'
+            
+            try {
+                // Clear Local Storage
+                localStorage.clear()
+                console.log('✅ Local Storage cleared')
+                
+                // Clear Session Storage
+                sessionStorage.clear()
+                console.log('✅ Session Storage cleared')
+                
+                // Clear Cookies
+                document.cookie.split(";").forEach((c) => {
+                    document.cookie = c
+                        .replace(/^ +/, "")
+                        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+                })
+                console.log('✅ Cookies cleared')
+                
+                // Clear Service Worker Cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys()
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    )
+                    console.log('✅ Service Worker caches cleared')
+                }
+                
+                // Clear IndexedDB
+                if ('indexedDB' in window) {
+                    try {
+                        // List all databases and delete them
+                        const databases = await indexedDB.databases()
+                        await Promise.all(
+                            databases.map(db => {
+                                return new Promise((resolve, reject) => {
+                                    const deleteReq = indexedDB.deleteDatabase(db.name)
+                                    deleteReq.onsuccess = () => resolve()
+                                    deleteReq.onerror = () => reject(deleteReq.error)
+                                })
+                            })
+                        )
+                        console.log('✅ IndexedDB cleared')
+                    } catch (e) {
+                        console.warn('Could not clear IndexedDB:', e)
+                    }
+                }
+                
+                // Unregister Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations()
+                    await Promise.all(
+                        registrations.map(registration => registration.unregister())
+                    )
+                    console.log('✅ Service Workers unregistered')
+                }
+                
+                statusEl.className = 'success'
+                statusEl.textContent = '✅ All data cleared successfully! Redirecting to localhost:3000...'
+                
+                // Redirect to localhost:3000
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:3000'
+                }, 2000)
+                
+            } catch (e) {
+                console.error('Error clearing data:', e)
+                statusEl.className = 'error'
+                statusEl.textContent = '❌ Error clearing data. Check console for details.'
+            }
+        }
+    </script>
+</body>
+</html>

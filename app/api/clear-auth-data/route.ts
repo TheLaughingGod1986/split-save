@@ -1,43 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AuthCleanup } from '@/lib/auth-cleanup'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('🧹 Manual auth cleanup requested')
+    // Clear the current session
+    const { error } = await supabase.auth.signOut()
     
-    await AuthCleanup.clearAllAuthData()
+    if (error) {
+      console.error('Error clearing session:', error)
+      return NextResponse.json({ error: 'Failed to clear session' }, { status: 500 })
+    }
     
-    return NextResponse.json({
-      success: true,
-      message: 'Authentication data cleared successfully'
-    })
-    
+    return NextResponse.json({ success: true, message: 'Session cleared successfully' })
   } catch (error) {
-    console.error('❌ Error clearing auth data:', error)
-    return NextResponse.json({ 
-      error: 'Failed to clear auth data',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
-  }
-}
-
-export async function GET(req: NextRequest) {
-  try {
-    console.log('🔍 Checking session validity')
-    
-    const isValid = await AuthCleanup.isSessionValid()
-    
-    return NextResponse.json({
-      success: true,
-      sessionValid: isValid,
-      message: isValid ? 'Session is valid' : 'Session is invalid'
-    })
-    
-  } catch (error) {
-    console.error('❌ Error checking session:', error)
-    return NextResponse.json({ 
-      error: 'Failed to check session',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error('Clear session error:', error)
+    return NextResponse.json({ error: 'Failed to clear session' }, { status: 500 })
   }
 }
