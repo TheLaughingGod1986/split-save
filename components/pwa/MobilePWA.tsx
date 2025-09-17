@@ -145,17 +145,20 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
   useEffect(() => {
     // Add mobile-specific event listeners (disabled to allow scrolling)
     const handleTouchStart = (e: TouchEvent) => {
-      // Only prevent zoom on multi-touch, allow single touch scrolling
+      // FIXED: Don't prevent any touch events to allow proper button interactions
+      // Only prevent zoom on multi-touch gestures, but allow all single touches
       if (e.touches.length > 1) {
         e.preventDefault()
       }
+      // Allow single touch events to bubble normally for button clicks
     }
 
     // Remove touchmove handler that was preventing scrolling
     // Allow natural scrolling behavior
 
     // Add passive event listeners for better performance
-    document.addEventListener('touchstart', handleTouchStart, { passive: true })
+    // FIXED: Use passive: false to allow preventDefault when needed, but only for multi-touch
+    document.addEventListener('touchstart', handleTouchStart, { passive: false })
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart)
@@ -211,13 +214,14 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
       style.textContent = `
         /* Mobile-specific styles */
         .mobile-device {
-          -webkit-touch-callout: none;
-          /* Allow text selection for inputs and textareas */
-          -webkit-user-select: none;
-          -khtml-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
+          /* FIXED: Allow touch interactions and callouts for buttons */
+          -webkit-touch-callout: auto;
+          /* FIXED: Allow user selection for better accessibility */
+          -webkit-user-select: auto;
+          -khtml-user-select: auto;
+          -moz-user-select: auto;
+          -ms-user-select: auto;
+          user-select: auto;
           /* Ensure no white overlay */
           background: #f9fafb !important;
           background-color: #f9fafb !important;
@@ -233,6 +237,31 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           -moz-user-select: text;
           -ms-user-select: text;
           user-select: text;
+        }
+        
+        /* FIXED: Ensure buttons and interactive elements work properly */
+        .mobile-device button,
+        .mobile-device [role="button"],
+        .mobile-device .cursor-pointer {
+          -webkit-touch-callout: default;
+          -webkit-user-select: none;
+          pointer-events: auto !important;
+          touch-action: manipulation;
+          cursor: pointer;
+        }
+        
+        /* FIXED: Ensure no invisible overlays block interactions */
+        .mobile-device *::before,
+        .mobile-device *::after {
+          pointer-events: none;
+        }
+        
+        /* FIXED: Allow button pseudo-elements to be interactive */
+        .mobile-device button::before,
+        .mobile-device button::after,
+        .mobile-device [role="button"]::before,
+        .mobile-device [role="button"]::after {
+          pointer-events: auto;
         }
         
         /* PWA standalone mode styles */
