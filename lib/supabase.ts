@@ -29,16 +29,51 @@ export const supabase = (() => {
     } else {
       global.__supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          // Mobile-specific auth configuration
+          // PWA-optimized auth configuration
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: true,
-          flowType: 'pkce', // Use PKCE flow for better mobile security
-          // Shorter timeout for mobile
-          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          flowType: 'pkce', // Use PKCE flow for better security
+          // Custom storage implementation for PWA compatibility
+          storage: typeof window !== 'undefined' ? {
+            getItem: (key: string) => {
+              try {
+                return window.localStorage.getItem(key)
+              } catch {
+                // Fallback to sessionStorage if localStorage is blocked
+                try {
+                  return window.sessionStorage.getItem(key)
+                } catch {
+                  return null
+                }
+              }
+            },
+            setItem: (key: string, value: string) => {
+              try {
+                window.localStorage.setItem(key, value)
+              } catch {
+                // Fallback to sessionStorage if localStorage is blocked
+                try {
+                  window.sessionStorage.setItem(key, value)
+                } catch {
+                  console.warn('Both localStorage and sessionStorage are blocked')
+                }
+              }
+            },
+            removeItem: (key: string) => {
+              try {
+                window.localStorage.removeItem(key)
+              } catch {
+                try {
+                  window.sessionStorage.removeItem(key)
+                } catch {
+                  // Ignore if both are blocked
+                }
+              }
+            }
+          } : undefined,
           storageKey: 'splitsave-auth-token',
-          // Mobile-optimized settings
-          debug: false // Disable debug logging to reduce console noise
+          debug: true // Enable debug for troubleshooting
         },
         // Mobile-optimized realtime settings
         realtime: {
