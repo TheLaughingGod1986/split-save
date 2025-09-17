@@ -357,11 +357,25 @@ export default function RootLayout({
               if (isMobile || isIPhone || isIPad) {
                 console.log('📱 Mobile device detected, setting up emergency fallback');
                 
-                // Show fallback immediately
+                // Only show fallback if the page seems to be stuck loading
                 const fallback = document.getElementById('iphone-fallback');
                 if (fallback) {
-                  console.log('✅ Fallback element found, showing it');
-                  fallback.style.display = 'block';
+                  console.log('✅ Fallback element found, will show after delay if needed');
+                  
+                  // Wait 1 second before showing fallback to give React a chance to load
+                  setTimeout(function() {
+                    // Only show if no content is visible yet
+                    const hasContent = document.querySelector('.min-h-screen') ||
+                                     document.querySelector('[class*="bg-gray"]') ||
+                                     document.querySelector('[data-reactroot]');
+                    
+                    if (!hasContent && fallback) {
+                      console.log('⚠️ No content detected after 1s, showing fallback');
+                      fallback.style.display = 'block';
+                    } else {
+                      console.log('✅ Content detected, skipping fallback');
+                    }
+                  }, 1000);
                 } else {
                   console.error('❌ Fallback element not found!');
                 }
@@ -378,25 +392,42 @@ export default function RootLayout({
                   console.error('❌ Refresh button not found!');
                 }
                 
-                // Hide fallback when React loads (after 2 seconds for mobile)
-                setTimeout(function() {
-                  console.log('⏰ 2s timeout - checking if React loaded');
-                  if (fallback && window.React) {
-                    console.log('✅ React detected, hiding fallback');
+                // Hide fallback when React loads (check more frequently)
+                const checkReactLoaded = function() {
+                  console.log('⏰ Checking if React/app loaded');
+                  
+                  // Check for multiple indicators that the app has loaded
+                  const reactLoaded = window.React || 
+                                     document.querySelector('[data-reactroot]') ||
+                                     document.querySelector('#__next') ||
+                                     document.querySelector('.min-h-screen') ||
+                                     document.querySelector('[class*="bg-gray"]');
+                  
+                  if (fallback && reactLoaded) {
+                    console.log('✅ App detected, hiding fallback');
                     fallback.style.display = 'none';
-                  } else {
-                    console.log('⚠️ React not detected, keeping fallback visible');
+                    return true;
                   }
-                }, 2000);
+                  return false;
+                };
                 
-                // If React still hasn't loaded after 4 seconds, keep fallback visible
-                setTimeout(function() {
-                  console.log('⏰ 4s timeout - final check');
-                  if (fallback && !window.React) {
-                    console.log('❌ React failed to load, keeping fallback visible');
-                    fallback.style.display = 'block';
-                  }
-                }, 4000);
+                // Check immediately and then every 500ms
+                if (!checkReactLoaded()) {
+                  const interval = setInterval(function() {
+                    if (checkReactLoaded()) {
+                      clearInterval(interval);
+                    }
+                  }, 500);
+                  
+                  // Force hide after 3 seconds regardless
+                  setTimeout(function() {
+                    console.log('⏰ 3s timeout - force hiding fallback');
+                    if (fallback) {
+                      fallback.style.display = 'none';
+                    }
+                    clearInterval(interval);
+                  }, 3000);
+                }
               } else {
                 console.log('🖥️ Desktop device detected, hiding all fallbacks');
                 const fallback = document.getElementById('iphone-fallback');
