@@ -27,3 +27,5 @@ CREATE TRIGGER update_comment_reactions_updated_at
     BEFORE UPDATE ON comment_reactions 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+
+

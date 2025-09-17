@@ -107,13 +107,21 @@ export function PWAInstallPrompt() {
     return null
   }
 
-  // Check if user dismissed in this session
-  if (typeof window !== 'undefined' && sessionStorage.getItem('pwa-install-dismissed')) {
+  // Check if user dismissed in this session or permanently
+  if (typeof window !== 'undefined') {
+    if (sessionStorage.getItem('pwa-install-dismissed') || localStorage.getItem('pwa-install-dismissed')) {
+      return null
+    }
+  }
+
+  // Additional check for development environment
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    console.log('PWA Install Prompt: Disabled on localhost for development')
     return null
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm">
+    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm pointer-events-auto">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">

@@ -16,7 +16,6 @@ import { MobileNavigation } from './mobile/MobileNavigation'
 import { MobileNavigation as PWAMobileNavigation } from './pwa/MobileNavigation'
 import { useMobilePWA } from './pwa/MobilePWA'
 import { MobileLayout } from './mobile/MobileLayout'
-import { MobileDebugger } from './mobile/MobileDebugger'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { MoneyHub } from './dashboard/MoneyHub'
 import { MonthlyContributionRecorder } from './forms/MonthlyContributionRecorder'
@@ -909,8 +908,6 @@ export function SplitsaveApp() {
           onSignOut={handleSignOut}
           onToggleTheme={toggleTheme}
         >
-          {/* Temporary mobile debugger */}
-          <MobileDebugger />
           {mainContent}
         </MobileLayout>
       ) : (

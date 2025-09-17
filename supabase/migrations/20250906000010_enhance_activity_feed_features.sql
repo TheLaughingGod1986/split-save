@@ -209,3 +209,5 @@ GRANT EXECUTE ON FUNCTION get_comment_replies(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION update_activity_comment(UUID, UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION delete_activity_comment(UUID, UUID) TO authenticated;
 
+
+

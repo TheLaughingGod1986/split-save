@@ -13,3 +13,5 @@ GRANT ALL ON activity_comments TO authenticated;
 GRANT ALL ON partner_activities TO authenticated;
 GRANT ALL ON activity_feed_views TO authenticated;
 
+
+

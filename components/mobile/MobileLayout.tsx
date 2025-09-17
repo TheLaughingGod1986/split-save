@@ -169,7 +169,7 @@ export function MobileLayout({
       </div>
 
       {/* Mobile Bottom Navigation - Fixed */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg pointer-events-auto">
         {/* Online/Offline Indicator */}
         <div className={`px-4 py-2 text-center text-xs font-medium ${
           isOnline ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'

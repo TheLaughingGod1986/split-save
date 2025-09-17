@@ -7,6 +7,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
 import { MobilePWA } from '@/components/pwa/MobilePWA'
 import { PWAProvider } from '@/components/pwa/PWAProvider'
+import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 import '@/lib/auth-cleanup'
 
 const inter = Inter({ 
@@ -426,6 +427,7 @@ export default function RootLayout({
             <ThemeProvider>
               <MobilePWA>
                 {children}
+                <MobileDebugOverlay />
                 <Analytics />
                 <SpeedInsights />
               </MobilePWA>
