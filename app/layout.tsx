@@ -7,8 +7,9 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
 import { MobilePWA } from '@/components/pwa/MobilePWA'
 import { PWAProvider } from '@/components/pwa/PWAProvider'
-import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
-import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
+// Debug components removed to prevent hydration issues
+// import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
+// import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
 import '@/lib/auth-cleanup'
 
 const inter = Inter({ 
@@ -459,8 +460,6 @@ export default function RootLayout({
             <ThemeProvider>
               <MobilePWA>
                 {children}
-                <MobileDebugOverlay />
-                <PWAAuthDebug />
                 <Analytics />
                 <SpeedInsights />
               </MobilePWA>
