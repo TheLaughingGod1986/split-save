@@ -307,11 +307,10 @@ export default function RootLayout({
         <PWAProvider>
           <AuthProvider>
             <ThemeProvider>
-              <MobilePWA>
-                {children}
-                <Analytics />
-                <SpeedInsights />
-              </MobilePWA>
+              {/* MobilePWA temporarily disabled to debug white screen */}
+              {children}
+              <Analytics />
+              <SpeedInsights />
             </ThemeProvider>
           </AuthProvider>
         </PWAProvider>
