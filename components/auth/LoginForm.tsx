@@ -140,6 +140,11 @@ export function LoginForm({ onBack }: LoginFormProps) {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🔐 FORM SUBMIT: Starting authentication', { 
+      isSignUp, 
+      email: email.substring(0, 10) + '...', 
+      formMode: isSignUp ? 'SIGNUP' : 'SIGNIN' 
+    })
     setLoading(true)
     setError('')
     setEmailError('')
@@ -166,6 +171,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
       const sanitizedEmail = sanitizeInput.email(email)
       
       if (isSignUp) {
+        console.log('🔐 SIGNUP MODE: Attempting to create new user')
         const { data, error } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password,
@@ -182,7 +188,8 @@ export function LoginForm({ onBack }: LoginFormProps) {
           toast.success('Account created successfully! You can now sign in.')
         }
       } else {
-        console.log('🔐 Attempting login with:', { email: sanitizedEmail, password: '***' })
+        console.log('🔐 SIGNIN MODE: Attempting login with existing user')
+        console.log('🔐 Login details:', { email: sanitizedEmail, password: '***', isSignUp })
         console.log('🔐 Supabase client info:', {
           clientType: 'regular',
           environment: process.env.NODE_ENV
