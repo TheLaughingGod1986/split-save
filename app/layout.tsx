@@ -231,8 +231,8 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{
           __html: `
             :root {
-              --mobile-bg-light: #f9fafb;
-              --mobile-bg-dark: #0f172a;
+              --mobile-bg-light: #ffffff;
+              --mobile-bg-dark: #111827;
             }
 
             /* Keep an initial background while React hydrates */

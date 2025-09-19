@@ -15,6 +15,7 @@ export default function Home() {
   const [showMobileFallback, setShowMobileFallback] = useState(false)
   const [forceShowLanding, setForceShowLanding] = useState(false)
   const [emergencyFallback, setEmergencyFallback] = useState(false)
+  const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
 
   // DEBUG: Log auth state changes
@@ -34,7 +35,35 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       const mobileCheck = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent) ||
         window.innerWidth <= 768
+
+      const detectStandalone = () => {
+        const isStandaloneMatch = window.matchMedia('(display-mode: standalone)').matches
+        const isIOSStandalone = (window.navigator as any).standalone === true
+        const cameFromAndroidApp = typeof document !== 'undefined' && document.referrer.startsWith('android-app://')
+        return isStandaloneMatch || isIOSStandalone || cameFromAndroidApp
+      }
+
       setIsMobileDevice(mobileCheck)
+      setIsStandalonePWA(detectStandalone())
+
+      const mediaQuery = window.matchMedia('(display-mode: standalone)')
+      const handleDisplayModeChange = (event: MediaQueryListEvent) => {
+        setIsStandalonePWA(event.matches || (window.navigator as any).standalone === true)
+      }
+
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', handleDisplayModeChange)
+      } else if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(handleDisplayModeChange)
+      }
+
+      return () => {
+        if (typeof mediaQuery.removeEventListener === 'function') {
+          mediaQuery.removeEventListener('change', handleDisplayModeChange)
+        } else if (typeof mediaQuery.removeListener === 'function') {
+          mediaQuery.removeListener(handleDisplayModeChange)
+        }
+      }
     }
   }, [])
 
@@ -73,6 +102,11 @@ export default function Home() {
 
   // Force show landing page after shorter time if still loading (especially on mobile)
   useEffect(() => {
+    if (isStandalonePWA) {
+      setForceShowLanding(false)
+      return
+    }
+
     if (loading) {
       // ULTRA-AGGRESSIVE timeout for mobile devices
       const isIPhone = isClient && /iPhone/.test(navigator.userAgent)
@@ -99,11 +133,15 @@ export default function Home() {
     } else {
       setForceShowLanding(false)
     }
-  }, [loading, isClient, isMobile, isSmallScreen])
+  }, [loading, isClient, isMobile, isSmallScreen, isStandalonePWA])
 
   // Emergency fallback for mobile devices - if nothing else works, show landing page
   useEffect(() => {
-    if (isClient && (isMobile || isSmallScreen)) {
+    if (isStandalonePWA) {
+      return
+    }
+
+    if (isClient && !isStandalonePWA && (isMobile || isSmallScreen)) {
       const isIPhone = /iPhone/.test(navigator.userAgent)
       const emergencyTimeoutDuration = isIPhone ? 4000 : 6000 // Even shorter for iPhone
       
@@ -121,10 +159,14 @@ export default function Home() {
       
       return () => clearTimeout(emergencyTimeout)
     }
-  }, [isClient, isMobile, isSmallScreen])
+  }, [isClient, isMobile, isSmallScreen, isStandalonePWA])
 
   // Additional mobile-specific timeout - if we're on mobile and still loading after 4 seconds, force show landing
   useEffect(() => {
+    if (isStandalonePWA) {
+      return
+    }
+
     if (isClient && (isMobile || isSmallScreen) && loading) {
       const isIPhone = /iPhone/.test(navigator.userAgent)
       const mobileTimeoutDuration = isIPhone ? 2500 : 4000 // Even shorter for iPhone
@@ -142,10 +184,10 @@ export default function Home() {
       
       return () => clearTimeout(mobileTimeout)
     }
-  }, [isClient, isMobile, isSmallScreen, loading])
+  }, [isClient, isMobile, isSmallScreen, loading, isStandalonePWA])
 
   // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
-  if (isMobileDevice) {
+  if (isMobileDevice && !isStandalonePWA) {
     console.log('🚨 EMERGENCY: Mobile device detected, showing landing page immediately without auth')
     return (
       <>
@@ -159,7 +201,7 @@ export default function Home() {
   }
 
   // iPhone-specific emergency fallback - if we detect iPhone and still loading, show basic HTML
-  if (isClient && /iPhone/.test(navigator.userAgent) && loading) {
+  if (isClient && !isStandalonePWA && /iPhone/.test(navigator.userAgent) && loading) {
     console.log('🍎 iPhone emergency fallback: showing basic HTML')
     return (
       <div style={{ 
