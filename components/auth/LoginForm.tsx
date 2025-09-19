@@ -14,7 +14,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false) // Force signin mode initially
   const [showPassword, setShowPassword] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
@@ -302,6 +302,10 @@ export function LoginForm({ onBack }: LoginFormProps) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h2>
+            {/* Debug indicator - remove after fixing */}
+            <div className="mt-1 text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+              DEBUG: Mode = {isSignUp ? 'SIGNUP' : 'SIGNIN'}
+            </div>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
               {isSignUp ? 'Start your financial journey together' : 'Continue managing your shared finances'}
             </p>
