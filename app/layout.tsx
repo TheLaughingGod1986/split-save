@@ -277,55 +277,7 @@ export default function RootLayout({
           </div>
         </noscript>
         
-        {/* Mobile loading fallback - DISABLED to prevent white screen */}
-        <div id="iphone-fallback" style={{
-          display: 'none !important', // Force hidden to prevent white screen
-          visibility: 'hidden',
-          opacity: 0,
-          pointerEvents: 'none'
-        }}>
-          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', paddingTop: '20vh' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
-              SplitSave
-            </h1>
-            <p style={{ fontSize: '1.125rem', color: '#6b7280', marginBottom: '2rem' }}>
-              Smart financial management for couples
-            </p>
-            <div style={{ 
-              padding: '1rem', 
-              backgroundColor: '#fef3c7', 
-              border: '1px solid #f59e0b', 
-              borderRadius: '8px',
-              marginBottom: '2rem'
-            }}>
-              <p style={{ color: '#92400e', margin: 0 }}>
-                📱 Loading optimized version for mobile...
-              </p>
-            </div>
-            <button 
-              id="refresh-button"
-              style={{
-                backgroundColor: '#7c3aed',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                border: 'none',
-                fontSize: '1rem',
-                cursor: 'pointer'
-              }}
-            >
-              Refresh Page
-            </button>
-            <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-              <p>If this page doesn't load properly, try:</p>
-              <ul style={{ textAlign: 'left', display: 'inline-block' }}>
-                <li>Refreshing the page</li>
-                <li>Clearing your browser cache</li>
-                <li>Using a different browser</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        {/* Mobile fallback completely removed to prevent white screen issues */}
 
         <script dangerouslySetInnerHTML={{
           __html: `

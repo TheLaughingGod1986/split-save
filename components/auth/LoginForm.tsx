@@ -302,10 +302,6 @@ export function LoginForm({ onBack }: LoginFormProps) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h2>
-            {/* Debug indicator - remove after fixing */}
-            <div className="mt-1 text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-              DEBUG: Mode = {isSignUp ? 'SIGNUP' : 'SIGNIN'}
-            </div>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
               {isSignUp ? 'Start your financial journey together' : 'Continue managing your shared finances'}
             </p>
@@ -459,7 +455,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
             <div className="mt-6 mb-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isFormValid()}
                 aria-label={isSignUp ? 'Create Account' : 'Sign In'}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                 style={{ minHeight: '48px', fontSize: '16px' }} // Ensure minimum touch target
@@ -473,11 +469,6 @@ export function LoginForm({ onBack }: LoginFormProps) {
                   isSignUp ? 'Create Account' : 'Sign In'
                 )}
               </button>
-              
-              {/* Debug info */}
-              <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                DEBUG: Button should be visible | Valid: {isFormValid() ? 'Yes' : 'No'} | Email: {email ? 'Set' : 'Empty'} | Password: {password.length > 0 ? 'Set' : 'Empty'}
-              </div>
             </div>
 
             {/* Forgot Password Link - only show on sign in */}
