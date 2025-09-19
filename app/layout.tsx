@@ -227,23 +227,47 @@ export default function RootLayout({
           }}
         />
         
-        {/* IMMEDIATE MOBILE FIX - Prevent white screen */}
+        {/* COMPREHENSIVE MOBILE FIX - Prevent white screen */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* IMMEDIATE FIX - Prevent white screen on mobile */
+            /* COMPREHENSIVE FIX - Prevent white screen on all devices */
             html, body {
               background: #f9fafb !important;
               background-color: #f9fafb !important;
               margin: 0 !important;
               padding: 0 !important;
+              min-height: 100vh !important;
+              height: auto !important;
             }
             
-            /* Force immediate background for mobile */
+            /* Force immediate background for mobile and all screen sizes */
             @media screen and (max-width: 768px) {
-              html, body, body > div {
+              html, body, body > div, #__next {
                 background: #f9fafb !important;
                 background-color: #f9fafb !important;
                 min-height: 100vh !important;
+                height: auto !important;
+              }
+              
+              /* Prevent any white overlays */
+              * {
+                box-sizing: border-box;
+              }
+              
+              /* Ensure React root has background */
+              [data-reactroot], #__next {
+                background: #f9fafb !important;
+                min-height: 100vh !important;
+              }
+            }
+            
+            /* Additional safety for very small screens */
+            @media screen and (max-width: 480px) {
+              html, body {
+                background: #f9fafb !important;
+                background-color: #f9fafb !important;
+                min-height: 100vh !important;
+                min-height: 100dvh !important; /* Dynamic viewport height */
               }
             }
           `
@@ -279,50 +303,6 @@ export default function RootLayout({
         
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // Comprehensive mobile debugging and fallback script
-            (function() {
-              console.log('🚀 Script starting - User Agent:', navigator.userAgent);
-              
-              const isIPhone = /iPhone/.test(navigator.userAgent);
-              const isIPad = /iPad/.test(navigator.userAgent);
-              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-              const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-              
-              console.log('📱 Device Detection:', {
-                isIPhone,
-                isIPad,
-                isMobile,
-                isSafari,
-                userAgent: navigator.userAgent.substring(0, 100),
-                screenWidth: window.innerWidth,
-                screenHeight: window.innerHeight
-              });
-              
-              // Hide all fallbacks immediately - no mobile detection needed
-              console.log('📱 Hiding all fallbacks to prevent white screen');
-              const fallback = document.getElementById('iphone-fallback');
-              const pureTest = document.getElementById('pure-html-test');
-              if (fallback) {
-                fallback.style.display = 'none';
-              }
-              if (pureTest) {
-                pureTest.style.display = 'none';
-              }
-            })();
-            
-            // Update time in pure HTML test
-            function updateTime() {
-              const timeElement = document.getElementById('current-time');
-              if (timeElement) {
-                timeElement.textContent = new Date().toLocaleTimeString();
-              }
-            }
-            updateTime();
-            setInterval(updateTime, 1000);
-          `
-        }} />
 
         <PWAProvider>
           <AuthProvider>
