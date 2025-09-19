@@ -4,7 +4,6 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
-import { MobileLoadingFallback } from '@/components/mobile/MobileLoadingFallback'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
@@ -12,9 +11,7 @@ import { analytics } from '@/lib/analytics'
 export default function Home() {
   const { user, loading } = useAuth()
   const analyticsTracked = useRef(false)
-  const [showMobileFallback, setShowMobileFallback] = useState(false)
   const [forceShowLanding, setForceShowLanding] = useState(false)
-  const [emergencyFallback, setEmergencyFallback] = useState(false)
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
 
@@ -27,15 +24,8 @@ export default function Home() {
     })
   }, [user, loading])
 
-  // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
-  // Use state to prevent hydration mismatches
-  const [isMobileDevice, setIsMobileDevice] = useState(false)
-  
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const mobileCheck = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent) ||
-        window.innerWidth <= 768
-
       const detectStandalone = () => {
         const isStandaloneMatch = window.matchMedia('(display-mode: standalone)').matches
         const isIOSStandalone = (window.navigator as any).standalone === true
@@ -43,7 +33,6 @@ export default function Home() {
         return isStandaloneMatch || isIOSStandalone || cameFromAndroidApp
       }
 
-      setIsMobileDevice(mobileCheck)
       setIsStandalonePWA(detectStandalone())
 
       const mediaQuery = window.matchMedia('(display-mode: standalone)')
@@ -135,32 +124,6 @@ export default function Home() {
     }
   }, [loading, isClient, isMobile, isSmallScreen, isStandalonePWA])
 
-  // Emergency fallback for mobile devices - if nothing else works, show landing page
-  useEffect(() => {
-    if (isStandalonePWA) {
-      return
-    }
-
-    if (isClient && !isStandalonePWA && (isMobile || isSmallScreen)) {
-      const isIPhone = /iPhone/.test(navigator.userAgent)
-      const emergencyTimeoutDuration = isIPhone ? 4000 : 6000 // Even shorter for iPhone
-      
-      console.log('🚨 Setting emergency fallback timeout', { 
-        isIPhone, 
-        emergencyTimeoutDuration,
-        userAgent: navigator.userAgent.substring(0, 50)
-      })
-      
-      const emergencyTimeout = setTimeout(() => {
-        console.log('🚨 Emergency fallback: forcing landing page for mobile', { isIPhone })
-        setEmergencyFallback(true)
-        setForceShowLanding(true)
-      }, emergencyTimeoutDuration)
-      
-      return () => clearTimeout(emergencyTimeout)
-    }
-  }, [isClient, isMobile, isSmallScreen, isStandalonePWA])
-
   // Additional mobile-specific timeout - if we're on mobile and still loading after 4 seconds, force show landing
   useEffect(() => {
     if (isStandalonePWA) {
@@ -185,20 +148,6 @@ export default function Home() {
       return () => clearTimeout(mobileTimeout)
     }
   }, [isClient, isMobile, isSmallScreen, loading, isStandalonePWA])
-
-  // EMERGENCY FIX: For mobile devices, show landing page immediately without any auth logic
-  if (isMobileDevice && !isStandalonePWA) {
-    console.log('🚨 EMERGENCY: Mobile device detected, showing landing page immediately without auth')
-    return (
-      <>
-        <StructuredData type="website" data={structuredDataSchemas.website} />
-        <StructuredData type="organization" data={structuredDataSchemas.organization} />
-        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        <LandingPage />
-      </>
-    )
-  }
 
   // iPhone-specific emergency fallback - if we detect iPhone and still loading, show basic HTML
   if (isClient && !isStandalonePWA && /iPhone/.test(navigator.userAgent) && loading) {
