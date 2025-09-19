@@ -60,20 +60,6 @@ export default function Home() {
     if (!loading && !analyticsTracked.current) {
       analyticsTracked.current = true
       
-      // Hide iPhone fallback when React loads successfully AND we have content to show
-      if (typeof window !== 'undefined' && /iPhone/.test(navigator.userAgent)) {
-        const fallback = document.getElementById('iphone-fallback')
-        const minimalTest = document.getElementById('minimal-test')
-        if (fallback) {
-          console.log('🍎 React loaded successfully, hiding iPhone fallback')
-          fallback.style.display = 'none'
-        }
-        if (minimalTest) {
-          console.log('🍎 React loaded successfully, hiding minimal test')
-          minimalTest.style.display = 'none'
-        }
-      }
-      
       if (user) {
         analytics.session.started()
         analytics.conversion.landingPageView('direct', {

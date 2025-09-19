@@ -310,16 +310,17 @@ export default function RootLayout({
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
 
-        <PWAProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              {/* MobilePWA temporarily disabled to debug white screen */}
-              {children}
-              <Analytics />
-              <SpeedInsights />
-            </ThemeProvider>
-          </AuthProvider>
-        </PWAProvider>
+                <PWAProvider>
+                  <AuthProvider>
+                    <ThemeProvider>
+                      <MobilePWA>
+                        {children}
+                      </MobilePWA>
+                      <Analytics />
+                      <SpeedInsights />
+                    </ThemeProvider>
+                  </AuthProvider>
+                </PWAProvider>
       </body>
     </html>
   )

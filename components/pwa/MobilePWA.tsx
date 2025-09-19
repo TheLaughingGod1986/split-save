@@ -169,7 +169,7 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
       const immediateStyle = document.createElement('style')
       immediateStyle.id = 'mobile-immediate-fix'
       immediateStyle.textContent = `
-        /* ESSENTIAL MOBILE FIX - Prevent white screen */
+        /* ESSENTIAL MOBILE FIX - Prevent white screen with proper dark mode support */
         html, body {
           margin: 0 !important;
           padding: 0 !important;
@@ -178,12 +178,23 @@ function MobileOptimizations({ isPWA, isStandalone, isMobile }: MobileOptimizati
           -webkit-overflow-scrolling: touch !important;
         }
         
-        /* Only fix mobile devices */
+        /* Mobile fixes that respect theme */
         @media screen and (max-width: 768px) {
           html, body {
+            min-height: 100vh !important;
+            min-height: 100dvh !important; /* Dynamic viewport height */
+          }
+          
+          /* Only set background if no theme class exists */
+          html:not(.dark), html:not(.dark) body {
             background: #f9fafb !important;
             background-color: #f9fafb !important;
-            min-height: 100vh !important;
+          }
+          
+          /* Dark mode support */
+          html.dark, html.dark body {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
           }
         }
       `
