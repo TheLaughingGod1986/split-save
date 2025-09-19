@@ -455,21 +455,25 @@ export function LoginForm({ onBack }: LoginFormProps) {
             </div>
 
 
-            <button
-              type="submit"
-              disabled={loading || !isFormValid()}
-              aria-label={isSignUp ? 'Create Account' : 'Sign In'}
-              className="btn btn-primary w-full py-3 px-4 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <div className="loading-spinner mr-2"></div>
-                  Processing...
-                </>
-              ) : (
-                isSignUp ? 'Create Account' : 'Sign In'
-              )}
-            </button>
+            {/* Sign In Button - Fixed visibility for mobile PWA */}
+            <div className="mt-6 mb-4">
+              <button
+                type="submit"
+                disabled={loading || !isFormValid()}
+                aria-label={isSignUp ? 'Create Account' : 'Sign In'}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                style={{ minHeight: '48px', fontSize: '16px' }} // Ensure minimum touch target
+              >
+                {loading ? (
+                  <>
+                    <div className="loading-spinner mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  isSignUp ? 'Create Account' : 'Sign In'
+                )}
+              </button>
+            </div>
 
             {/* Forgot Password Link - only show on sign in */}
             {!isSignUp && (
