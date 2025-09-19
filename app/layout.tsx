@@ -227,46 +227,52 @@ export default function RootLayout({
           }}
         />
         
-        {/* COMPREHENSIVE MOBILE FIX - Prevent white screen */}
+        {/* COMPREHENSIVE MOBILE FIX - Prevent white screen without breaking dark mode */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* COMPREHENSIVE FIX - Prevent white screen on all devices */
+            :root {
+              --mobile-bg-light: #f9fafb;
+              --mobile-bg-dark: #0f172a;
+            }
+
+            /* Keep an initial background while React hydrates */
             html, body {
-              background: #f9fafb !important;
-              background-color: #f9fafb !important;
+              background: var(--mobile-bg-light) !important;
+              background-color: var(--mobile-bg-light) !important;
               margin: 0 !important;
               padding: 0 !important;
               min-height: 100vh !important;
               height: auto !important;
             }
-            
-            /* Force immediate background for mobile and all screen sizes */
+
+            /* Respect dark theme class applied by next-themes */
+            html.dark, html.dark body {
+              background: var(--mobile-bg-dark) !important;
+              background-color: var(--mobile-bg-dark) !important;
+            }
+
+            /* Force immediate background for mobile screens */
             @media screen and (max-width: 768px) {
               html, body, body > div, #__next {
-                background: #f9fafb !important;
-                background-color: #f9fafb !important;
+                background: var(--mobile-bg-light) !important;
+                background-color: var(--mobile-bg-light) !important;
                 min-height: 100vh !important;
                 height: auto !important;
               }
-              
-              /* Prevent any white overlays */
+
+              html.dark, html.dark body, html.dark body > div, html.dark #__next {
+                background: var(--mobile-bg-dark) !important;
+                background-color: var(--mobile-bg-dark) !important;
+              }
+
               * {
                 box-sizing: border-box;
               }
-              
-              /* Ensure React root has background */
-              [data-reactroot], #__next {
-                background: #f9fafb !important;
-                min-height: 100vh !important;
-              }
             }
-            
+
             /* Additional safety for very small screens */
             @media screen and (max-width: 480px) {
               html, body {
-                background: #f9fafb !important;
-                background-color: #f9fafb !important;
-                min-height: 100vh !important;
                 min-height: 100dvh !important; /* Dynamic viewport height */
               }
             }
