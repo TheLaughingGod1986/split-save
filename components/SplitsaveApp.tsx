@@ -764,7 +764,7 @@ export function SplitsaveApp() {
 
         
         {/* Main Content */}
-        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isMobile ? 'py-2' : 'py-4 sm:py-6'}`}>
+        <main className={`${isMobile || isPWAMobile || isPWA ? 'px-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} ${isMobile ? 'py-2' : 'py-4 sm:py-6'}`}>
           <div className={isMobile ? 'py-2' : 'py-4 sm:py-6'}>
             <ErrorBoundary>
         {currentView === 'overview' && (

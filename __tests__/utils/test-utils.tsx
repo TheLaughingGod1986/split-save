@@ -1,8 +1,8 @@
 import React, { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { ThemeProvider } from 'next-themes'
-import { AuthProvider } from '@/components/AuthProvider'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AuthProvider } from '@/components/auth/AuthProvider'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // Mock data for testing
 export const mockUser = {
@@ -282,24 +282,62 @@ export const mockMatchMedia = () => {
 
 // Mock localStorage
 export const mockLocalStorage = () => {
-  const localStorageMock = {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn(),
+  let store: Record<string, string> = {}
+
+  const localStorageMock: Storage = {
+    get length() {
+      return Object.keys(store).length
+    },
+    clear: jest.fn(() => {
+      store = {}
+    }),
+    getItem: jest.fn((key: string) => {
+      return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null
+    }),
+    key: jest.fn((index: number) => Object.keys(store)[index] ?? null),
+    removeItem: jest.fn((key: string) => {
+      delete store[key]
+    }),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value
+    }),
   }
-  global.localStorage = localStorageMock
+
+  Object.defineProperty(global, 'localStorage', {
+    value: localStorageMock,
+    configurable: true,
+    writable: true,
+  })
 }
 
 // Mock sessionStorage
 export const mockSessionStorage = () => {
-  const sessionStorageMock = {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn(),
+  let store: Record<string, string> = {}
+
+  const sessionStorageMock: Storage = {
+    get length() {
+      return Object.keys(store).length
+    },
+    clear: jest.fn(() => {
+      store = {}
+    }),
+    getItem: jest.fn((key: string) => {
+      return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null
+    }),
+    key: jest.fn((index: number) => Object.keys(store)[index] ?? null),
+    removeItem: jest.fn((key: string) => {
+      delete store[key]
+    }),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value
+    }),
   }
-  global.sessionStorage = sessionStorageMock
+
+  Object.defineProperty(global, 'sessionStorage', {
+    value: sessionStorageMock,
+    configurable: true,
+    writable: true,
+  })
 }
 
 // Mock fetch
@@ -451,5 +489,3 @@ export const cleanupMockData = () => {
     global.sessionStorage.clear()
   }
 }
-
-

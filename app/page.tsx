@@ -97,10 +97,8 @@ export default function Home() {
   }
 
   if (!user) {
-    console.log('🏠 Home: Showing landing page', { 
-      hasUser: !!user, 
-      userEmail: user?.email,
-      userId: user?.id 
+    console.log('🏠 Home: Showing landing page', {
+      hasUser: false
     })
     return (
       <>

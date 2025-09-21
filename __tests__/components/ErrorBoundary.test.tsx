@@ -1,6 +1,30 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ErrorBoundary, useErrorHandler, withErrorBoundary, AsyncErrorBoundary } from '@/components/ui/ErrorBoundary'
 
+type NodeEnvironment = 'development' | 'production' | 'test'
+
+const withNodeEnv = (value: NodeEnvironment) => {
+  const originalValue = process.env.NODE_ENV
+
+  Object.defineProperty(process.env, 'NODE_ENV', {
+    value,
+    configurable: true,
+    writable: true,
+  })
+
+  return () => {
+    if (typeof originalValue === 'undefined') {
+      delete (process.env as Record<string, string | undefined>).NODE_ENV
+    } else {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalValue,
+        configurable: true,
+        writable: true,
+      })
+    }
+  }
+}
+
 // Component that throws an error for testing
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   if (shouldThrow) {
@@ -80,24 +104,21 @@ describe('ErrorBoundary', () => {
 
   describe('Error UI Elements', () => {
     it('displays error details in development mode', () => {
-      // Mock development environment
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'development'
-      
-      render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
-        </ErrorBoundary>
-      )
-      
-      expect(screen.getByText('Error Details')).toBeInTheDocument()
-      // Check that the error message is displayed in the error details section
-      expect(screen.getByText(/Message:/)).toBeInTheDocument()
-      // Check that the error message content is displayed
-      expect(screen.getByText('Test error message')).toBeInTheDocument()
-      
-      // Restore environment
-      process.env.NODE_ENV = originalEnv
+      const restoreEnv = withNodeEnv('development')
+
+      try {
+        render(
+          <ErrorBoundary>
+            <ThrowError shouldThrow={true} />
+          </ErrorBoundary>
+        )
+
+        expect(screen.getByText('Error Details')).toBeInTheDocument()
+        expect(screen.getByText(/Message:/)).toBeInTheDocument()
+        expect(screen.getByText('Test error message')).toBeInTheDocument()
+      } finally {
+        restoreEnv()
+      }
     })
 
     it('shows action buttons', () => {
@@ -260,18 +281,19 @@ describe('ErrorBoundary', () => {
 
   describe('Error Logging', () => {
     it('logs errors to console in development', () => {
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'development'
-      
-      render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
-        </ErrorBoundary>
-      )
-      
-      expect(console.error).toHaveBeenCalledWith('ErrorBoundary caught an error:', expect.any(Error), expect.any(Object))
-      
-      process.env.NODE_ENV = originalEnv
+      const restoreEnv = withNodeEnv('development')
+
+      try {
+        render(
+          <ErrorBoundary>
+            <ThrowError shouldThrow={true} />
+          </ErrorBoundary>
+        )
+
+        expect(console.error).toHaveBeenCalledWith('ErrorBoundary caught an error:', expect.any(Error), expect.any(Object))
+      } finally {
+        restoreEnv()
+      }
     })
 
     it('calls custom error handler when provided', () => {
@@ -289,22 +311,22 @@ describe('ErrorBoundary', () => {
 
   describe('Production Environment', () => {
     it('logs errors to external service in production', () => {
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'production'
-      
+      const restoreEnv = withNodeEnv('production')
+
       // Mock fetch for external service
       global.fetch = jest.fn()
-      
-      render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
-        </ErrorBoundary>
-      )
-      
-      // Should attempt to log to external service
-      expect(console.log).toHaveBeenCalledWith('Error logged to service:', expect.any(Object))
-      
-      process.env.NODE_ENV = originalEnv
+
+      try {
+        render(
+          <ErrorBoundary>
+            <ThrowError shouldThrow={true} />
+          </ErrorBoundary>
+        )
+
+        expect(console.log).toHaveBeenCalledWith('Error logged to service:', expect.any(Object))
+      } finally {
+        restoreEnv()
+      }
     })
   })
 
@@ -357,5 +379,4 @@ describe('ErrorBoundary', () => {
     })
   })
 })
-
 
