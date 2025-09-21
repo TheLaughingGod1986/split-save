@@ -74,7 +74,20 @@ export default function Home() {
     }
   }, [loading, user])
 
+  // DEBUG: Add mobile-specific loading timeout
+  useEffect(() => {
+    if (loading && (isMobile || isSmallScreen)) {
+      console.log('🔍 Mobile loading detected, setting timeout')
+      const timeout = setTimeout(() => {
+        console.log('⏰ Mobile loading timeout - forcing render')
+        // Don't force loading to false here, let AuthProvider handle it
+      }, 3000)
+      return () => clearTimeout(timeout)
+    }
+  }, [loading, isMobile, isSmallScreen])
+
   if (loading) {
+    console.log('⏳ Showing loading screen', { loading, user: !!user, isMobile, isSmallScreen, isClient })
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -82,6 +95,9 @@ export default function Home() {
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
           <div className="mt-2 text-xs text-gray-500">
             Auth Loading: {loading ? 'true' : 'false'}
+          </div>
+          <div className="mt-1 text-xs text-gray-500">
+            Mobile: {isMobile ? 'true' : 'false'} | Client: {isClient ? 'true' : 'false'}
           </div>
           <div className="mt-4 text-xs text-gray-400">
             If this takes too long, <button 
@@ -120,8 +136,23 @@ export default function Home() {
     hasUser: !!user, 
     userEmail: user?.email,
     userId: user?.id,
-    loading 
+    loading,
+    isMobile,
+    isSmallScreen,
+    isClient
   })
+
+  // Safety fallback - if we get here but something is wrong, show debug info
+  if (!isClient) {
+    console.log('🔄 Not client-side yet, showing minimal fallback')
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Initializing...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>

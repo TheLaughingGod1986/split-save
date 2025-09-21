@@ -313,9 +313,8 @@ export default function RootLayout({
                 <PWAProvider>
                   <AuthProvider>
                     <ThemeProvider>
-                      <MobilePWA>
-                        {children}
-                      </MobilePWA>
+                      {/* Temporarily disable MobilePWA for debugging mobile website */}
+                      {children}
                       <Analytics />
                       <SpeedInsights />
                     </ThemeProvider>
