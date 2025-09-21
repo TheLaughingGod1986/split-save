@@ -158,30 +158,36 @@ export default function Home() {
   if (isMobile && !isStandalonePWA) {
     console.log('📱 Mobile website detected (not PWA)', { isMobile, isStandalonePWA })
     return (
-      <div className="min-h-screen bg-blue-50 dark:bg-blue-900 p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-4">
-            Mobile Website Test
-          </h1>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4">
-            <p className="text-gray-700 dark:text-gray-300 mb-2">Debug Info:</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Mobile: {isMobile ? 'Yes' : 'No'}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">PWA: {isStandalonePWA ? 'Yes' : 'No'}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">User: {user ? 'Logged in' : 'Not logged in'}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Loading: {loading ? 'Yes' : 'No'}</p>
+      <>
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4 sm:px-6">
+          <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-blue-100/60 bg-white/90 p-4 text-left shadow-lg backdrop-blur-sm dark:border-blue-800/50 dark:bg-gray-900/85">
+            <p className="text-sm font-semibold text-blue-600 dark:text-blue-300">Mobile website</p>
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+              You're viewing SplitSave in the browser. Add it to your home screen for the full PWA experience.
+            </p>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <div>
+                <dt className="font-medium text-gray-700 dark:text-gray-200">Mobile</dt>
+                <dd>{isMobile ? 'Yes' : 'No'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-gray-700 dark:text-gray-200">Standalone</dt>
+                <dd>{isStandalonePWA ? 'Yes' : 'No'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-gray-700 dark:text-gray-200">User</dt>
+                <dd>{user ? 'Logged in' : 'Not logged in'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-gray-700 dark:text-gray-200">Client ready</dt>
+                <dd>{isClient ? 'Yes' : 'No'}</dd>
+              </div>
+            </dl>
           </div>
-          {!user && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-              <LandingPage />
-            </div>
-          )}
-          {user && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-              <SplitsaveApp />
-            </div>
-          )}
         </div>
-      </div>
+
+        <SplitsaveApp />
+      </>
     )
   }
 
