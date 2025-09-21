@@ -154,6 +154,37 @@ export default function Home() {
     )
   }
 
+  // TEMPORARY: Add mobile website test
+  if (isMobile && !isStandalonePWA) {
+    console.log('📱 Mobile website detected (not PWA)', { isMobile, isStandalonePWA })
+    return (
+      <div className="min-h-screen bg-blue-50 dark:bg-blue-900 p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-4">
+            Mobile Website Test
+          </h1>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-gray-700 dark:text-gray-300 mb-2">Debug Info:</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Mobile: {isMobile ? 'Yes' : 'No'}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">PWA: {isStandalonePWA ? 'Yes' : 'No'}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">User: {user ? 'Logged in' : 'Not logged in'}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Loading: {loading ? 'Yes' : 'No'}</p>
+          </div>
+          {!user && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+              <LandingPage />
+            </div>
+          )}
+          {user && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+              <SplitsaveApp />
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <SplitsaveApp />
