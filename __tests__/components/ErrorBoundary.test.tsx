@@ -96,9 +96,10 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       )
       
-      const errorId = screen.getByText(/ID:/)
-      expect(errorId).toBeInTheDocument()
-      expect(errorId.textContent).toMatch(/err_\d+_[a-z0-9]+/)
+      const errorIdLabel = screen.getByText(/Error ID:/)
+      const errorIdContainer = errorIdLabel.closest('p')
+      expect(errorIdContainer).not.toBeNull()
+      expect(errorIdContainer?.textContent).toMatch(/err_\d+_[a-z0-9]+/)
     })
   })
 
@@ -379,4 +380,3 @@ describe('ErrorBoundary', () => {
     })
   })
 })
-

@@ -38,10 +38,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({
+    this.setState(prevState => ({
       error,
-      errorInfo
-    })
+      errorInfo,
+      errorId: prevState.errorId || `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    }))
 
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
@@ -233,29 +234,15 @@ interface AsyncErrorBoundaryProps {
 }
 
 export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({ children, fallback }) => {
-  const [hasError, setHasError] = React.useState(false)
+  const [hasAsyncError, setHasAsyncError] = React.useState(false)
+  const [boundaryKey, setBoundaryKey] = React.useState(0)
 
-  React.useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      setHasError(true)
-      console.error('Async error caught:', event.error)
-    }
-
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      setHasError(true)
-      console.error('Unhandled promise rejection:', event.reason)
-    }
-
-    window.addEventListener('error', handleError)
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-
-    return () => {
-      window.removeEventListener('error', handleError)
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-    }
+  const resetErrors = React.useCallback(() => {
+    setHasAsyncError(false)
+    setBoundaryKey((key) => key + 1)
   }, [])
 
-  if (hasError) {
+  const renderFallback = React.useCallback(() => {
     if (fallback) {
       return <>{fallback}</>
     }
@@ -271,7 +258,7 @@ export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({ children
             Something went wrong with this operation. Please try again.
           </p>
           <button
-            onClick={() => setHasError(false)}
+            onClick={resetErrors}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             Try Again
@@ -279,7 +266,39 @@ export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({ children
         </div>
       </div>
     )
+  }, [fallback, resetErrors])
+
+  React.useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      setHasAsyncError(true)
+      console.error('Async error caught:', event.error)
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      setHasAsyncError(true)
+      console.error('Unhandled promise rejection:', event.reason)
+    }
+
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
+  if (hasAsyncError) {
+    return renderFallback()
   }
 
-  return <>{children}</>
+  return (
+    <ErrorBoundary
+      key={boundaryKey}
+      fallback={renderFallback()}
+      onError={() => setHasAsyncError(true)}
+    >
+      {children}
+    </ErrorBoundary>
+  )
 }

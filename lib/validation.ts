@@ -108,11 +108,11 @@ export const validationRules = {
     }
 
     if (password.length < 8) {
-      return { isValid: false, error: 'Password must be at least 8 characters long' }
+      return { isValid: false, error: 'Password must be at least 8 characters long', strength: 'weak' }
     }
 
     if (password.length > 128) {
-      return { isValid: false, error: 'Password must be less than 128 characters' }
+      return { isValid: false, error: 'Password must be less than 128 characters', strength: 'weak' }
     }
 
     // Check for at least one lowercase, uppercase, number, and special character

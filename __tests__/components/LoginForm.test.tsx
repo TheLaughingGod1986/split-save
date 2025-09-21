@@ -111,7 +111,7 @@ describe('LoginForm', () => {
       
       // Strong password
       await user.clear(passwordInput)
-      await user.type(passwordInput, 'strongpassword123')
+      await user.type(passwordInput, 'StrongPassword123!')
       expect(screen.getByText('Strong')).toBeInTheDocument()
     })
   })
@@ -211,7 +211,8 @@ describe('LoginForm', () => {
       
       const submitButton = screen.getByRole('button', { name: /sign in/i })
       expect(submitButton).toBeInTheDocument()
-      expect(submitButton).toHaveClass('btn', 'btn-primary')
+      expect(submitButton).toHaveClass('bg-purple-600')
+      expect(submitButton).toHaveClass('text-white')
     })
   })
 
@@ -346,5 +347,3 @@ describe('LoginForm', () => {
     })
   })
 })
-
-
