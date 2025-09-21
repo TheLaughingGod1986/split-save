@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/api-client'
+import { NotificationDropdown } from '../notifications/NotificationDropdown'
 
 interface MobileLayoutProps {
   children: React.ReactNode
@@ -14,6 +15,7 @@ interface MobileLayoutProps {
   profile?: any
   onSignOut?: () => Promise<void>
   onToggleTheme?: () => void
+  isDarkMode?: boolean
 }
 
 export function MobileLayout({
@@ -26,10 +28,10 @@ export function MobileLayout({
   user,
   profile,
   onSignOut,
-  onToggleTheme
+  onToggleTheme,
+  isDarkMode
 }: MobileLayoutProps) {
   const [realNotificationCount, setRealNotificationCount] = useState(0)
-  const [showNotifications, setShowNotifications] = useState(false)
 
   // Fetch real notification count
   useEffect(() => {
@@ -54,9 +56,68 @@ export function MobileLayout({
 
   console.log('🔄 MobileLayout render:', { currentView, hasUser: !!user, isOnline, realNotificationCount })
   
+  const viewLabels: Record<string, string> = {
+    overview: 'Overview',
+    expenses: 'Money',
+    goals: 'Goals',
+    partnerships: 'Partners',
+    analytics: 'Analytics',
+    account: 'Account',
+    'monthly-progress': 'Monthly Progress'
+  }
+
+  const currentViewLabel = viewLabels[currentView] || 'Dashboard'
+  const displayName = profile?.name && profile.name.trim().length > 0
+    ? profile.name.trim().split(' ')[0]
+    : null
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 flex flex-col">
-      {/* NO HEADER - Clean PWA experience */}
+      <div
+        className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-b border-gray-200 dark:border-gray-700"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold">S</span>
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                {displayName ? `Hi, ${displayName}` : 'SplitSave'}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{currentViewLabel}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onNavigate('account')}
+              className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Open settings"
+            >
+              <span className="text-xl">⚙️</span>
+            </button>
+            <div className="relative">
+              <NotificationDropdown
+                userId={user?.id || ''}
+              />
+              {realNotificationCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900" aria-hidden="true"></span>
+              )}
+            </div>
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle dark mode"
+              >
+                <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto pb-24">

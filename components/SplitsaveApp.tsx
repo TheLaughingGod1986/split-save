@@ -907,6 +907,7 @@ export function SplitsaveApp() {
           profile={profile}
           onSignOut={handleSignOut}
           onToggleTheme={toggleTheme}
+          isDarkMode={isDarkMode}
         >
           {mainContent}
         </MobileLayout>
