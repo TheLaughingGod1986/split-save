@@ -5,14 +5,65 @@ import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
 
 export default function Home() {
   const { user, loading } = useAuth()
   const analyticsTracked = useRef(false)
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
+  const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
+
+  const checkStoredAuthToken = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    try {
+      const localToken = window.localStorage.getItem('splitsave-auth-token')
+      const sessionToken = window.sessionStorage.getItem('splitsave-auth-token')
+      const tokenExists = Boolean(localToken || sessionToken)
+
+      setHasAuthToken(tokenExists)
+      return tokenExists
+    } catch (error) {
+      console.warn('⚠️ Auth token storage check failed', error)
+      setHasAuthToken(false)
+      return false
+    }
+  }, [])
+
+  // Quickly detect if the visitor has no stored session so we can show the landing
+  useEffect(() => {
+    checkStoredAuthToken()
+
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const handleStorageChange = () => {
+      checkStoredAuthToken()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [checkStoredAuthToken])
+
+  // Keep token state in sync with auth changes
+  useEffect(() => {
+    if (user) {
+      setHasAuthToken(true)
+      return
+    }
+
+    if (!loading) {
+      checkStoredAuthToken()
+    }
+  }, [user, loading, checkStoredAuthToken])
 
   // DEBUG: Log auth state changes
   useEffect(() => {
@@ -86,7 +137,24 @@ export default function Home() {
     }
   }, [loading, isMobile, isSmallScreen])
 
+  const landingContent = (
+    <>
+      <StructuredData type="website" data={structuredDataSchemas.website} />
+      <StructuredData type="organization" data={structuredDataSchemas.organization} />
+      <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+      <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+      <LandingPage />
+    </>
+  )
+
   if (loading) {
+    const shouldBypassLoading = hasAuthToken === false
+
+    if (shouldBypassLoading) {
+      console.log('🚀 No stored session detected - showing marketing site while auth resolves')
+      return landingContent
+    }
+
     console.log('⏳ Showing loading screen', { loading, user: !!user, isMobile, isSmallScreen, isClient })
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -116,15 +184,7 @@ export default function Home() {
     console.log('🏠 Home: Showing landing page', {
       hasUser: false
     })
-    return (
-      <>
-        <StructuredData type="website" data={structuredDataSchemas.website} />
-        <StructuredData type="organization" data={structuredDataSchemas.organization} />
-        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        <LandingPage />
-      </>
-    )
+    return landingContent
   }
 
   // For mobile devices, add additional safety check
