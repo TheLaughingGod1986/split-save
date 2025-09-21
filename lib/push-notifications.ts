@@ -22,18 +22,31 @@ export interface NotificationAction {
 
 class PushNotificationManager {
   private registration: ServiceWorkerRegistration | null = null
-  private isSupported: boolean = false
+  private isSupported = false
   private permission: NotificationPermission = 'default'
 
   constructor() {
-    this.isSupported = typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator
-    this.permission = typeof window !== 'undefined' ? Notification.permission : 'default'
+    this.updateSupportStatus()
+  }
+
+  private updateSupportStatus() {
+    if (typeof window === 'undefined') {
+      this.isSupported = false
+      this.permission = 'default'
+      return
+    }
+
+    const hasNotificationApi = 'Notification' in window
+    this.isSupported = hasNotificationApi && 'serviceWorker' in navigator
+    this.permission = hasNotificationApi ? Notification.permission : 'default'
   }
 
   /**
    * Initialize push notifications
    */
   async initialize(): Promise<boolean> {
+    this.updateSupportStatus()
+
     if (!this.isSupported) {
       console.warn('Push notifications not supported in this browser')
       return false
@@ -45,7 +58,8 @@ class PushNotificationManager {
       
       // Request notification permission
       if (this.permission === 'default') {
-        this.permission = await Notification.requestPermission()
+        const permission = await Notification.requestPermission()
+        this.permission = permission
       }
 
       if (this.permission === 'granted') {
@@ -117,6 +131,8 @@ class PushNotificationManager {
    * Show local notification
    */
   async showNotification(payload: PushNotificationPayload): Promise<void> {
+    this.updateSupportStatus()
+
     if (!this.registration || this.permission !== 'granted') {
       // Fallback to toast notification
       toast.success(`${payload.title}: ${payload.body}`, {
@@ -172,6 +188,7 @@ class PushNotificationManager {
    * Get notification permission status
    */
   getPermissionStatus(): NotificationPermission {
+    this.updateSupportStatus()
     return this.permission
   }
 
@@ -179,7 +196,16 @@ class PushNotificationManager {
    * Check if notifications are supported and enabled
    */
   isEnabled(): boolean {
+    this.updateSupportStatus()
     return this.isSupported && this.permission === 'granted'
+  }
+
+  /**
+   * Check if the Notification API is available in the current browser
+   */
+  isSupportedInBrowser(): boolean {
+    this.updateSupportStatus()
+    return this.isSupported
   }
 
   /**
