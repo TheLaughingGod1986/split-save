@@ -28,10 +28,9 @@ export function MobilePWA({ children }: MobilePWAProps) {
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
       setIsMobile(isMobileDevice)
       
-      // Show mobile optimizations for mobile users
-      if (isMobileDevice) {
-        setShowMobileOptimizations(true)
-      }
+      // Only show mobile optimizations for PWA users, not regular mobile website users
+      // This prevents CSS conflicts on the mobile website
+      setShowMobileOptimizations(false) // Disabled for now to fix mobile website
     }
 
     const checkPWA = () => {
@@ -108,6 +107,8 @@ export function MobilePWA({ children }: MobilePWAProps) {
     }
   }, [isMobile, isStandalone, isPWA])
 
+  console.log('🔍 MobilePWA render:', { isMobile, isPWA, isStandalone, showMobileOptimizations, isClient })
+
   return (
     <>
       {children}
@@ -123,8 +124,8 @@ export function MobilePWA({ children }: MobilePWAProps) {
         </>
       )}
       
-      {/* Mobile-specific optimizations */}
-      {showMobileOptimizations && (
+      {/* Mobile-specific optimizations - ONLY for actual PWA or standalone mode */}
+      {showMobileOptimizations && (isPWA || isStandalone) && (
         <MobileOptimizations 
           isPWA={isPWA} 
           isStandalone={isStandalone} 

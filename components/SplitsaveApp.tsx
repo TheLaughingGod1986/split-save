@@ -648,8 +648,8 @@ export function SplitsaveApp() {
   const mainContent = (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-        {/* Desktop Navigation - Only show on desktop */}
-        {!isMobile && (
+        {/* Desktop Navigation - Only show on desktop (not mobile or PWA) */}
+        {!isMobile && !isPWAMobile && !isPWA && (
           <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
