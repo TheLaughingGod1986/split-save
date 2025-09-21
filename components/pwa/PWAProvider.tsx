@@ -32,9 +32,11 @@ export function PWAProvider({ children }: PWAProviderProps) {
     }
 
     const handleControllerChange = () => {
-      console.log('🔄 PWA: Controller changed')
-      // Reload the page to get the new version
-      window.location.reload()
+      console.log('🔄 PWA: Controller changed - new service worker active')
+      // Previously we forced a full reload here which caused mobile browsers to briefly
+      // render the page and then flash to a white screen while the reload occurred.
+      // Let the app continue running – the new service worker will serve updated assets
+      // without interrupting the current session.
     }
 
     const handleOnline = () => {
