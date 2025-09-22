@@ -41,6 +41,10 @@ export function SmartNotifications() {
   const [progressAlerts, setProgressAlerts] = useState<ProgressAlert[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'settings' | 'reminders' | 'alerts'>('settings')
+  const [notificationSupport, setNotificationSupport] = useState<{
+    supported: boolean
+    permission: NotificationPermission
+  }>({ supported: false, permission: 'default' })
 
   // Default notification settings
   const defaultSettings: NotificationSetting[] = useMemo(() => [
@@ -126,6 +130,14 @@ export function SmartNotifications() {
     loadNotificationData()
   }, [loadNotificationData])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationSupport({ supported: true, permission: Notification.permission })
+    } else {
+      setNotificationSupport({ supported: false, permission: 'default' })
+    }
+  }, [])
+
   const getNextPayday = () => {
     // Calculate next payday (assuming monthly on the 1st for demo)
     const now = new Date()
@@ -158,20 +170,25 @@ export function SmartNotifications() {
   }
 
   const requestNotificationPermission = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted') {
-        toast.success('Browser notifications enabled!')
-      } else {
-        toast.warning('Browser notifications denied')
-      }
-    } else {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
       toast.error('Browser notifications not supported')
+      return
+    }
+
+    const permission = await Notification.requestPermission()
+    setNotificationSupport({ supported: true, permission })
+
+    if (permission === 'granted') {
+      toast.success('Browser notifications enabled!')
+    } else if (permission === 'denied') {
+      toast.warning('Browser notifications denied')
+    } else {
+      toast.info('Browser notifications permission is pending')
     }
   }
 
   const testNotification = (setting: NotificationSetting) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && 'Notification' in window && notificationSupport.permission === 'granted') {
       new Notification(setting.title, {
         body: 'This is a test notification from SplitSave',
         icon: '/icon-192x192.png',
@@ -237,7 +254,7 @@ export function SmartNotifications() {
       </div>
 
       {/* Notification Permission */}
-      {Notification.permission !== 'granted' && (
+      {notificationSupport.supported && notificationSupport.permission !== 'granted' && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
           <div className="flex items-start space-x-3">
             <span className="text-2xl">🔔</span>
@@ -254,6 +271,22 @@ export function SmartNotifications() {
               >
                 Enable Notifications
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!notificationSupport.supported && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+          <div className="flex items-start space-x-3">
+            <span className="text-2xl">ℹ️</span>
+            <div className="flex-1">
+              <h3 className="text-amber-800 dark:text-amber-200 font-medium mb-2">
+                Browser notifications are unavailable
+              </h3>
+              <p className="text-amber-700 dark:text-amber-300 text-sm">
+                Your current browser does not support the Notification API, so push alerts will be disabled automatically.
+              </p>
             </div>
           </div>
         </div>

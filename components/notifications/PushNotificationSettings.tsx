@@ -30,9 +30,9 @@ export function PushNotificationSettings() {
       setLoading(true)
       
       // Check if notifications are supported
-      const supported = pushNotificationManager.isEnabled()
+      const supported = pushNotificationManager.isSupportedInBrowser()
       setIsSupported(supported)
-      
+
       // Get permission status
       const permissionStatus = pushNotificationManager.getPermissionStatus()
       setPermission(permissionStatus)
