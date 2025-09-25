@@ -372,8 +372,19 @@ export const serviceWorkerUtils = {
    */
   isStandalone(): boolean {
     if (typeof window === 'undefined') return false
-    return window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone === true
+
+    // Standard display-mode checks
+    const standaloneModes = ['standalone', 'fullscreen', 'minimal-ui']
+    if (standaloneModes.some(mode => window.matchMedia(`(display-mode: ${mode})`).matches)) {
+      return true
+    }
+
+    // iOS specific homescreen detection
+    if ((window.navigator as any).standalone === true) {
+      return true
+    }
+
+    return false
   },
 
   /**
@@ -381,9 +392,16 @@ export const serviceWorkerUtils = {
    */
   isPWA(): boolean {
     if (typeof window === 'undefined') return false
-    return this.isStandalone() || 
-           window.location.protocol === 'https:' && 
-           this.isSupported()
+
+    if (this.isStandalone()) {
+      return true
+    }
+
+    if (typeof document !== 'undefined' && document.referrer?.startsWith('android-app://')) {
+      return true
+    }
+
+    return false
   }
 }
 

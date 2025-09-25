@@ -14,11 +14,12 @@ export function MobileNavigation({ currentView, onViewChange }: MobileNavigation
   if (!isMobile) return null
 
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
-    { id: 'money', label: 'Money', icon: '💰' },
+    { id: 'overview', label: 'Overview', icon: '🏠' },
+    { id: 'expenses', label: 'Money', icon: '💰' },
     { id: 'goals', label: 'Goals', icon: '🎯' },
-    { id: 'partnerships', label: 'Partners', icon: '👥' },
-    { id: 'analytics', label: 'Analytics', icon: '📊' }
+    { id: 'partnerships', label: 'Partners', icon: '🤝' },
+    { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'account', label: 'Account', icon: '👤' }
   ]
 
   return (
