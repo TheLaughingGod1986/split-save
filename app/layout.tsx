@@ -5,8 +5,8 @@ import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
-import { MobilePWA } from '@/components/pwa/MobilePWA'
 import { PWAProvider } from '@/components/pwa/PWAProvider'
+import { SafariRuntimeRepair } from '@/components/pwa/SafariRuntimeRepair'
 // Debug components removed to prevent hydration issues
 // import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 // import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
@@ -144,51 +144,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
 
-        {/* Ensure Next.js runtime script loads correctly on Safari */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var head = document.head;
-                  if (!head) return;
-
-                  var cssScripts = head.querySelectorAll('script[src$=".css"]');
-                  cssScripts.forEach(function(node) {
-                    if (node.parentNode) {
-                      node.parentNode.removeChild(node);
-                    }
-                  });
-
-                  var preload = head.querySelector('link[rel="preload"][as="script"][href*="/_next/static/chunks/webpack"]');
-                  if (!preload) return;
-
-                  var runtimeSrc = preload.getAttribute('href') || preload.href;
-                  if (!runtimeSrc) return;
-
-                  if (!head.querySelector('script[src="' + runtimeSrc + '"]')) {
-                    var runtimeScript = document.createElement('script');
-                    runtimeScript.src = runtimeSrc;
-                    runtimeScript.async = false;
-                    var crossOrigin = preload.getAttribute('crossorigin');
-                    if (crossOrigin) {
-                      runtimeScript.setAttribute('crossorigin', crossOrigin);
-                    }
-
-                    var firstScript = head.querySelector('script[src^="/_next/static/chunks/"]');
-                    if (firstScript && firstScript.parentNode) {
-                      firstScript.parentNode.insertBefore(runtimeScript, firstScript);
-                    } else {
-                      head.appendChild(runtimeScript);
-                    }
-                  }
-                } catch (error) {
-                  console.error('⚠️ Failed to repair Next.js runtime bootstrap', error);
-                }
-              })();
-            `
-          }}
-        />
 
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
@@ -356,16 +311,17 @@ export default function RootLayout({
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
 
-                <PWAProvider>
-                  <AuthProvider>
-                    <ThemeProvider>
-                      {/* Temporarily disable MobilePWA for debugging mobile website */}
-                      {children}
-                      <Analytics />
-                      <SpeedInsights />
-                    </ThemeProvider>
-                  </AuthProvider>
-                </PWAProvider>
+        <PWAProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <SafariRuntimeRepair />
+              {/* Temporarily disable MobilePWA for debugging mobile website */}
+              {children}
+              <Analytics />
+              <SpeedInsights />
+            </ThemeProvider>
+          </AuthProvider>
+        </PWAProvider>
       </body>
     </html>
   )
