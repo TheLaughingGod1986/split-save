@@ -47,22 +47,38 @@ export class DarkModeManager {
     this.setModeInternal(initialMode as 'light' | 'dark' | 'system')
 
     // Listen for system preference changes
-    if (this.config.enableSystemPreference) {
+    if (this.config.enableSystemPreference && typeof window.matchMedia === 'function') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      mediaQuery.addEventListener('change', (e) => {
-        this.systemPreference = e.matches ? 'dark' : 'light'
+      const listener = (event: MediaQueryListEvent) => {
+        this.systemPreference = event.matches ? 'dark' : 'light'
         if (this.currentMode === 'system') {
           this.actualMode = this.systemPreference
           this.applyMode(this.systemPreference)
           this.notifyListeners(this.systemPreference)
         }
-      })
+      }
+
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', listener)
+      } else if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(listener)
+      } else {
+        console.warn('⚠️ DarkModeManager: MediaQueryList change listener not supported')
+      }
     }
   }
 
   private getSystemPreference(): 'light' | 'dark' {
-    if (typeof window === 'undefined') return 'light'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return 'light'
+    }
+
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    } catch (error) {
+      console.warn('⚠️ DarkModeManager: system preference detection failed', error)
+      return 'light'
+    }
   }
 
   private setModeInternal(mode: 'light' | 'dark' | 'system') {

@@ -40,7 +40,7 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
 
       setNotifications(notificationList)
       setUnreadCount(
-        unreadFromApi ?? notificationList.filter((notification) => !notification.isRead).length
+        unreadFromApi ?? notificationList.filter((notification: Notification) => !notification.isRead).length
       )
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
@@ -76,7 +76,7 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
       ]
 
       setNotifications(mockNotifications)
-      setUnreadCount(mockNotifications.filter((notification) => !notification.isRead).length)
+      setUnreadCount(mockNotifications.filter((notification: Notification) => !notification.isRead).length)
     } finally {
       setIsLoading(false)
     }
