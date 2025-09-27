@@ -140,7 +140,18 @@ export class MobileOptimizationManager {
    * Apply reduced motion preferences
    */
   private applyReducedMotion() {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (typeof window.matchMedia !== 'function') {
+      return
+    }
+
+    let prefersReducedMotion = false
+
+    try {
+      prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    } catch (error) {
+      console.warn('⚠️ MobileOptimizationManager: reduced motion detection failed', error)
+      prefersReducedMotion = false
+    }
 
     if (prefersReducedMotion) {
       document.documentElement.classList.add('reduced-motion')
@@ -286,8 +297,16 @@ export const mobileUtils = {
    * Check if device prefers reduced motion
    */
   prefersReducedMotion(): boolean {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false
+    }
+
+    try {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    } catch (error) {
+      console.warn('⚠️ mobileUtils.prefersReducedMotion detection failed', error)
+      return false
+    }
   },
 
   /**

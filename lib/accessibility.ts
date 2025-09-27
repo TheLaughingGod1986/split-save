@@ -45,14 +45,24 @@ export class AccessibilityManager {
   }
 
   private detectSystemPreferences() {
-    // Check for reduced motion preference
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this.config.enableReducedMotion = true
-    }
+    if (typeof window.matchMedia === 'function') {
+      // Check for reduced motion preference
+      try {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          this.config.enableReducedMotion = true
+        }
+      } catch (error) {
+        console.warn('⚠️ AccessibilityManager: reduced motion detection failed', error)
+      }
 
-    // Check for high contrast preference
-    if (window.matchMedia('(prefers-contrast: high)').matches) {
-      this.config.enableHighContrast = true
+      // Check for high contrast preference
+      try {
+        if (window.matchMedia('(prefers-contrast: high)').matches) {
+          this.config.enableHighContrast = true
+        }
+      } catch (error) {
+        console.warn('⚠️ AccessibilityManager: high contrast detection failed', error)
+      }
     }
 
     // Check for screen reader (basic detection)
@@ -64,20 +74,43 @@ export class AccessibilityManager {
   }
 
   private setupPreferenceListeners() {
+    if (typeof window.matchMedia !== 'function') {
+      return
+    }
+
+    const addMediaQueryListener = (
+      query: MediaQueryList,
+      callback: (event: MediaQueryListEvent) => void
+    ) => {
+      if (typeof query.addEventListener === 'function') {
+        query.addEventListener('change', callback)
+        return () => query.removeEventListener('change', callback)
+      }
+
+      // Fallback for Safari and older browsers
+      if (typeof query.addListener === 'function') {
+        query.addListener(callback)
+        return () => query.removeListener(callback)
+      }
+
+      console.warn('⚠️ AccessibilityManager: MediaQueryList change listener not supported')
+      return () => {}
+    }
+
     // Listen for reduced motion changes
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    reducedMotionQuery.addEventListener('change', (e) => {
-      this.config.enableReducedMotion = e.matches
+    addMediaQueryListener(reducedMotionQuery, (event) => {
+      this.config.enableReducedMotion = event.matches
       this.applyAccessibilitySettings()
-      this.emit('reducedMotionChanged', e.matches)
+      this.emit('reducedMotionChanged', event.matches)
     })
 
     // Listen for high contrast changes
     const highContrastQuery = window.matchMedia('(prefers-contrast: high)')
-    highContrastQuery.addEventListener('change', (e) => {
-      this.config.enableHighContrast = e.matches
+    addMediaQueryListener(highContrastQuery, (event) => {
+      this.config.enableHighContrast = event.matches
       this.applyAccessibilitySettings()
-      this.emit('highContrastChanged', e.matches)
+      this.emit('highContrastChanged', event.matches)
     })
   }
 
