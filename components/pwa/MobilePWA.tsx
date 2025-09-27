@@ -27,15 +27,16 @@ export function MobilePWA({ children }: MobilePWAProps) {
       const userAgent = navigator.userAgent.toLowerCase()
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
       setIsMobile(isMobileDevice)
-      
-      // Only show mobile optimizations for PWA users, not regular mobile website users
-      // This prevents CSS conflicts on the mobile website
-      setShowMobileOptimizations(false) // Disabled for now to fix mobile website
+
+      const shouldEnableOptimizations = isMobileDevice && (serviceWorkerUtils.isPWA() || serviceWorkerUtils.isStandalone())
+      setShowMobileOptimizations(shouldEnableOptimizations)
     }
 
     const checkPWA = () => {
-      setIsPWA(serviceWorkerUtils.isPWA())
-      setIsStandalone(serviceWorkerUtils.isStandalone())
+      const pwa = serviceWorkerUtils.isPWA()
+      const standalone = serviceWorkerUtils.isStandalone()
+      setIsPWA(pwa)
+      setIsStandalone(standalone)
     }
 
     checkMobile()
@@ -96,16 +97,26 @@ export function MobilePWA({ children }: MobilePWAProps) {
   useEffect(() => {
     if (isMobile && typeof document !== 'undefined') {
       document.documentElement.classList.add('mobile-device')
-      
+
       if (isStandalone) {
         document.documentElement.classList.add('pwa-standalone')
       }
-      
+
       if (isPWA) {
         document.documentElement.classList.add('pwa-mode')
       }
     }
   }, [isMobile, isStandalone, isPWA])
+
+  useEffect(() => {
+    if (!isClient) return
+
+    if (isMobile) {
+      setShowMobileOptimizations(isPWA || isStandalone)
+    } else {
+      setShowMobileOptimizations(false)
+    }
+  }, [isClient, isMobile, isPWA, isStandalone])
 
   console.log('🔍 MobilePWA render:', { isMobile, isPWA, isStandalone, showMobileOptimizations, isClient })
 

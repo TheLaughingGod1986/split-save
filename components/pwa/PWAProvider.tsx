@@ -9,8 +9,16 @@ interface PWAProviderProps {
 
 export function PWAProvider({ children }: PWAProviderProps) {
   useEffect(() => {
-    // Register service worker on app load
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return
+    }
+
+    let isMounted = true
+
+    // Register service worker on app load or once the window has finished loading.
     const registerServiceWorker = async () => {
+      if (!isMounted) return
+
       try {
         console.log('🚀 PWA: Registering service worker...')
         await serviceWorkerManager.register()
@@ -20,9 +28,10 @@ export function PWAProvider({ children }: PWAProviderProps) {
       }
     }
 
-    // Only register if supported
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    if (document.readyState === 'complete') {
       registerServiceWorker()
+    } else {
+      window.addEventListener('load', registerServiceWorker, { once: true })
     }
 
     // Listen for service worker events
@@ -54,6 +63,8 @@ export function PWAProvider({ children }: PWAProviderProps) {
     serviceWorkerManager.on('offline', handleOffline)
 
     return () => {
+      isMounted = false
+      window.removeEventListener('load', registerServiceWorker)
       // Clean up event listeners
       serviceWorkerManager.off('updateavailable', handleUpdateAvailable)
       serviceWorkerManager.off('controllerchange', handleControllerChange)

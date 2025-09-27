@@ -5,6 +5,8 @@ import { toast } from '@/lib/toast'
 import { apiClient } from '@/lib/api-client'
 import { DashboardContributionSummary } from './DashboardContributionSummary'
 import { QuickCharts } from '../analytics/QuickCharts'
+import { MobileUsageGuide } from '../mobile/MobileUsageGuide'
+import { useMobilePWA } from '../pwa/MobilePWA'
 
 interface OverviewHubProps {
   expenses: any[]
@@ -60,6 +62,44 @@ export function OverviewHub({
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [localMonthlyProgress, setLocalMonthlyProgress] = useState<any>(null)
   const [safetyPotAmount, setSafetyPotAmount] = useState(0)
+  const [showMobileGuide, setShowMobileGuide] = useState(false)
+
+  const {
+    isMobile: isMobileClient,
+    isPWA,
+    isStandalone,
+    isClient: hasClientInfo
+  } = useMobilePWA()
+
+  useEffect(() => {
+    if (!hasClientInfo) {
+      return
+    }
+
+    const dismissed = typeof window !== 'undefined'
+      ? localStorage.getItem('splitsave-mobile-guide-dismissed')
+      : null
+
+    if (!dismissed && (isMobileClient || isPWA || isStandalone)) {
+      setShowMobileGuide(true)
+    }
+  }, [hasClientInfo, isMobileClient, isPWA, isStandalone])
+
+  const openMobileGuide = useCallback(() => {
+    setShowMobileGuide(true)
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('splitsave-mobile-guide-dismissed')
+    }
+  }, [])
+
+  const dismissMobileGuide = useCallback(() => {
+    setShowMobileGuide(false)
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('splitsave-mobile-guide-dismissed', 'true')
+    }
+  }, [])
 
   // Fetch safety pot data
   const fetchSafetyPotData = useCallback(async () => {
@@ -156,8 +196,16 @@ export function OverviewHub({
       color: 'orange',
       description: 'View partner activity & approvals',
       action: () => onNavigate('partnerships')
+    },
+    {
+      id: 'mobile-guide',
+      title: 'Mobile Guide',
+      icon: '📲',
+      color: 'indigo',
+      description: 'Install or browse SplitSave on mobile',
+      action: openMobileGuide
     }
-  ], [onNavigate])
+  ], [onNavigate, openMobileGuide])
 
 
 
@@ -272,12 +320,21 @@ export function OverviewHub({
           Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {profile?.name || 'there'}! {currencyEmoji}
         </h1>
         <p className="text-blue-100">
-          {partnerships.length > 0 
+          {partnerships.length > 0
             ? `You and ${partnerProfile?.name || 'your partner'} are doing great!`
             : 'Ready to start your financial journey?'
           }
         </p>
       </div>
+
+      {showMobileGuide && (
+        <MobileUsageGuide
+          isMobile={isMobileClient}
+          isPWA={isPWA}
+          isStandalone={isStandalone}
+          onDismiss={dismissMobileGuide}
+        />
+      )}
 
       {/* Smart Notifications - Compact */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
