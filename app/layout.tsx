@@ -7,6 +7,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
 import { PWAProvider } from '@/components/pwa/PWAProvider'
 import { SafariRuntimeRepair } from '@/components/pwa/SafariRuntimeRepair'
+import { MobilePWA } from '@/components/pwa/MobilePWA'
 // Debug components removed to prevent hydration issues
 // import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 // import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
@@ -315,8 +316,9 @@ export default function RootLayout({
           <AuthProvider>
             <ThemeProvider>
               <SafariRuntimeRepair />
-              {/* Temporarily disable MobilePWA for debugging mobile website */}
-              {children}
+              <MobilePWA>
+                {children}
+              </MobilePWA>
               <Analytics />
               <SpeedInsights />
             </ThemeProvider>

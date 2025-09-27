@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 interface MobileNavigationProps {
   currentView: string
@@ -24,8 +24,8 @@ export function MobileNavigation({
   notificationCount
 }: MobileNavigationProps) {
   const [isVisible, setIsVisible] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
-  const [isScrolling, setIsScrolling] = useState(false)
+  const lastScrollYRef = useRef(0)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const navigationItems: NavigationItem[] = [
     {
@@ -70,26 +70,34 @@ export function MobileNavigation({
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
+      const lastScrollY = lastScrollYRef.current
       const scrollingDown = currentScrollY > lastScrollY
       const scrollingUp = currentScrollY < lastScrollY
 
-      // Hide navigation when scrolling down, show when scrolling up
       if (scrollingDown && currentScrollY > 100) {
         setIsVisible(false)
       } else if (scrollingUp || currentScrollY < 100) {
         setIsVisible(true)
       }
 
-      setLastScrollY(currentScrollY)
-      setIsScrolling(true)
+      lastScrollYRef.current = currentScrollY
 
-      // Reset scrolling state after a delay
-      setTimeout(() => setIsScrolling(false), 150)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        scrollTimeoutRef.current = null
+      }, 150)
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Handle touch gestures
   const handleTouchStart = (e: React.TouchEvent) => {

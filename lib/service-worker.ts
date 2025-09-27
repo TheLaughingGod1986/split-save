@@ -23,6 +23,7 @@ class ServiceWorkerManager {
   private isRegistered: boolean = false
   private isOnline: boolean = typeof window !== 'undefined' ? navigator.onLine : true
   private updateAvailable: boolean = false
+  private registrationPromise: Promise<globalThis.ServiceWorkerRegistration> | null = null
   private listeners: Map<string, Function[]> = new Map()
 
   constructor() {
@@ -41,12 +42,33 @@ class ServiceWorkerManager {
       return this.getStatus()
     }
 
+    if (this.isRegistered && this.registration) {
+      return this.getStatus()
+    }
+
+    if (this.registrationPromise) {
+      await this.registrationPromise
+      return this.getStatus()
+    }
+
     try {
       console.log('🔧 Registering Service Worker...')
-      
-      this.registration = await navigator.serviceWorker.register('/sw.js', {
+
+      this.registrationPromise = navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       })
+
+      this.registration = await this.registrationPromise
+
+      // Ensure we keep a reference to the active registration even if the initial registration promise resolves to a waiting worker
+      navigator.serviceWorker.ready
+        .then((readyRegistration) => {
+          this.registration = readyRegistration
+          this.isRegistered = true
+        })
+        .catch((error) => {
+          console.error('❌ Service Worker ready check failed:', error)
+        })
 
       this.isRegistered = true
       console.log('✅ Service Worker registered successfully')
@@ -66,7 +88,10 @@ class ServiceWorkerManager {
       return this.getStatus()
     } catch (error) {
       console.error('❌ Service Worker registration failed:', error)
+      this.registrationPromise = null
       throw error
+    } finally {
+      this.registrationPromise = null
     }
   }
 
