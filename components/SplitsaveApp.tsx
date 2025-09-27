@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
+import { serviceWorkerManager } from '@/lib/service-worker'
 
 // Import components
 import { OverviewHub } from './dashboard/OverviewHub'
@@ -180,7 +181,13 @@ export function SplitsaveApp() {
     } catch (error) {
       console.error('Sign out error:', error)
     }
-    
+
+    try {
+      await serviceWorkerManager.clearCaches()
+    } catch (error) {
+      console.error('Failed to clear caches after sign out:', error)
+    }
+
     // Clear local state
     setUser(null)
     setExpenses([])
