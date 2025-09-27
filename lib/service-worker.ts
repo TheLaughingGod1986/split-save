@@ -400,15 +400,29 @@ export const serviceWorkerUtils = {
   isStandalone(): boolean {
     if (typeof window === 'undefined') return false
 
-    // Standard display-mode checks
-    const standaloneModes = ['standalone', 'fullscreen', 'minimal-ui']
-    if (standaloneModes.some(mode => window.matchMedia(`(display-mode: ${mode})`).matches)) {
-      return true
-    }
+    try {
+      // Standard display-mode checks (guard matchMedia availability)
+      const standaloneModes = ['standalone', 'fullscreen', 'minimal-ui']
+      if (
+        typeof window.matchMedia === 'function' &&
+        standaloneModes.some(mode => {
+          try {
+            return window.matchMedia(`(display-mode: ${mode})`).matches
+          } catch (error) {
+            console.warn('⚠️ serviceWorkerUtils.isStandalone matchMedia check failed:', error)
+            return false
+          }
+        })
+      ) {
+        return true
+      }
 
-    // iOS specific homescreen detection
-    if ((window.navigator as any).standalone === true) {
-      return true
+      // iOS specific homescreen detection
+      if (typeof window.navigator !== 'undefined' && (window.navigator as any).standalone === true) {
+        return true
+      }
+    } catch (error) {
+      console.warn('⚠️ serviceWorkerUtils.isStandalone detection failed:', error)
     }
 
     return false
@@ -420,12 +434,16 @@ export const serviceWorkerUtils = {
   isPWA(): boolean {
     if (typeof window === 'undefined') return false
 
-    if (this.isStandalone()) {
-      return true
-    }
+    try {
+      if (this.isStandalone()) {
+        return true
+      }
 
-    if (typeof document !== 'undefined' && document.referrer?.startsWith('android-app://')) {
-      return true
+      if (typeof document !== 'undefined' && document.referrer?.startsWith('android-app://')) {
+        return true
+      }
+    } catch (error) {
+      console.warn('⚠️ serviceWorkerUtils.isPWA detection failed:', error)
     }
 
     return false
