@@ -34,11 +34,14 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
     setIsLoading(true)
     try {
       const response = await apiClient.get('/notifications')
-      const data = response?.data || response || []
-      const notificationList = Array.isArray(data) ? data : []
-      
+      const data = response?.data ?? {}
+      const notificationList = Array.isArray(data?.notifications) ? data.notifications : []
+      const unreadFromApi = typeof data?.unreadCount === 'number' ? data.unreadCount : null
+
       setNotifications(notificationList)
-      setUnreadCount(notificationList.filter(n => !n.isRead).length)
+      setUnreadCount(
+        unreadFromApi ?? notificationList.filter((notification) => !notification.isRead).length
+      )
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
       // Create some mock notifications for demo purposes
@@ -71,9 +74,9 @@ export function NotificationDropdown({ userId, className = '' }: NotificationDro
           actionUrl: '/' // Redirect to main app where partnerships view is available
         }
       ]
-      
+
       setNotifications(mockNotifications)
-      setUnreadCount(mockNotifications.filter(n => !n.isRead).length)
+      setUnreadCount(mockNotifications.filter((notification) => !notification.isRead).length)
     } finally {
       setIsLoading(false)
     }
