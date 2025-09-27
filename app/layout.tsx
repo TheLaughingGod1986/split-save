@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/ui/ThemeProvider'
 import { PWAProvider } from '@/components/pwa/PWAProvider'
 import { SafariRuntimeRepair } from '@/components/pwa/SafariRuntimeRepair'
 import { MobilePWA } from '@/components/pwa/MobilePWA'
+import { PWAInstallPrompt, PWAStatus } from '@/components/pwa/PWAInstallPrompt'
 // Debug components removed to prevent hydration issues
 // import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 // import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
@@ -308,6 +309,8 @@ export default function RootLayout({
               <SafariRuntimeRepair />
               <MobilePWA>
                 {children}
+                <PWAStatus />
+                <PWAInstallPrompt />
               </MobilePWA>
               <Analytics />
               <SpeedInsights />
