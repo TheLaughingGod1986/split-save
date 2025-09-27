@@ -1,123 +1,28 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { serviceWorkerUtils } from '@/lib/service-worker'
-
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[]
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed'
-    platform: string
-  }>
-  prompt(): Promise<void>
-}
+import React from 'react'
+import { useMobilePWA } from './MobilePWA'
 
 export function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
-  const [isInstalled, setIsInstalled] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [isClient, setIsClient] = useState(false)
+  const {
+    isClient,
+    isMobile,
+    canInstall,
+    showInstallPrompt,
+    requestInstall,
+    dismissInstallPrompt
+  } = useMobilePWA()
 
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') {
-      return
-    }
+  if (!isClient || !isMobile || !canInstall || !showInstallPrompt) {
+    return null
+  }
 
-    setIsClient(true)
-
-    // Check if running on mobile
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent.toLowerCase()
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
-      setIsMobile(isMobileDevice)
-    }
-
-    // Check if already installed
-    const checkInstalled = () => {
-      const isStandalone = serviceWorkerUtils.isStandalone()
-      setIsInstalled(isStandalone)
-    }
-
-    checkMobile()
-    checkInstalled()
-
-    // Listen for beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-      
-      // Show install prompt for mobile users after a delay
-      setTimeout(() => {
-        setShowInstallPrompt(true)
-      }, 3000) // Show after 3 seconds
-    }
-
-    // Listen for appinstalled event
-    const handleAppInstalled = () => {
-      console.log('✅ PWA installed successfully')
-      setIsInstalled(true)
-      setShowInstallPrompt(false)
-      setDeferredPrompt(null)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', handleAppInstalled)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', handleAppInstalled)
-    }
-  }, []) // Remove dependencies to prevent infinite re-renders
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-
-    try {
-      await deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-      
-      if (outcome === 'accepted') {
-        console.log('✅ User accepted PWA installation')
-      } else {
-        console.log('❌ User dismissed PWA installation')
-      }
-      
-      setDeferredPrompt(null)
-      setShowInstallPrompt(false)
-    } catch (error) {
-      console.error('❌ Error during PWA installation:', error)
-    }
+  const handleInstall = async () => {
+    await requestInstall()
   }
 
   const handleDismiss = () => {
-    setShowInstallPrompt(false)
-    // Don't show again for this session
-    sessionStorage.setItem('pwa-install-dismissed', 'true')
-  }
-
-  // Don't render on server side
-  if (!isClient) {
-    return null
-  }
-
-  // Don't show if already installed, dismissed, or not mobile
-  if (isInstalled || !isMobile || !showInstallPrompt || !deferredPrompt) {
-    return null
-  }
-
-  // Check if user dismissed in this session or permanently
-  if (typeof window !== 'undefined') {
-    if (sessionStorage.getItem('pwa-install-dismissed') || localStorage.getItem('pwa-install-dismissed')) {
-      return null
-    }
-  }
-
-  // Additional check for development environment
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    console.log('PWA Install Prompt: Disabled on localhost for development')
-    return null
+    dismissInstallPrompt({ persist: true })
   }
 
   return (
@@ -131,7 +36,7 @@ export function PWAInstallPrompt() {
               </svg>
             </div>
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white">
               Install SplitSave
@@ -139,10 +44,10 @@ export function PWAInstallPrompt() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Add to your home screen for quick access and offline support.
             </p>
-            
+
             <div className="flex items-center space-x-2 mt-3">
               <button
-                onClick={handleInstallClick}
+                onClick={handleInstall}
                 className="flex-1 bg-purple-600 text-white text-sm font-medium py-2 px-3 rounded-md hover:bg-purple-700 transition-colors"
               >
                 Install
@@ -155,10 +60,11 @@ export function PWAInstallPrompt() {
               </button>
             </div>
           </div>
-          
+
           <button
             onClick={handleDismiss}
             className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            aria-label="Dismiss PWA install prompt"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -171,25 +77,11 @@ export function PWAInstallPrompt() {
 }
 
 export function PWAStatus() {
-  const [isPWA, setIsPWA] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
-  const [isClient, setIsClient] = useState(false)
+  const { isClient, isPWA, isStandalone } = useMobilePWA()
 
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') {
-      return
-    }
-    
-    setIsClient(true)
-    setIsPWA(serviceWorkerUtils.isPWA())
-    setIsStandalone(serviceWorkerUtils.isStandalone())
-  }, [])
-
-  // Don't render on server side
-  if (!isClient) return null
-
-  if (!isPWA) return null
+  if (!isClient || !isPWA) {
+    return null
+  }
 
   return (
     <div className="fixed top-4 right-4 z-40">
@@ -198,7 +90,7 @@ export function PWAStatus() {
           <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="text-xs font-medium text-green-800 dark:text-green-200">
+          <span className="text-xs font-medium text-green-700 dark:text-green-200">
             {isStandalone ? 'PWA Mode' : 'PWA Ready'}
           </span>
         </div>
@@ -206,3 +98,4 @@ export function PWAStatus() {
     </div>
   )
 }
+

@@ -433,3 +433,19 @@
   }
 }
 
+/* PWA + mobile shell helpers */
+html.is-mobile-device,
+html.is-mobile-device body {
+  min-height: 100%;
+  background-color: var(--color-background);
+}
+
+html.is-pwa-experience body {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.is-standalone-pwa body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
