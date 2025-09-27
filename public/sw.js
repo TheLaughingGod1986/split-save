@@ -8,8 +8,10 @@ const STATIC_CACHE = 'splitsave-static-v1.0.0'
 const DYNAMIC_CACHE = 'splitsave-dynamic-v1.0.0'
 
 // Assets to cache immediately
+// Only precache truly static assets. Avoid caching the root document because
+// Next.js streams the shell HTML and caching it can capture an empty loading
+// state that never hydrates when returned offline or from a stale cache.
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/icon-192x192.png',
   '/icon-512x512.png',
