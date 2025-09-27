@@ -1,3 +1,5 @@
+import React from 'react'
+
 /**
  * Service Worker Registration and Management
  * Handles registration, updates, and communication with the service worker
