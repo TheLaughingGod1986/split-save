@@ -40,8 +40,9 @@ const customJestConfig = {
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   testMatch: [
-    '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
-    '**/*.(test|spec).(ts|tsx|js)',
+    '**/__tests__/**/*.test.[tj]s?(x)',
+    '**/__tests__/**/*.spec.[tj]s?(x)',
+    '**/?(*.)+(test|spec).[tj]s?(x)',
   ],
 }
 
