@@ -150,6 +150,20 @@ export default function Home() {
 
   if (loading) {
     const shouldBypassLoading = isClient && hasAuthToken === false
+    const shouldShowPlainMobileFallback = isClient && isMobile && !isStandalonePWA
+
+    if (shouldShowPlainMobileFallback) {
+      console.log('📄 Loading mobile visitor detected - showing plain markup while auth resolves')
+      return (
+        <>
+          <StructuredData type="website" data={structuredDataSchemas.website} />
+          <StructuredData type="organization" data={structuredDataSchemas.organization} />
+          <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+          <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+          <MobilePlainMarkup />
+        </>
+      )
+    }
 
     if (shouldBypassLoading) {
       console.log('🚀 No stored session detected - showing marketing site while auth resolves')
@@ -169,8 +183,8 @@ export default function Home() {
             Mobile: {isMobile ? 'true' : 'false'} | Client: {isClient ? 'true' : 'false'}
           </div>
           <div className="mt-4 text-xs text-gray-400">
-            If this takes too long, <button 
-              onClick={() => window.location.reload()} 
+            If this takes too long, <button
+              onClick={() => window.location.reload()}
               className="text-purple-600 hover:text-purple-700 underline"
             >
               refresh the page
