@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
-import { serviceWorkerManager } from '@/lib/service-worker'
 
 // Import components
 import { OverviewHub } from './dashboard/OverviewHub'
@@ -13,9 +12,6 @@ import { AccountHub } from './dashboard/AccountHub'
 import { AnalyticsView } from './analytics/AnalyticsView'
 import { NotificationManager } from './notifications/NotificationManager'
 import { NotificationDropdown } from './notifications/NotificationDropdown'
-import { MobileNavigation } from './mobile/MobileNavigation'
-import { MobileNavigation as PWAMobileNavigation } from './pwa/MobileNavigation'
-import { useMobilePWA } from './pwa/MobilePWA'
 import { MobileLayout } from './mobile/MobileLayout'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { MoneyHub } from './dashboard/MoneyHub'
@@ -35,9 +31,6 @@ export function SplitsaveApp() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   
-  // PWA mobile detection
-  const { isMobile: isPWAMobile, isPWA, isStandalone } = useMobilePWA()
-
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
   const [goals, setGoals] = useState<Goal[] | null>(null)
@@ -180,12 +173,6 @@ export function SplitsaveApp() {
       }
     } catch (error) {
       console.error('Sign out error:', error)
-    }
-
-    try {
-      await serviceWorkerManager.clearCaches()
-    } catch (error) {
-      console.error('Failed to clear caches after sign out:', error)
     }
 
     // Clear local state
@@ -533,22 +520,8 @@ export function SplitsaveApp() {
       setLoading(false)
     }, 5000)
     
-    // Mobile-specific failsafe: Force loading to false after 2 seconds on mobile
-    const mobileFailsafeTimeout = isPWAMobile ? setTimeout(() => {
-      console.log('🔍 Mobile failsafe: forcing loading to false')
-      setLoading(false)
-    }, 2000) : null
-    
-    // Ultra-aggressive mobile failsafe: Force loading to false after 1 second
-    const ultraMobileFailsafeTimeout = isPWAMobile ? setTimeout(() => {
-      console.log('🔍 Ultra mobile failsafe: forcing loading to false')
-      setLoading(false)
-    }, 1000) : null
-    
     return () => {
       clearTimeout(failsafeTimeout)
-      if (mobileFailsafeTimeout) clearTimeout(mobileFailsafeTimeout)
-      if (ultraMobileFailsafeTimeout) clearTimeout(ultraMobileFailsafeTimeout)
       subscription.unsubscribe()
     }
   }, []) // Remove loadData and loading from dependencies to prevent infinite loops
@@ -655,8 +628,8 @@ export function SplitsaveApp() {
   const mainContent = (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-        {/* Desktop Navigation - Only show on desktop (not mobile or PWA) */}
-        {!isMobile && !isPWAMobile && !isPWA && (
+        {/* Desktop Navigation - Only show on desktop */}
+        {!isMobile && (
           <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
@@ -771,7 +744,7 @@ export function SplitsaveApp() {
 
         
         {/* Main Content */}
-        <main className={`${isMobile || isPWAMobile || isPWA ? 'px-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} ${isMobile ? 'py-2' : 'py-4 sm:py-6'}`}>
+        <main className={`${isMobile ? 'px-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} ${isMobile ? 'py-2' : 'py-4 sm:py-6'}`}>
           <div className={isMobile ? 'py-2' : 'py-4 sm:py-6'}>
             <ErrorBoundary>
         {currentView === 'overview' && (
@@ -880,14 +853,6 @@ export function SplitsaveApp() {
           onNavigateToView={handleNavigation}
           onAchievementUnlocked={handleAchievementUnlocked}
         />
-
-        {/* PWA Mobile Navigation */}
-        {isPWAMobile && (
-          <PWAMobileNavigation
-            currentView={currentView}
-            onViewChange={handleNavigation}
-          />
-        )}
 
     </div>
     </ErrorBoundary>

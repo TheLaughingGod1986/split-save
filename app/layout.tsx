@@ -5,11 +5,6 @@ import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
-import { PWAProvider } from '@/components/pwa/PWAProvider'
-import { SafariRuntimeRepair } from '@/components/pwa/SafariRuntimeRepair'
-import { MobilePWA } from '@/components/pwa/MobilePWA'
-import { PWAInstallPrompt, PWAStatus } from '@/components/pwa/PWAInstallPrompt'
-import { RuntimeErrorRecovery } from '@/components/pwa/RuntimeErrorRecovery'
 // Debug components removed to prevent hydration issues
 // import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 // import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
@@ -132,14 +127,8 @@ export default function RootLayout({
       <head>
         {/* Viewport meta tag for mobile responsiveness */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        
-        {/* Mobile-specific optimizations */}
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="SplitSave" />
         <meta name="format-detection" content="telephone=no" />
-        
+
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -147,10 +136,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
 
-
-        {/* PWA Manifest */}
-        <link rel="manifest" href="/manifest.json" />
-        
         {/* Apple Touch Icon */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         
@@ -287,21 +272,13 @@ export default function RootLayout({
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
 
-        <PWAProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <SafariRuntimeRepair />
-              <MobilePWA>
-                <RuntimeErrorRecovery />
-                {children}
-                <PWAStatus />
-                <PWAInstallPrompt />
-              </MobilePWA>
-              <Analytics />
-              <SpeedInsights />
-            </ThemeProvider>
-          </AuthProvider>
-        </PWAProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            {children}
+            <Analytics />
+            <SpeedInsights />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

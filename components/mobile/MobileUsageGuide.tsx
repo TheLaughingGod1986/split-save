@@ -4,8 +4,6 @@ import React, { useMemo, useState } from 'react'
 
 interface MobileUsageGuideProps {
   isMobile: boolean
-  isPWA: boolean
-  isStandalone: boolean
   onDismiss?: () => void
   className?: string
 }
@@ -17,28 +15,18 @@ const platformLabels: Record<'ios' | 'android', string> = {
 
 export function MobileUsageGuide({
   isMobile,
-  isPWA,
-  isStandalone,
   onDismiss,
   className = ''
 }: MobileUsageGuideProps) {
   const [activePlatform, setActivePlatform] = useState<'ios' | 'android'>('ios')
 
   const status = useMemo(() => {
-    if (isStandalone) {
-      return { label: 'Running as installed app', tone: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' }
-    }
-
-    if (isPWA) {
-      return { label: 'Ready for offline use', tone: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200' }
-    }
-
     if (isMobile) {
       return { label: 'Mobile browser detected', tone: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' }
     }
 
     return { label: 'Viewing on desktop', tone: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' }
-  }, [isMobile, isPWA, isStandalone])
+  }, [isMobile])
 
   return (
     <div
@@ -53,7 +41,7 @@ export function MobileUsageGuide({
             </span>
           </div>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            Follow the quick steps below to access SplitSave from your phone browser or install it as a Progressive Web App (PWA).
+            Follow the quick steps below to access SplitSave from your phone browser. PWA installation is temporarily disabled while we focus on polishing the mobile web experience.
           </p>
         </div>
 
@@ -101,7 +89,7 @@ export function MobileUsageGuide({
 
         <section className="px-6 py-5 bg-gray-50 dark:bg-gray-800/60 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Install the PWA</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Add to your home screen</h3>
             <div className="flex items-center gap-1 bg-white/70 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-full p-1 text-xs">
               {(['ios', 'android'] as const).map((platform) => (
                 <button
@@ -121,28 +109,28 @@ export function MobileUsageGuide({
           </div>
 
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
-            Installing the app gives you full-screen access, push notifications, and offline caching of your most recent data.
+            Creating a shortcut keeps SplitSave just a tap away without needing the full install flow.
           </p>
 
           {activePlatform === 'ios' ? (
             <ol className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-300 list-decimal list-inside">
               <li>Open SplitSave in Safari on your iPhone or iPad.</li>
               <li>Tap the <strong>Share</strong> icon, then choose <strong>Add to Home Screen</strong>.</li>
-              <li>Name the shortcut “SplitSave” and tap <strong>Add</strong>. Launch it from your home screen for the full PWA experience.</li>
-              <li>When prompted, allow notifications so you never miss partner approvals.</li>
+              <li>Name the shortcut “SplitSave” and tap <strong>Add</strong>. Launch it from your home screen for a focused experience.</li>
+              <li>Notifications and offline mode will return when the dedicated app experience comes back.</li>
             </ol>
           ) : (
             <ol className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-300 list-decimal list-inside">
               <li>Open SplitSave in Chrome on your Android device.</li>
               <li>Tap the <strong>⋮</strong> menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
-              <li>Confirm the installation. SplitSave will appear in your app drawer and support offline access.</li>
-              <li>Enable notifications when requested to receive contribution reminders instantly.</li>
+              <li>Confirm the shortcut. SplitSave will appear in your app drawer for quick access.</li>
+              <li>Offline access and push alerts are temporarily disabled while we rebuild the app shell.</li>
             </ol>
           )}
 
           <div className="mt-5 rounded-lg bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 px-4 py-3 text-sm text-purple-800 dark:text-purple-100">
             <p className="font-medium">Tip for couples on the go</p>
-            <p className="mt-1">Both partners can install the PWA. Any updates you make sync in real time once either device reconnects to the internet.</p>
+            <p className="mt-1">Both partners can add the shortcut today. The installable PWA will return once the mobile improvements are complete.</p>
           </div>
         </section>
       </div>

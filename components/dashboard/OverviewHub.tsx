@@ -6,7 +6,6 @@ import { apiClient } from '@/lib/api-client'
 import { DashboardContributionSummary } from './DashboardContributionSummary'
 import { QuickCharts } from '../analytics/QuickCharts'
 import { MobileUsageGuide } from '../mobile/MobileUsageGuide'
-import { useMobilePWA } from '../pwa/MobilePWA'
 
 interface OverviewHubProps {
   expenses: any[]
@@ -63,27 +62,38 @@ export function OverviewHub({
   const [localMonthlyProgress, setLocalMonthlyProgress] = useState<any>(null)
   const [safetyPotAmount, setSafetyPotAmount] = useState(0)
   const [showMobileGuide, setShowMobileGuide] = useState(false)
-
-  const {
-    isMobile: isMobileClient,
-    isPWA,
-    isStandalone,
-    isClient: hasClientInfo
-  } = useMobilePWA()
+  const [isMobileClient, setIsMobileClient] = useState(false)
 
   useEffect(() => {
-    if (!hasClientInfo) {
+    if (typeof window === 'undefined') {
       return
     }
 
-    const dismissed = typeof window !== 'undefined'
-      ? localStorage.getItem('splitsave-mobile-guide-dismissed')
-      : null
+    const detectMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
+      const isSmallScreen = window.innerWidth <= 768
 
-    if (!dismissed && (isMobileClient || isPWA || isStandalone)) {
+      setIsMobileClient(isMobileDevice || isSmallScreen)
+    }
+
+    detectMobile()
+    window.addEventListener('resize', detectMobile)
+
+    return () => window.removeEventListener('resize', detectMobile)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const dismissed = localStorage.getItem('splitsave-mobile-guide-dismissed')
+
+    if (!dismissed && isMobileClient) {
       setShowMobileGuide(true)
     }
-  }, [hasClientInfo, isMobileClient, isPWA, isStandalone])
+  }, [isMobileClient])
 
   const openMobileGuide = useCallback(() => {
     setShowMobileGuide(true)
@@ -330,8 +340,6 @@ export function OverviewHub({
       {showMobileGuide && (
         <MobileUsageGuide
           isMobile={isMobileClient}
-          isPWA={isPWA}
-          isStandalone={isStandalone}
           onDismiss={dismissMobileGuide}
         />
       )}
