@@ -9,7 +9,7 @@ export interface AnalyticsEvent {
   'user_logout': Record<string, never>
   
   // CRO & Conversion Events
-  'cta_clicked': { location: string; cta_type: string; page: string }
+  'cta_clicked': { location: string; cta_type: string; page: string; device?: string }
   'landing_page_view': { source: string; utm_campaign?: string; utm_source?: string }
   'signup_started': { method: string; source: string }
   'signup_completed': { method: string; time_to_complete: number }
