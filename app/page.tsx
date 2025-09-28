@@ -7,7 +7,7 @@ import { StructuredData, structuredDataSchemas } from '@/components/ui/Structure
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
-import { MobileLandingPage } from '@/components/mobile/MobileLandingPage'
+import { MobilePlainMarkup } from '@/components/mobile/MobilePlainMarkup'
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -183,14 +183,14 @@ export default function Home() {
 
   if (!user) {
     if (isClient && isMobile && !isStandalonePWA) {
-      console.log('📱 Home: Showing mobile marketing experience')
+      console.log('📱 Home: Showing unstyled mobile markup fallback')
       return (
         <>
           <StructuredData type="website" data={structuredDataSchemas.website} />
           <StructuredData type="organization" data={structuredDataSchemas.organization} />
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileLandingPage />
+          <MobilePlainMarkup />
         </>
       )
     }
