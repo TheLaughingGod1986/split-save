@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/ui/ThemeProvider'
 // import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 // import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
 import '@/lib/auth-cleanup'
+import { MobilePlainMarkup } from '@/components/mobile/MobilePlainMarkup'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -213,6 +214,11 @@ export default function RootLayout({
               background-color: var(--mobile-bg-dark) !important;
             }
 
+            /* Ensure the raw HTML fallback is hidden by default */
+            #mobile-html-fallback {
+              display: none;
+            }
+
             /* Force immediate background for mobile screens */
             @media screen and (max-width: 768px) {
               html, body, body > div, #__next {
@@ -225,6 +231,11 @@ export default function RootLayout({
               html.dark, html.dark body, html.dark body > div, html.dark #__next {
                 background: var(--mobile-bg-dark) !important;
                 background-color: var(--mobile-bg-dark) !important;
+              }
+
+              /* Show the fallback markup until the React tree hydrates */
+              body:not([data-app-loaded='true']) #mobile-html-fallback {
+                display: block;
               }
 
               * {
@@ -268,8 +279,11 @@ export default function RootLayout({
             </div>
           </div>
         </noscript>
-        
-        {/* Mobile fallback completely removed to prevent white screen issues */}
+
+        {/* Raw HTML fallback for mobile Safari users before hydration completes */}
+        <div id="mobile-html-fallback">
+          <MobilePlainMarkup />
+        </div>
 
 
         <AuthProvider>

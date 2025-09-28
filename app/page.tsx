@@ -7,7 +7,7 @@ import { StructuredData, structuredDataSchemas } from '@/components/ui/Structure
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
-import { MobileLandingPage } from '@/components/mobile/MobileLandingPage'
+import { MobilePlainMarkup } from '@/components/mobile/MobilePlainMarkup'
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -15,6 +15,18 @@ export default function Home() {
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    document.body.setAttribute('data-app-loaded', 'true')
+
+    return () => {
+      document.body.removeAttribute('data-app-loaded')
+    }
+  }, [])
 
   const checkStoredAuthToken = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -150,6 +162,20 @@ export default function Home() {
 
   if (loading) {
     const shouldBypassLoading = isClient && hasAuthToken === false
+    const shouldShowPlainMobileFallback = isClient && isMobile && !isStandalonePWA
+
+    if (shouldShowPlainMobileFallback) {
+      console.log('📄 Loading mobile visitor detected - showing plain markup while auth resolves')
+      return (
+        <>
+          <StructuredData type="website" data={structuredDataSchemas.website} />
+          <StructuredData type="organization" data={structuredDataSchemas.organization} />
+          <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+          <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+          <MobilePlainMarkup />
+        </>
+      )
+    }
 
     if (shouldBypassLoading) {
       console.log('🚀 No stored session detected - showing marketing site while auth resolves')
@@ -169,8 +195,8 @@ export default function Home() {
             Mobile: {isMobile ? 'true' : 'false'} | Client: {isClient ? 'true' : 'false'}
           </div>
           <div className="mt-4 text-xs text-gray-400">
-            If this takes too long, <button 
-              onClick={() => window.location.reload()} 
+            If this takes too long, <button
+              onClick={() => window.location.reload()}
               className="text-purple-600 hover:text-purple-700 underline"
             >
               refresh the page
@@ -183,14 +209,14 @@ export default function Home() {
 
   if (!user) {
     if (isClient && isMobile && !isStandalonePWA) {
-      console.log('📱 Home: Showing mobile marketing experience')
+      console.log('📱 Home: Showing unstyled mobile markup fallback')
       return (
         <>
           <StructuredData type="website" data={structuredDataSchemas.website} />
           <StructuredData type="organization" data={structuredDataSchemas.organization} />
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileLandingPage />
+          <MobilePlainMarkup />
         </>
       )
     }
