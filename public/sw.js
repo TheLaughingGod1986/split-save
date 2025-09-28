@@ -137,25 +137,68 @@ async function handleApiRequest(request) {
   }
 }
 
-// Handle static assets with cache-first strategy
+// Validate that cached/static responses contain the expected asset content.
+function isValidAssetResponse(response, request) {
+  if (!response || !response.ok) {
+    return false
+  }
+
+  const contentType = response.headers.get('content-type') || ''
+  const url = new URL(request.url)
+  const extensionMatch = url.pathname.match(/\.([a-z0-9]+)$/i)
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : ''
+
+  if (extension === 'js') {
+    return contentType.includes('javascript')
+  }
+
+  if (extension === 'css') {
+    return contentType.includes('text/css')
+  }
+
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp', 'avif'].includes(extension)) {
+    return contentType.startsWith('image/')
+  }
+
+  if (['woff', 'woff2', 'ttf', 'eot', 'otf'].includes(extension)) {
+    return contentType.includes('font') || contentType.includes('woff') || contentType.includes('truetype')
+  }
+
+  return true
+}
+
+// Handle static assets with cache-first strategy while avoiding corrupted entries
 async function handleStaticAsset(request) {
   const cachedResponse = await caches.match(request)
-  
-  if (cachedResponse) {
+
+  if (cachedResponse && isValidAssetResponse(cachedResponse, request)) {
     return cachedResponse
   }
-  
+
   try {
     const networkResponse = await fetch(request)
-    
-    if (networkResponse.ok) {
+
+    if (networkResponse.ok && isValidAssetResponse(networkResponse, request)) {
       const cache = await caches.open(STATIC_CACHE)
       cache.put(request, networkResponse.clone())
+      return networkResponse
     }
-    
+
+    // If the network response is not valid, fall back to the last known good cached response
+    if (cachedResponse && isValidAssetResponse(cachedResponse, request)) {
+      console.warn('⚠️ Service Worker: Using cached fallback for asset due to invalid network response', request.url)
+      return cachedResponse
+    }
+
     return networkResponse
   } catch (error) {
-    console.error('❌ Service Worker: Failed to fetch static asset', request.url)
+    console.error('❌ Service Worker: Failed to fetch static asset', request.url, error)
+
+    if (cachedResponse && isValidAssetResponse(cachedResponse, request)) {
+      console.warn('⚠️ Service Worker: Serving cached asset after fetch failure', request.url)
+      return cachedResponse
+    }
+
     throw error
   }
 }
