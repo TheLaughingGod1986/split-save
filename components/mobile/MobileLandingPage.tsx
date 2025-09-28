@@ -90,8 +90,11 @@ export function MobileLandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div className="relative min-h-screen bg-slate-950 text-white">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        aria-hidden="true"
+      >
         <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-purple-600/30 blur-3xl" />
         <div className="absolute bottom-[-20%] left-[-10%] h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
       </div>
