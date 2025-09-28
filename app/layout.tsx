@@ -202,24 +202,7 @@ export default function RootLayout({
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
         
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "SplitSave",
-              "url": "https://splitsave.app",
-              "description": "Smart financial management app for couples to split expenses fairly and track savings goals together.",
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": "https://splitsave.app/search?q={search_term_string}",
-                "query-input": "required name=search_term_string"
-              }
-            })
-          }}
-        />
+        {/* Structured Data is handled by page-level components to avoid hydration mismatches */}
         
         {/* COMPREHENSIVE MOBILE FIX - Prevent white screen without breaking dark mode */}
         <style dangerouslySetInnerHTML={{
