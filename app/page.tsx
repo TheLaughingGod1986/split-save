@@ -7,7 +7,7 @@ import { StructuredData, structuredDataSchemas } from '@/components/ui/Structure
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
-import { MobileWebPlaceholder } from '@/components/mobile/MobileWebPlaceholder'
+import { MobileLandingPage } from '@/components/mobile/MobileLandingPage'
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -15,7 +15,6 @@ export default function Home() {
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
-  const [bypassMobilePlaceholder, setBypassMobilePlaceholder] = useState(false)
 
   const checkStoredAuthToken = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -182,20 +181,20 @@ export default function Home() {
     )
   }
 
-  if (isClient && isMobile && !isStandalonePWA && !bypassMobilePlaceholder) {
-    console.log('🧪 Mobile web placeholder active', { isMobile, isStandalonePWA, bypassMobilePlaceholder })
-    return (
-      <>
-        <StructuredData type="website" data={structuredDataSchemas.website} />
-        <StructuredData type="organization" data={structuredDataSchemas.organization} />
-        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        <MobileWebPlaceholder onContinue={() => setBypassMobilePlaceholder(true)} />
-      </>
-    )
-  }
-
   if (!user) {
+    if (isClient && isMobile && !isStandalonePWA) {
+      console.log('📱 Home: Showing mobile marketing experience')
+      return (
+        <>
+          <StructuredData type="website" data={structuredDataSchemas.website} />
+          <StructuredData type="organization" data={structuredDataSchemas.organization} />
+          <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+          <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+          <MobileLandingPage />
+        </>
+      )
+    }
+
     console.log('🏠 Home: Showing landing page', {
       hasUser: false
     })
