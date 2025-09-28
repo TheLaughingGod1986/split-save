@@ -148,7 +148,7 @@ export default function Home() {
   )
 
   if (loading) {
-    const shouldBypassLoading = hasAuthToken === false
+    const shouldBypassLoading = isClient && hasAuthToken === false
 
     if (shouldBypassLoading) {
       console.log('🚀 No stored session detected - showing marketing site while auth resolves')

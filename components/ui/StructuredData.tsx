@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo } from 'react'
+import Script from 'next/script'
 
 interface StructuredDataProps {
   type: 'website' | 'organization' | 'webapp' | 'article' | 'faq' | 'financialService' | 'mobileApp'
@@ -24,10 +25,10 @@ export function StructuredData({ type, data }: StructuredDataProps) {
   }
 
   return (
-    <script
+    <Script
       id={`structured-data-${type}`}
       type="application/ld+json"
-      suppressHydrationWarning
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{ __html: schema }}
     />
   )
