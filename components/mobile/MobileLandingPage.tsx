@@ -66,6 +66,7 @@ export function MobileLandingPage() {
     trackEvent('cta_clicked', {
       location: 'mobile_landing',
       cta_type: 'get_started',
+      page: 'mobile_landing',
       device: 'mobile_web'
     })
 
@@ -76,6 +77,7 @@ export function MobileLandingPage() {
     trackEvent('cta_clicked', {
       location: 'mobile_landing',
       cta_type: 'see_how_it_works',
+      page: 'mobile_landing',
       device: 'mobile_web'
     })
 
