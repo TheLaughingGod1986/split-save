@@ -273,13 +273,11 @@ export default function RootLayout({
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
 
-        <AuthProvider>
-          <ThemeProvider>
-            {children}
-            <Analytics />
-            <SpeedInsights />
-          </ThemeProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          {children}
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   )
