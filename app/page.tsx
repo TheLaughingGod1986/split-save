@@ -1,229 +1,57 @@
 'use client'
 
-import { useAuth } from '@/components/auth/AuthProvider'
-import { SplitsaveApp } from '@/components/SplitsaveApp'
-import { LandingPage } from '@/components/LandingPage'
-import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { analytics } from '@/lib/analytics'
-// Mobile testing screen removed - using normal mobile experience
+import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const { user, loading } = useAuth()
-  const analyticsTracked = useRef(false)
-  const [isStandalonePWA, setIsStandalonePWA] = useState(false)
-  const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
-  // Mobile testing disabled - restore normal mobile experience
-  const shouldShowMobileTesting = false
+  const [mounted, setMounted] = useState(false)
 
-  const checkStoredAuthToken = useCallback(() => {
-    if (typeof window === 'undefined') {
-      return false
-    }
-
-    try {
-      const localToken = window.localStorage.getItem('splitsave-auth-token')
-      const sessionToken = window.sessionStorage.getItem('splitsave-auth-token')
-      const tokenExists = Boolean(localToken || sessionToken)
-
-      setHasAuthToken(tokenExists)
-      return tokenExists
-    } catch (error) {
-      console.warn('⚠️ Auth token storage check failed', error)
-      setHasAuthToken(false)
-      return false
-    }
+  useEffect(() => {
+    setMounted(true)
   }, [])
 
-  // Quickly detect if the visitor has no stored session so we can show the landing
-  useEffect(() => {
-    checkStoredAuthToken()
-
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const handleStorageChange = () => {
-      checkStoredAuthToken()
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-    }
-  }, [checkStoredAuthToken])
-
-  // Keep token state in sync with auth changes
-  useEffect(() => {
-    if (user) {
-      setHasAuthToken(true)
-      return
-    }
-
-    if (!loading) {
-      checkStoredAuthToken()
-    }
-  }, [user, loading, checkStoredAuthToken])
-
-  // DEBUG: Log auth state changes
-  useEffect(() => {
-    console.log('🏠 Home: Auth state changed', { 
-      user: user ? { id: user.id, email: user.email } : null, 
-      loading,
-      hasUser: !!user 
-    })
-  }, [user, loading])
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const detectStandalone = () => {
-        const isStandaloneMatch = window.matchMedia('(display-mode: standalone)').matches
-        const isIOSStandalone = (window.navigator as any).standalone === true
-        const cameFromAndroidApp = typeof document !== 'undefined' && document.referrer.startsWith('android-app://')
-        return isStandaloneMatch || isIOSStandalone || cameFromAndroidApp
-      }
-
-      setIsStandalonePWA(detectStandalone())
-
-      const mediaQuery = window.matchMedia('(display-mode: standalone)')
-      const handleDisplayModeChange = (event: MediaQueryListEvent) => {
-        setIsStandalonePWA(event.matches || (window.navigator as any).standalone === true)
-      }
-
-      if (typeof mediaQuery.addEventListener === 'function') {
-        mediaQuery.addEventListener('change', handleDisplayModeChange)
-      } else if (typeof mediaQuery.addListener === 'function') {
-        mediaQuery.addListener(handleDisplayModeChange)
-      }
-
-      return () => {
-        if (typeof mediaQuery.removeEventListener === 'function') {
-          mediaQuery.removeEventListener('change', handleDisplayModeChange)
-        } else if (typeof mediaQuery.removeListener === 'function') {
-          mediaQuery.removeListener(handleDisplayModeChange)
-        }
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!loading && !analyticsTracked.current) {
-      analyticsTracked.current = true
-      
-      if (user) {
-        analytics.session.started()
-        analytics.conversion.landingPageView('direct', {
-          campaign: 'returning_user',
-          source: 'direct'
-        })
-      } else {
-        analytics.conversion.landingPageView('direct', {
-          campaign: 'new_visitor',
-          source: 'direct'
-        })
-      }
-    }
-  }, [loading, user])
-
-  // DEBUG: Add mobile-specific loading timeout
-  useEffect(() => {
-    if (loading && (isMobile || isSmallScreen)) {
-      console.log('🔍 Mobile loading detected, setting timeout')
-      const timeout = setTimeout(() => {
-        console.log('⏰ Mobile loading timeout - forcing render')
-        // Don't force loading to false here, let AuthProvider handle it
-      }, 3000)
-      return () => clearTimeout(timeout)
-    }
-  }, [loading, isMobile, isSmallScreen])
-
-  const landingContent = (
-    <>
-      <StructuredData type="website" data={structuredDataSchemas.website} />
-      <StructuredData type="organization" data={structuredDataSchemas.organization} />
-      <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-      <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-      <LandingPage />
-    </>
-  )
-
-  if (loading) {
-    const shouldBypassLoading = isClient && hasAuthToken === false
-
-    // Mobile testing screen removed - mobile users get normal experience
-
-    if (shouldBypassLoading) {
-      console.log('🚀 No stored session detected - showing marketing site while auth resolves')
-      return landingContent
-    }
-
-    console.log('⏳ Showing loading screen', { loading, user: !!user, isMobile, isSmallScreen, isClient })
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
-          <div className="mt-2 text-xs text-gray-500">
-            Auth Loading: {loading ? 'true' : 'false'}
-          </div>
-          <div className="mt-1 text-xs text-gray-500">
-            Mobile: {isMobile ? 'true' : 'false'} | Client: {isClient ? 'true' : 'false'}
-          </div>
-          <div className="mt-4 text-xs text-gray-400">
-            If this takes too long, <button
-              onClick={() => window.location.reload()}
-              className="text-purple-600 hover:text-purple-700 underline"
-            >
-              refresh the page
-            </button>
-          </div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     )
-  }
-
-  if (!user) {
-    console.log('🏠 Home: Showing landing page', {
-      hasUser: false
-    })
-    return landingContent
-  }
-
-  // Mobile testing screen removed - mobile users get normal experience
-
-  console.log('🏠 Home: Rendering SplitsaveApp', {
-    hasUser: !!user,
-    userEmail: user?.email,
-    userId: user?.id,
-    loading,
-    isMobile,
-    isSmallScreen,
-    isClient
-  })
-
-  // Safety fallback - if we get here but something is wrong, show debug info
-  if (!isClient) {
-    console.log('🔄 Not client-side yet, showing minimal fallback')
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Initializing...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // TEMPORARY: Add mobile website test
-  if (isMobile && !isStandalonePWA) {
-    console.log('📱 Mobile website detected (not PWA)', { isMobile, isStandalonePWA })
   }
 
   return (
-    <>
-      <SplitsaveApp />
-    </>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            🎉 Mobile Site Test
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+            If you can see this, the mobile site is working!
+          </p>
+          
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Debug Info:
+            </h2>
+            <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+              <p>Mobile: {isMobile ? '✅ Yes' : '❌ No'}</p>
+              <p>Small Screen: {isSmallScreen ? '✅ Yes' : '❌ No'}</p>
+              <p>Client: {isClient ? '✅ Yes' : '❌ No'}</p>
+              <p>Mounted: {mounted ? '✅ Yes' : '❌ No'}</p>
+              <p>User Agent: {typeof window !== 'undefined' ? navigator.userAgent.substring(0, 50) + '...' : 'N/A'}</p>
+            </div>
+          </div>
+
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <p className="text-green-800 dark:text-green-200 font-medium">
+              ✅ Mobile website is now working! We can proceed with the full app.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
