@@ -186,20 +186,6 @@ export default function Home() {
   }
 
   if (!user) {
-    if (shouldShowMobileTesting) {
-      console.log('📱 Home: Showing mobile testing screen for visitor without session')
-
-      return (
-        <>
-          <StructuredData type="website" data={structuredDataSchemas.website} />
-          <StructuredData type="organization" data={structuredDataSchemas.organization} />
-          <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-          <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileTestingScreen />
-        </>
-      )
-    }
-
     console.log('🏠 Home: Showing landing page', {
       hasUser: false
     })
