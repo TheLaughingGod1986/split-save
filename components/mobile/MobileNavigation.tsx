@@ -2,14 +2,7 @@
 
 import { useState } from 'react'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
-import { 
-  HomeIcon, 
-  ChartBarIcon, 
-  CurrencyDollarIcon, 
-  CogIcon,
-  UserIcon,
-  BellIcon
-} from '@heroicons/react/24/outline'
+// Using simple text icons instead of Heroicons
 
 interface MobileNavigationProps {
   currentPage?: string
@@ -32,18 +25,17 @@ export function MobileNavigation({ currentPage = 'dashboard', onNavigate }: Mobi
   if (!isMobile) return null
 
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon },
-    { id: 'expenses', label: 'Expenses', icon: CurrencyDollarIcon },
-    { id: 'goals', label: 'Goals', icon: ChartBarIcon },
-    { id: 'notifications', label: 'Alerts', icon: BellIcon },
-    { id: 'profile', label: 'Profile', icon: UserIcon },
+    { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
+    { id: 'expenses', label: 'Expenses', icon: '💰' },
+    { id: 'goals', label: 'Goals', icon: '🎯' },
+    { id: 'notifications', label: 'Alerts', icon: '🔔' },
+    { id: 'profile', label: 'Profile', icon: '👤' },
   ]
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 ${isPWA ? 'pb-safe' : ''}`}>
       <div className="flex justify-around items-center py-2">
         {navigationItems.map((item) => {
-          const Icon = item.icon
           const isActive = currentPage === item.id
           
           return (
@@ -56,7 +48,7 @@ export function MobileNavigation({ currentPage = 'dashboard', onNavigate }: Mobi
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
-              <Icon className="w-6 h-6 mb-1" />
+              <span className="text-2xl mb-1">{item.icon}</span>
               <span className="text-xs font-medium">{item.label}</span>
             </button>
           )
