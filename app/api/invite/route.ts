@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
@@ -108,12 +109,15 @@ export async function POST(request: NextRequest) {
 
     console.log('15. Creating partnership invitation...')
     // Create invitation with or without user_id
+    const jointLinkToken = crypto.randomBytes(32).toString('hex')
+
     const invitationData: any = {
       from_user_id: user.id,
       to_email: toEmail,
       status: 'pending',
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      joint_link_token: jointLinkToken
     }
 
     // If user exists, link the invitation to them
@@ -134,6 +138,15 @@ export async function POST(request: NextRequest) {
 
     console.log('18. Invitation created successfully, sending email...')
 
+    const urlFromEnv = process.env.NEXT_PUBLIC_APP_URL || process.env.FRONTEND_URL
+    const requestOrigin = new URL(request.url).origin
+    const baseUrl = (urlFromEnv || requestOrigin).replace(/\/$/, '')
+    const jointLink = `${baseUrl}/invite/join/${invitation.joint_link_token}`
+    const acceptLink = `${baseUrl}/api/invite/accept/${invitation.id}`
+
+    let emailSent = false
+    let emailError: string | null = null
+
     // Get user profile data for the email
     const { data: userProfile, error: profileError } = await supabaseAdmin
       .from('users')
@@ -144,45 +157,62 @@ export async function POST(request: NextRequest) {
     const fromUserName = userProfile?.name || 'SplitSave User'
 
     // Send invitation email
-    try {
-      console.log('18a. About to call Edge Function...')
-      console.log('18b. Edge Function URL:', `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`)
-      console.log('18c. Service Role Key available:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
-      
-      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          invitationId: invitation.id,
-          toEmail: toEmail,
-          fromUserName: fromUserName,
-          fromUserEmail: user.email
-        }),
-      })
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      emailError = 'Missing Supabase configuration for sending invitation emails'
+      console.warn('19. Skipping email send - configuration missing')
+    } else {
+      try {
+        console.log('18a. About to call Edge Function...')
+        console.log('18b. Edge Function URL:', `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`)
+        console.log('18c. Service Role Key available:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-      console.log('18d. Edge Function response status:', emailResponse.status)
-      console.log('18e. Edge Function response headers:', Object.fromEntries(emailResponse.headers.entries()))
+        const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            invitationId: invitation.id,
+            toEmail: toEmail,
+            fromUserName: fromUserName,
+            fromUserEmail: user.email,
+            invitationLink: jointLink
+          }),
+        })
 
-      if (emailResponse.ok) {
-        const emailResult = await emailResponse.json()
-        console.log('19. Email sent successfully:', emailResult)
-      } else {
-        const errorText = await emailResponse.text()
-        console.error('19. Email sending failed:', emailResponse.status, errorText)
+        console.log('18d. Edge Function response status:', emailResponse.status)
+        console.log('18e. Edge Function response headers:', Object.fromEntries(emailResponse.headers.entries()))
+
+        if (emailResponse.ok) {
+          const emailResult = await emailResponse.json()
+          console.log('19. Email sent successfully:', emailResult)
+          emailSent = true
+        } else {
+          const errorText = await emailResponse.text()
+          console.error('19. Email sending failed:', emailResponse.status, errorText)
+          emailError = `Email sending failed with status ${emailResponse.status}`
+          // Don't fail the invitation creation if email fails
+        }
+      } catch (error) {
+        console.error('19. Email sending error:', error)
+        emailError = error instanceof Error ? error.message : 'Unknown email error'
         // Don't fail the invitation creation if email fails
       }
-    } catch (emailError) {
-      console.error('19. Email sending error:', emailError)
-      // Don't fail the invitation creation if email fails
     }
 
     console.log('20. Success! Returning invitation data')
+    const successMessage = emailSent
+      ? existingUser ? 'Invitation sent to existing user' : 'Invitation sent - user will be notified to create account'
+      : 'Invitation created. Share the invite link directly since email could not be sent.'
+
     return NextResponse.json({
-      message: existingUser ? 'Invitation sent to existing user' : 'Invitation sent - user will be notified to create account',
-      invitation
+      message: successMessage,
+      invitation,
+      jointLink,
+      acceptLink,
+      emailSent,
+      emailError
     })
   } catch (error) {
     console.error('21. Unexpected error in invite route:', error)

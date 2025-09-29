@@ -22,12 +22,13 @@ serve(async (req)=>{
       throw new Error('Invalid service role key');
     }
     // Get the invitation data from the request
-    const { invitationId, toEmail, fromUserName, fromUserEmail } = await req.json();
+    const { invitationId, toEmail, fromUserName, fromUserEmail, invitationLink: providedLink } = await req.json();
     if (!invitationId || !toEmail || !fromUserName || !fromUserEmail) {
       throw new Error('Missing required fields');
     }
     // Create the invitation link
-    const invitationLink = `${Deno.env.get('FRONTEND_URL') || 'https://splitsave.community'}/api/invite/accept/${invitationId}`;
+    const defaultLink = `${Deno.env.get('FRONTEND_URL') || 'https://splitsave.community'}/api/invite/accept/${invitationId}`;
+    const invitationLink = providedLink || defaultLink;
     // Email template
     const emailHtml = `
       <!DOCTYPE html>
