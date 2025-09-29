@@ -7,8 +7,7 @@ import { StructuredData, structuredDataSchemas } from '@/components/ui/Structure
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
-import { MobileLandingPage } from '@/components/mobile/MobileLandingPage'
-import { MobilePlainMarkup } from '@/components/mobile/MobilePlainMarkup'
+import { MobileTestingScreen } from '@/components/mobile/MobileTestingScreen'
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -16,6 +15,7 @@ export default function Home() {
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
+  const shouldShowMobileTesting = isClient && (isMobile || isSmallScreen) && !isStandalonePWA
 
   const checkStoredAuthToken = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -151,17 +151,16 @@ export default function Home() {
 
   if (loading) {
     const shouldBypassLoading = isClient && hasAuthToken === false
-    const shouldShowPlainMobileFallback = isClient && isMobile && !isStandalonePWA
 
-    if (shouldShowPlainMobileFallback) {
-      console.log('📄 Loading mobile visitor detected - showing plain markup while auth resolves')
+    if (shouldShowMobileTesting) {
+      console.log('🛠️ Loading mobile visitor detected - showing testing screen')
       return (
         <>
           <StructuredData type="website" data={structuredDataSchemas.website} />
           <StructuredData type="organization" data={structuredDataSchemas.organization} />
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobilePlainMarkup />
+          <MobileTestingScreen variant="loading" />
         </>
       )
     }
@@ -197,8 +196,8 @@ export default function Home() {
   }
 
   if (!user) {
-    if (isClient && isMobile && !isStandalonePWA) {
-      console.log('📱 Home: Showing tailored mobile landing experience')
+    if (shouldShowMobileTesting) {
+      console.log('📱 Home: Showing mobile testing screen for visitor without session')
 
       return (
         <>
@@ -206,10 +205,7 @@ export default function Home() {
           <StructuredData type="organization" data={structuredDataSchemas.organization} />
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileLandingPage />
-          <noscript>
-            <MobilePlainMarkup />
-          </noscript>
+          <MobileTestingScreen />
         </>
       )
     }
@@ -221,12 +217,26 @@ export default function Home() {
   }
 
   // For mobile devices, add additional safety check
-  if (isClient && (isMobile || isSmallScreen)) {
-    console.log('🔍 Mobile device detected, rendering SplitsaveApp', { isMobile, isSmallScreen, hasUser: !!user })
+  if (shouldShowMobileTesting) {
+    console.log('🛠️ Mobile device detected - showing testing screen for authenticated user', {
+      isMobile,
+      isSmallScreen,
+      hasUser: !!user
+    })
+
+    return (
+      <>
+        <StructuredData type="website" data={structuredDataSchemas.website} />
+        <StructuredData type="organization" data={structuredDataSchemas.organization} />
+        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
+        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
+        <MobileTestingScreen />
+      </>
+    )
   }
 
-  console.log('🏠 Home: Rendering SplitsaveApp', { 
-    hasUser: !!user, 
+  console.log('🏠 Home: Rendering SplitsaveApp', {
+    hasUser: !!user,
     userEmail: user?.email,
     userId: user?.id,
     loading,
