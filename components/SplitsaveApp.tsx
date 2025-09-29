@@ -21,6 +21,7 @@ import { PartnerHub } from './dashboard/PartnerHub'
 import { LoadingScreen, useLoadingScreen } from './ui/LoadingScreen'
 import { AuthForm } from './auth/AuthForm'
 import { ProfileManager } from './forms/ProfileManager'
+import { useMobileDetection } from '@/hooks/useMobileDetection'
 
 // Import types
 import type { Expense, Goal, Partnership, Profile, Approval } from '@/types'
@@ -30,7 +31,7 @@ export function SplitsaveApp() {
   const [navigationParams, setNavigationParams] = useState<any>({})
   const [user, setUser] = useState<any>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const { isMobile } = useMobileDetection()
   
   // State management
   const [expenses, setExpenses] = useState<Expense[] | null>(null)
@@ -419,29 +420,7 @@ export function SplitsaveApp() {
       document.documentElement.classList.remove('dark')
     }
 
-    // Detect mobile devices
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
-      const isSmallScreen = window.innerWidth <= 768
-      const isSafari = /safari/i.test(userAgent) && !/chrome/i.test(userAgent)
-      
-      console.log('🔍 Mobile detection:', {
-        userAgent,
-        isMobileDevice,
-        isSmallScreen,
-        isSafari,
-        windowWidth: window.innerWidth,
-        finalIsMobile: isMobileDevice || isSmallScreen
-      })
-      
-      setIsMobile(isMobileDevice || isSmallScreen)
-    }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    
-    return () => window.removeEventListener('resize', checkMobile)
+    // Mobile detection is now handled by useMobileDetection hook
   }, [])
 
   // Check for existing session on mount and listen for auth changes
