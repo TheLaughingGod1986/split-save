@@ -67,3 +67,4 @@ supabase/.env
 *.sqlite
 *.sqlite3
 .vercel
+.env*.local
