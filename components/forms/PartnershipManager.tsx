@@ -24,6 +24,7 @@ interface Invitation {
   created_at: string
   expires_at: string
   from_user?: { name: string; email: string }
+  joint_link_token?: string
 }
 
 export function PartnershipManager() {
@@ -34,6 +35,28 @@ export function PartnershipManager() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [sendingInvite, setSendingInvite] = useState(false)
   const [showInviteForm, setShowInviteForm] = useState(false)
+
+  const shareInviteLink = async (link: string, {
+    successMessage,
+    fallbackPrompt
+  }: { successMessage: string; fallbackPrompt: string }) => {
+    if (!link) return
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link)
+        toast.success(successMessage)
+      } else {
+        throw new Error('Clipboard API unavailable')
+      }
+    } catch (error) {
+      console.error('Invite link copy failed:', error)
+      if (typeof window !== 'undefined') {
+        window.prompt(`${fallbackPrompt}\n`, link)
+      }
+      toast.info(`${fallbackPrompt} ${link}`)
+    }
+  }
 
   // Fetch partnerships and invitations
   const fetchData = async () => {
@@ -62,7 +85,21 @@ export function PartnershipManager() {
     setSendingInvite(true)
     try {
       const response = await apiClient.post('/invite', { toEmail: inviteEmail.trim() })
-      toast.success(response.data?.message || 'Invitation sent successfully!')
+      const result = response.data
+
+      if (result?.emailSent) {
+        toast.success(result?.message || 'Invitation sent successfully!')
+      } else {
+        toast.warning(result?.message || 'Invitation created. Share the invite link with your partner.')
+      }
+
+      if (result?.jointLink && !result?.emailSent) {
+        await shareInviteLink(result.jointLink, {
+          successMessage: 'Email could not be sent, so the invite link was copied to your clipboard.',
+          fallbackPrompt: 'Copy this invitation link and share it with your partner:'
+        })
+      }
+
       setInviteEmail('')
       setShowInviteForm(false)
       fetchData() // Refresh data
@@ -144,9 +181,10 @@ export function PartnershipManager() {
       const jointLink = response.data?.jointLink
       
       if (jointLink) {
-        // Copy to clipboard
-        await navigator.clipboard.writeText(jointLink)
-        toast.success('Joint link copied to clipboard!')
+        await shareInviteLink(jointLink, {
+          successMessage: 'Joint link copied to clipboard!',
+          fallbackPrompt: 'Copy this joint link and share it with your partner:'
+        })
       } else {
         toast.error('Failed to generate joint link')
       }
