@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
+
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+
+function getAppBaseUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+  }
+
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL.replace(/\/$/, '')
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  return 'http://localhost:3000'
+}
 
 export async function POST(request: NextRequest) {
   console.log('=== INVITE RESEND API ROUTE START ===')
@@ -31,11 +49,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the invitation with new expiry date
+    let jointLinkToken = invitation.joint_link_token
+    if (!jointLinkToken) {
+      jointLinkToken = crypto.randomBytes(32).toString('hex')
+    }
+
     const { data: updatedInvitation, error: updateError } = await supabaseAdmin
       .from('partnership_invitations')
       .update({
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        joint_link_token: jointLinkToken
       })
       .eq('id', invitationId)
       .select()
@@ -45,6 +69,9 @@ export async function POST(request: NextRequest) {
       console.error('Update invitation error:', updateError)
       return NextResponse.json({ error: 'Failed to update invitation' }, { status: 500 })
     }
+
+    const baseUrl = getAppBaseUrl()
+    const invitationLink = `${baseUrl}/api/invite/accept/${invitation.id}`
 
     // Get user profile data for the email
     const { data: userProfile, error: profileError } = await supabaseAdmin
@@ -56,38 +83,41 @@ export async function POST(request: NextRequest) {
     const fromUserName = userProfile?.name || 'SplitSave User'
 
     // Send invitation email
+    let emailDelivered = false
+    let emailErrorMessage: string | null = null
+
     try {
-      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data: emailResult, error: emailError } = await supabaseAdmin.functions.invoke('send-invitation-email', {
+        body: {
           invitationId: invitation.id,
           toEmail: toEmail,
           fromUserName: fromUserName,
           fromUserEmail: user.email,
+          invitationLink,
           isResend: true
-        }),
+        }
       })
 
-      if (emailResponse.ok) {
-        const emailResult = await emailResponse.json()
-        console.log('Resend email sent successfully:', emailResult)
+      if (emailError) {
+        emailErrorMessage = emailError.message || 'Unknown email delivery error'
+        console.error('Resend email sending failed:', emailError)
       } else {
-        const errorText = await emailResponse.text()
-        console.error('Resend email sending failed:', emailResponse.status, errorText)
-        // Don't fail the resend if email fails
+        emailDelivered = true
+        console.log('Resend email sent successfully:', emailResult)
       }
     } catch (emailError) {
+      emailErrorMessage = emailError instanceof Error ? emailError.message : 'Failed to send invitation email'
       console.error('Resend email sending error:', emailError)
-      // Don't fail the resend if email fails
     }
 
-    return NextResponse.json({ 
-      message: 'Invitation resent successfully',
-      invitation: updatedInvitation
+    return NextResponse.json({
+      message: emailDelivered
+        ? 'Invitation resent successfully'
+        : 'Invitation refreshed, but the email could not be delivered. Share the invite link manually.',
+      invitation: updatedInvitation,
+      emailDelivered,
+      invitationLink,
+      emailError: emailErrorMessage
     })
   } catch (error) {
     console.error('Resend method error:', error)

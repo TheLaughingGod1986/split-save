@@ -35,6 +35,22 @@ export function PartnershipManager() {
   const [sendingInvite, setSendingInvite] = useState(false)
   const [showInviteForm, setShowInviteForm] = useState(false)
 
+  const shareInviteLinkManually = async (link?: string) => {
+    if (!link) return
+
+    try {
+      if (typeof window !== 'undefined' && navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link)
+        toast.info('Invite link copied to your clipboard so you can share it manually.')
+      } else {
+        toast.info(`Share this invite link with your partner: ${link}`)
+      }
+    } catch (error) {
+      console.error('Failed to copy invite link:', error)
+      toast.info(`Share this invite link with your partner: ${link}`)
+    }
+  }
+
   // Fetch partnerships and invitations
   const fetchData = async () => {
     try {
@@ -62,7 +78,17 @@ export function PartnershipManager() {
     setSendingInvite(true)
     try {
       const response = await apiClient.post('/invite', { toEmail: inviteEmail.trim() })
-      toast.success(response.data?.message || 'Invitation sent successfully!')
+      const { message, emailDelivered, invitationLink, emailError } = response.data || {}
+
+      if (emailDelivered || emailDelivered === undefined) {
+        toast.success(message || 'Invitation sent successfully!')
+      } else {
+        toast.warning(message || 'Invitation created, but the email could not be delivered.')
+        if (emailError) {
+          console.error('Invitation email error:', emailError)
+        }
+        await shareInviteLinkManually(invitationLink)
+      }
       setInviteEmail('')
       setShowInviteForm(false)
       fetchData() // Refresh data
@@ -123,11 +149,21 @@ export function PartnershipManager() {
   // Resend invitation
   const resendInvitation = async (invitationId: string, toEmail: string) => {
     try {
-      const response = await apiClient.post('/invite/resend', { 
+      const response = await apiClient.post('/invite/resend', {
         invitationId,
-        toEmail 
+        toEmail
       })
-      toast.success('Invitation resent successfully!')
+      const { message, emailDelivered, invitationLink, emailError } = response.data || {}
+
+      if (emailDelivered || emailDelivered === undefined) {
+        toast.success(message || 'Invitation resent successfully!')
+      } else {
+        toast.warning(message || 'Invitation refreshed, but the email could not be delivered.')
+        if (emailError) {
+          console.error('Invitation resend email error:', emailError)
+        }
+        await shareInviteLinkManually(invitationLink)
+      }
       fetchData() // Refresh data
     } catch (error) {
       console.error('Resend invitation error:', error)

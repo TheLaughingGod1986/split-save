@@ -22,12 +22,12 @@ serve(async (req)=>{
       throw new Error('Invalid service role key');
     }
     // Get the invitation data from the request
-    const { invitationId, toEmail, fromUserName, fromUserEmail } = await req.json();
+    const { invitationId, toEmail, fromUserName, fromUserEmail, invitationLink } = await req.json();
     if (!invitationId || !toEmail || !fromUserName || !fromUserEmail) {
       throw new Error('Missing required fields');
     }
     // Create the invitation link
-    const invitationLink = `${Deno.env.get('FRONTEND_URL') || 'https://splitsave.community'}/api/invite/accept/${invitationId}`;
+    const resolvedInvitationLink = invitationLink || `${Deno.env.get('FRONTEND_URL') || Deno.env.get('NEXT_PUBLIC_APP_URL') || 'https://app.splitsave.community'}/api/invite/accept/${invitationId}`;
     // Email template
     const emailHtml = `
       <!DOCTYPE html>
@@ -64,11 +64,11 @@ serve(async (req)=>{
           <p>To accept this invitation and create your account:</p>
           
           <div style="text-align: center;">
-            <a href="${invitationLink}" class="button">Accept Invitation & Join SplitSave</a>
+            <a href="${resolvedInvitationLink}" class="button">Accept Invitation & Join SplitSave</a>
           </div>
           
           <p><strong>Or copy this link:</strong><br>
-          <a href="${invitationLink}">${invitationLink}</a></p>
+          <a href="${resolvedInvitationLink}">${resolvedInvitationLink}</a></p>
           
           <p><em>This invitation expires in 7 days.</em></p>
           
@@ -93,7 +93,7 @@ What is SplitSave?
 SplitSave helps partners manage shared expenses, track savings goals, and build financial transparency together.
 
 To accept this invitation and create your account, visit:
-${invitationLink}
+${resolvedInvitationLink}
 
 This invitation expires in 7 days.
 
@@ -139,7 +139,7 @@ This email was sent by SplitSave on behalf of ${fromUserName}
       success: true,
       message: 'Invitation email sent successfully',
       emailId: emailResult.id,
-      invitationLink: invitationLink,
+      invitationLink: resolvedInvitationLink,
       toEmail: toEmail,
       fromUserName: fromUserName
     }), {
