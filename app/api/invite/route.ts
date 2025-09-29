@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
+
 import { authenticateRequest } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+
+function getAppBaseUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+  }
+
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL.replace(/\/$/, '')
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  return 'http://localhost:3000'
+}
 
 export async function GET(request: NextRequest) {
   console.log('=== INVITE API ROUTE GET START ===')
@@ -113,7 +131,8 @@ export async function POST(request: NextRequest) {
       to_email: toEmail,
       status: 'pending',
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      joint_link_token: crypto.randomBytes(32).toString('hex')
     }
 
     // If user exists, link the invitation to them
@@ -134,6 +153,9 @@ export async function POST(request: NextRequest) {
 
     console.log('18. Invitation created successfully, sending email...')
 
+    const baseUrl = getAppBaseUrl()
+    const invitationLink = `${baseUrl}/api/invite/accept/${invitation.id}`
+
     // Get user profile data for the email
     const { data: userProfile, error: profileError } = await supabaseAdmin
       .from('users')
@@ -144,46 +166,44 @@ export async function POST(request: NextRequest) {
     const fromUserName = userProfile?.name || 'SplitSave User'
 
     // Send invitation email
+    let emailDelivered = false
+    let emailErrorMessage: string | null = null
+
     try {
-      console.log('18a. About to call Edge Function...')
-      console.log('18b. Edge Function URL:', `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`)
-      console.log('18c. Service Role Key available:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
-      
-      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invitation-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data: emailResult, error: emailError } = await supabaseAdmin.functions.invoke('send-invitation-email', {
+        body: {
           invitationId: invitation.id,
           toEmail: toEmail,
           fromUserName: fromUserName,
-          fromUserEmail: user.email
-        }),
+          fromUserEmail: user.email,
+          invitationLink
+        }
       })
 
-      console.log('18d. Edge Function response status:', emailResponse.status)
-      console.log('18e. Edge Function response headers:', Object.fromEntries(emailResponse.headers.entries()))
-
-      if (emailResponse.ok) {
-        const emailResult = await emailResponse.json()
-        console.log('19. Email sent successfully:', emailResult)
+      if (emailError) {
+        emailErrorMessage = emailError.message || 'Unknown email delivery error'
+        console.error('19. Email sending failed:', emailError)
       } else {
-        const errorText = await emailResponse.text()
-        console.error('19. Email sending failed:', emailResponse.status, errorText)
-        // Don't fail the invitation creation if email fails
+        emailDelivered = true
+        console.log('19. Email sent successfully:', emailResult)
       }
     } catch (emailError) {
+      emailErrorMessage = emailError instanceof Error ? emailError.message : 'Failed to send invitation email'
       console.error('19. Email sending error:', emailError)
-      // Don't fail the invitation creation if email fails
     }
 
     console.log('20. Success! Returning invitation data')
     return NextResponse.json({
-      message: existingUser ? 'Invitation sent to existing user' : 'Invitation sent - user will be notified to create account',
-      invitation
-    })
+      message: emailDelivered
+        ? existingUser
+          ? 'Invitation sent to existing user'
+          : 'Invitation sent - user will be notified to create account'
+        : 'Invitation created, but the email could not be delivered. Share the invite link manually.',
+      invitation,
+      emailDelivered,
+      invitationLink,
+      emailError: emailErrorMessage
+    }, { status: emailDelivered ? 200 : 202 })
   } catch (error) {
     console.error('21. Unexpected error in invite route:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
