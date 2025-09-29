@@ -275,9 +275,7 @@ export default function RootLayout({
 
         <AuthProvider>
           <ThemeProvider>
-            <MobilePWA>
-              {children}
-            </MobilePWA>
+            {children}
             <Analytics />
             <SpeedInsights />
           </ThemeProvider>
