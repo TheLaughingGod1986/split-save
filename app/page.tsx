@@ -88,7 +88,12 @@ export default function Home() {
         <StructuredData type="organization" data={structuredDataSchemas.organization} />
         <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
         <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        {isMobile ? <MobileLandingPage /> : <LandingPage />}
+        <div className="mobile-landing-container block md:hidden">
+          <MobileLandingPage />
+        </div>
+        <div className="desktop-landing-container hidden md:block">
+          <LandingPage />
+        </div>
       </>
     )
   }
