@@ -5,9 +5,10 @@ import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
 import { MobileTestingScreen } from '@/components/mobile/MobileTestingScreen'
+import { useSearchParams } from 'next/navigation'
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -15,7 +16,52 @@ export default function Home() {
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
-  const shouldShowMobileTesting = isClient && (isMobile || isSmallScreen) && !isStandalonePWA
+  const searchParams = useSearchParams()
+  const forceMobileTestingParam = searchParams?.get('forceMobileTesting')
+  const mobileDebugParam = searchParams?.get('mobileDebug')
+  const isForceMobileTesting = forceMobileTestingParam === 'true' || forceMobileTestingParam === '1'
+  const isMobileDebugEnabled = mobileDebugParam === 'true' || mobileDebugParam === '1'
+  const isMobileTestingMode = process.env.NEXT_PUBLIC_MOBILE_TESTING_MODE === 'true'
+  const isMobileTestingActive = isMobileTestingMode || isForceMobileTesting
+  const shouldShowMobileTesting =
+    isClient &&
+    isMobileTestingActive &&
+    ((isMobile || isSmallScreen) || isForceMobileTesting) &&
+    (!isStandalonePWA || isForceMobileTesting)
+
+  const mobileDebugInfo = useMemo(
+    () => ({
+      flags: {
+        envMobileTestingFlag: isMobileTestingMode,
+        forceMobileTesting: isForceMobileTesting,
+        mobileDebug: isMobileDebugEnabled
+      },
+      device: {
+        isMobile,
+        isSmallScreen,
+        isClient,
+        isStandalonePWA
+      },
+      auth: {
+        hasAuthToken,
+        loading,
+        hasUser: !!user,
+        userEmail: user?.email ?? null
+      }
+    }),
+    [
+      hasAuthToken,
+      isClient,
+      isForceMobileTesting,
+      isMobile,
+      isMobileDebugEnabled,
+      isMobileTestingMode,
+      isSmallScreen,
+      isStandalonePWA,
+      loading,
+      user
+    ]
+  )
 
   const checkStoredAuthToken = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -160,7 +206,11 @@ export default function Home() {
           <StructuredData type="organization" data={structuredDataSchemas.organization} />
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileTestingScreen variant="loading" />
+          <MobileTestingScreen
+            variant="loading"
+            debugInfo={mobileDebugInfo}
+            showDebugPanel={isMobileDebugEnabled}
+          />
         </>
       )
     }
@@ -205,7 +255,10 @@ export default function Home() {
           <StructuredData type="organization" data={structuredDataSchemas.organization} />
           <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
           <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileTestingScreen />
+          <MobileTestingScreen
+            debugInfo={mobileDebugInfo}
+            showDebugPanel={isMobileDebugEnabled}
+          />
         </>
       )
     }
@@ -230,7 +283,10 @@ export default function Home() {
         <StructuredData type="organization" data={structuredDataSchemas.organization} />
         <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
         <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        <MobileTestingScreen />
+        <MobileTestingScreen
+          debugInfo={mobileDebugInfo}
+          showDebugPanel={isMobileDebugEnabled}
+        />
       </>
     )
   }
