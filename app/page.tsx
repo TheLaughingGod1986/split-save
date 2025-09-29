@@ -15,7 +15,9 @@ export default function Home() {
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
-  const shouldShowMobileTesting = isClient && (isMobile || isSmallScreen) && !isStandalonePWA
+  const isMobileTestingMode = process.env.NEXT_PUBLIC_MOBILE_TESTING_MODE === 'true'
+  const shouldShowMobileTesting =
+    isMobileTestingMode && isClient && (isMobile || isSmallScreen) && !isStandalonePWA
 
   const checkStoredAuthToken = useCallback(() => {
     if (typeof window === 'undefined') {
