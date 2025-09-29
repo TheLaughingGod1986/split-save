@@ -7,7 +7,7 @@ import { StructuredData, structuredDataSchemas } from '@/components/ui/Structure
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
-import { MobileTestingScreen } from '@/components/mobile/MobileTestingScreen'
+// Mobile testing screen removed - using normal mobile experience
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -15,7 +15,8 @@ export default function Home() {
   const [isStandalonePWA, setIsStandalonePWA] = useState(false)
   const [hasAuthToken, setHasAuthToken] = useState<boolean | null>(null)
   const { isMobile, isSmallScreen, isClient } = useMobileDetection()
-  const shouldShowMobileTesting = isClient && (isMobile || isSmallScreen) && !isStandalonePWA
+  // Mobile testing disabled - restore normal mobile experience
+  const shouldShowMobileTesting = false
 
   const checkStoredAuthToken = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -152,18 +153,7 @@ export default function Home() {
   if (loading) {
     const shouldBypassLoading = isClient && hasAuthToken === false
 
-    if (shouldShowMobileTesting) {
-      console.log('🛠️ Loading mobile visitor detected - showing testing screen')
-      return (
-        <>
-          <StructuredData type="website" data={structuredDataSchemas.website} />
-          <StructuredData type="organization" data={structuredDataSchemas.organization} />
-          <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-          <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-          <MobileTestingScreen variant="loading" />
-        </>
-      )
-    }
+    // Mobile testing screen removed - mobile users get normal experience
 
     if (shouldBypassLoading) {
       console.log('🚀 No stored session detected - showing marketing site while auth resolves')
@@ -216,24 +206,7 @@ export default function Home() {
     return landingContent
   }
 
-  // For mobile devices, add additional safety check
-  if (shouldShowMobileTesting) {
-    console.log('🛠️ Mobile device detected - showing testing screen for authenticated user', {
-      isMobile,
-      isSmallScreen,
-      hasUser: !!user
-    })
-
-    return (
-      <>
-        <StructuredData type="website" data={structuredDataSchemas.website} />
-        <StructuredData type="organization" data={structuredDataSchemas.organization} />
-        <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
-        <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        <MobileTestingScreen />
-      </>
-    )
-  }
+  // Mobile testing screen removed - mobile users get normal experience
 
   console.log('🏠 Home: Rendering SplitsaveApp', {
     hasUser: !!user,
