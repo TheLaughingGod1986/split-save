@@ -42,11 +42,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('⚠️ AuthProvider immediate failsafe: forcing loading to false')
         setLoading(false)
       }
-    }, 8000) // Longer timeout to allow proper authentication
+    }, 3000) // Shorter timeout to prevent long loading
     
-    // Get initial session with timeout (longer timeout for mobile PWA)
+    // Get initial session with timeout (shorter timeout to prevent long loading)
     const sessionPromise = supabase.auth.getSession()
-    const timeoutDuration = isMobile ? 8000 : 5000 // Longer timeout for mobile PWA
+    const timeoutDuration = isMobile ? 2000 : 1500 // Shorter timeout to prevent long loading
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Session timeout')), timeoutDuration)
     )
