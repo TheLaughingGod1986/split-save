@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { AuthProvider } from '@/components/auth/AuthProvider'
+import { SimpleAuthProvider } from '@/components/auth/SimpleAuthProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ui/ThemeProvider'
@@ -273,11 +273,15 @@ export default function RootLayout({
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
 
-        <ThemeProvider>
-          {children}
-          <Analytics />
-          <SpeedInsights />
-        </ThemeProvider>
+        <SimpleAuthProvider>
+          <ThemeProvider>
+            <MobilePWA>
+              {children}
+            </MobilePWA>
+            <Analytics />
+            <SpeedInsights />
+          </ThemeProvider>
+        </SimpleAuthProvider>
       </body>
     </html>
   )
