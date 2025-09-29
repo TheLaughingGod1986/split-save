@@ -1,274 +1,162 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { LoginForm } from '@/components/auth/LoginForm'
-import { trackEvent } from '@/lib/analytics'
+import { useState } from 'react'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
-
-const roadmapItems = [
-  {
-    label: 'Today',
-    title: 'Mobile web',
-    copy: 'Optimised for on-the-go check-ins, balance reviews, and quick adds.'
-  },
-  {
-    label: 'Next up',
-    title: 'Native apps',
-    copy: 'Polished iOS and Android apps with widgets and notifications are already in beta.'
-  },
-  {
-    label: 'Later',
-    title: 'Bank sync',
-    copy: 'Secure account connections so SplitSave updates itself while you live your life.'
-  }
-]
-
-const sellingPoints = [
-  {
-    title: 'Fair by default',
-    description: 'Income-based splits, smart repayments, and approvals for bigger spends.'
-  },
-  {
-    title: 'Celebrate progress',
-    description: 'Goal streaks, savings boosts, and gentle reminders keep momentum high.'
-  },
-  {
-    title: 'Keep receipts tidy',
-    description: 'Snap or forward receipts and let SplitSave log the details for both of you.'
-  }
-]
+import { LoginForm } from '@/components/auth/LoginForm'
 
 export function MobileLandingPage() {
+  const { isMobile, isSmallScreen } = useMobileDetection()
   const [showLogin, setShowLogin] = useState(false)
-  const [showSafariGuide, setShowSafariGuide] = useState(false)
-  const { isMobileSafari } = useMobileDetection()
-
-  useEffect(() => {
-    if (!isMobileSafari && showSafariGuide) {
-      setShowSafariGuide(false)
-    }
-  }, [isMobileSafari, showSafariGuide])
-
-  const handlePrimaryCta = () => {
-    trackEvent('cta_clicked', {
-      location: 'mobile_landing',
-      cta_type: 'log_in_mobile_web',
-      page: 'mobile_landing',
-      device: 'mobile_web'
-    })
-
-    setShowLogin(true)
-  }
-
-  const handleSecondaryCta = () => {
-    trackEvent('cta_clicked', {
-      location: 'mobile_landing',
-      cta_type: 'see_how_it_works',
-      page: 'mobile_landing',
-      device: 'mobile_web'
-    })
-
-    const section = document.getElementById('mobile-how-it-works')
-    section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  const handleSafariInstallToggle = () => {
-    setShowSafariGuide((prev) => {
-      const next = !prev
-      trackEvent('cta_clicked', {
-        location: 'mobile_landing',
-        cta_type: next ? 'open_safari_install_guide' : 'close_safari_install_guide',
-        page: 'mobile_landing',
-        device: 'mobile_web'
-      })
-      return next
-    })
-  }
 
   if (showLogin) {
-    return <LoginForm onBack={() => setShowLogin(false)} />
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="max-w-md mx-auto">
+          <button
+            onClick={() => setShowLogin(false)}
+            className="mb-4 text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            ← Back to overview
+          </button>
+          <LoginForm />
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-white">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-purple-600/30 blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[-10%] h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
-      </div>
-
-      <div className="relative mx-auto flex min-h-screen max-w-md flex-col">
-        <header className="px-6 pt-16 pb-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-purple-200/80">SplitSave mobile</p>
-          <h1 className="mt-6 text-3xl font-semibold leading-snug text-white">
-            Everything you love in the SplitSave app—right in Safari
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Hero Section */}
+      <div className="px-4 pt-8 pb-12">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            SplitSave
           </h1>
-          <p className="mt-4 text-sm text-purple-100/80">
-            The mobile web experience mirrors the PWA so you can check balances, track shared purchases, and fund goals without installing anything extra.
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">
+            Smart financial management for couples
           </p>
+          <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+            Split expenses fairly, track savings goals together, and build financial harmony with your partner.
+          </p>
+        </div>
 
-          <div className="mt-8 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={handlePrimaryCta}
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-purple-900 shadow-lg shadow-purple-900/30 transition hover:-translate-y-0.5 hover:bg-purple-50"
-            >
-              Log in to SplitSave
-            </button>
-            <button
-              type="button"
-              onClick={handleSecondaryCta}
-              className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-base font-semibold text-white/90 transition hover:border-white hover:text-white"
-            >
-              Explore the web app preview
-            </button>
-          </div>
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <button
+            onClick={() => setShowLogin(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg text-lg transition-colors"
+          >
+            Get Started
+          </button>
+          <button className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-semibold py-3 px-8 rounded-lg text-lg transition-colors">
+            Learn More
+          </button>
+        </div>
 
-          {isMobileSafari && (
-            <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 text-left shadow-xl backdrop-blur-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-purple-100/90">Add SplitSave to your Home Screen</p>
-                  <p className="mt-1 text-xs text-purple-100/70">
-                    Install the mobile web app for a true full-screen experience with offline support.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSafariInstallToggle}
-                  className="inline-flex items-center justify-center rounded-full bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                  aria-expanded={showSafariGuide}
-                >
-                  {showSafariGuide ? 'Hide steps' : 'Install'}
-                </button>
-              </div>
-              {showSafariGuide && (
-                <ol className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-purple-100/80">
-                  <li>Tap the <strong>Share</strong> icon in Safari.</li>
-                  <li>Choose <strong>Add to Home Screen</strong>.</li>
-                  <li>Confirm the name “SplitSave” and tap <strong>Add</strong>.</li>
-                </ol>
-              )}
-            </div>
-          )}
-        </header>
-
-        <main className="flex-1 space-y-14 px-6 pb-20">
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-purple-900/30 backdrop-blur">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-purple-100/70">Live preview</p>
-            <h2 className="mt-3 text-2xl font-semibold text-white/95">This is what the SplitSave web app looks like</h2>
-            <p className="mt-3 text-sm text-purple-100/80">
-              Navigate the same cards, balances, and activity feed you see in the installed PWA—no more blank screens.
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="text-3xl mb-4">💰</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Fair Expense Splitting
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Split bills proportionally based on income or equally - whatever works for your relationship.
             </p>
-
-            <AppShellPreview />
-          </section>
-
-          <section id="mobile-how-it-works" className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-purple-900/30 backdrop-blur">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-purple-100/70">Why it matches the PWA</p>
-            <h2 className="mt-3 text-2xl font-semibold text-white/95">Full fidelity budgeting on the go</h2>
-            <div className="mt-6 space-y-5">
-              {sellingPoints.map((point) => (
-                <div key={point.title} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-sm font-semibold text-white/90">{point.title}</p>
-                  <p className="mt-2 text-xs text-purple-100/70">{point.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-purple-900/30 backdrop-blur">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-purple-100/70">Roadmap</p>
-            <h2 className="mt-3 text-2xl font-semibold text-white/95">SplitSave keeps evolving</h2>
-            <div className="mt-6 space-y-5">
-              {roadmapItems.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-purple-100/70">{item.label}</p>
-                  <p className="mt-2 text-sm font-semibold text-white/90">{item.title}</p>
-                  <p className="mt-1 text-xs text-purple-100/70">{item.copy}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        </main>
-
-        <footer className="px-6 pb-12 text-center text-[0.7rem] text-purple-100/60">
-          &copy; {new Date().getFullYear()} SplitSave. All rights reserved.
-        </footer>
-      </div>
-    </div>
-  )
-}
-
-function AppShellPreview() {
-  return (
-    <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-inner">
-      <div className="rounded-xl bg-slate-950 p-4 text-left">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-200/70">Shared balance</p>
-            <p className="mt-1 text-2xl font-semibold text-white">$4,380.42</p>
           </div>
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-[0.65rem] font-semibold text-emerald-300">On track</span>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="text-3xl mb-4">🎯</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Shared Goals
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Set and track savings goals together with real-time progress updates and celebrations.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="text-3xl mb-4">📱</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Mobile First
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Works perfectly on mobile, desktop, and as a PWA. Install it like a native app.
+            </p>
+          </div>
         </div>
 
-        <div className="mt-5 grid gap-3">
-          <PreviewCard
-            title="This week"
-            amount="$612.20"
-            description="Groceries, date nights, and shared subscriptions"
-          />
-          <PreviewCard
-            title="Upcoming bills"
-            amount="$940.00"
-            description="Rent, utilities, and sinking funds for travel"
-          />
+        {/* How It Works */}
+        <div className="mt-16 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+            How It Works
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Sign Up Together
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Create accounts and invite your partner to join your financial journey.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-green-100 dark:bg-green-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-green-600 dark:text-green-400">2</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Add Expenses
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Log shared expenses and let SplitSave calculate fair splits automatically.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-purple-100 dark:bg-purple-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Track Progress
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Monitor your financial health and celebrate milestones together.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 rounded-lg border border-white/10 bg-black/30 p-3">
-          <p className="text-xs font-semibold text-purple-100/80">Activity feed</p>
-          <ul className="mt-3 space-y-3 text-xs text-purple-100/70">
-            <li>
-              <span className="font-semibold text-white/90">Jordan</span> added a grocery run • Split 60/40
-            </li>
-            <li>
-              <span className="font-semibold text-white/90">Riley</span> funded the &ldquo;Weekend getaway&rdquo; goal
-            </li>
-            <li>Auto-transfer scheduled for Monday</li>
-          </ul>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-          <button className="rounded-full bg-purple-600/90 px-3 py-2 font-semibold text-white transition hover:bg-purple-500">
-            Add purchase
-          </button>
-          <button className="rounded-full border border-white/10 px-3 py-2 font-semibold text-white/90 transition hover:border-white/20">
-            Add to goal
-          </button>
-        </div>
+        {/* Mobile-specific features */}
+        {isMobile && (
+          <div className="mt-16 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+              📱 Mobile Optimized
+            </h3>
+            <div className="space-y-3 text-gray-600 dark:text-gray-300">
+              <div className="flex items-center">
+                <span className="text-green-500 mr-3">✓</span>
+                <span>Touch-friendly interface</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-green-500 mr-3">✓</span>
+                <span>Install as PWA app</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-green-500 mr-3">✓</span>
+                <span>Offline support</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-green-500 mr-3">✓</span>
+                <span>Push notifications</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  )
-}
-
-function PreviewCard({
-  title,
-  amount,
-  description
-}: {
-  title: string
-  amount: string
-  description: string
-}) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/30 p-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple-100/70">{title}</p>
-        <p className="text-sm font-semibold text-white/90">{amount}</p>
-      </div>
-      <p className="mt-2 text-[0.7rem] text-purple-100/70">{description}</p>
     </div>
   )
 }

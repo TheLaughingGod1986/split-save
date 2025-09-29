@@ -3,6 +3,7 @@
 import { useAuth } from '@/components/auth/SimpleAuthProvider'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { LandingPage } from '@/components/LandingPage'
+import { MobileLandingPage } from '@/components/mobile/MobileLandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useEffect, useRef, useState } from 'react'
@@ -87,7 +88,7 @@ export default function Home() {
         <StructuredData type="organization" data={structuredDataSchemas.organization} />
         <StructuredData type="webapp" data={structuredDataSchemas.webapp} />
         <StructuredData type="financialService" data={structuredDataSchemas.financialService} />
-        <LandingPage />
+        {isMobile ? <MobileLandingPage /> : <LandingPage />}
       </>
     )
   }

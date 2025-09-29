@@ -35,7 +35,7 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
         
         const result = await Promise.race([sessionPromise, timeoutPromise])
         
-        if (mounted && result.data?.session?.user) {
+        if (mounted && result && result.data?.session?.user) {
           setUser(result.data.session.user)
         }
       } catch (error) {

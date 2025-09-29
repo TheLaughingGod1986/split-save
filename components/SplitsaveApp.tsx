@@ -13,6 +13,7 @@ import { AnalyticsView } from './analytics/AnalyticsView'
 import { NotificationManager } from './notifications/NotificationManager'
 import { NotificationDropdown } from './notifications/NotificationDropdown'
 import { MobileLayout } from './mobile/MobileLayout'
+import { MobileAppLayout } from './mobile/MobileAppLayout'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { MoneyHub } from './dashboard/MoneyHub'
 import { MonthlyContributionRecorder } from './forms/MonthlyContributionRecorder'
@@ -869,20 +870,9 @@ export function SplitsaveApp() {
   return (
     <ErrorBoundary>
       {isMobile ? (
-        <MobileLayout
-          currentView={currentView}
-          onNavigate={handleNavigation}
-          isOnline={true}
-          hasNotifications={approvals && approvals.length > 0}
-          notificationCount={approvals ? approvals.length : 0}
-          user={user}
-          profile={profile}
-          onSignOut={handleSignOut}
-          onToggleTheme={toggleTheme}
-          isDarkMode={isDarkMode}
-        >
+        <MobileAppLayout>
           {mainContent}
-        </MobileLayout>
+        </MobileAppLayout>
       ) : (
         mainContent
       )}
