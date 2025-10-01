@@ -181,8 +181,8 @@ export default function Home() {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 transition: 'transform 0.2s ease'
               }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.transform = 'scale(1)'}
             >
               Get Started Free
             </button>
@@ -203,12 +203,14 @@ export default function Home() {
                 transition: 'all 0.2s ease'
               }}
               onMouseOver={(e) => {
-                e.target.style.backgroundColor = 'white'
-                e.target.style.color = '#3b82f6'
+                const target = e.target as HTMLButtonElement
+                target.style.backgroundColor = 'white'
+                target.style.color = '#3b82f6'
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = 'transparent'
-                e.target.style.color = 'white'
+                const target = e.target as HTMLButtonElement
+                target.style.backgroundColor = 'transparent'
+                target.style.color = 'white'
               }}
             >
               Learn More
@@ -456,14 +458,16 @@ export default function Home() {
               transition: 'all 0.2s ease'
             }}
             onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#2563eb'
-              e.target.style.transform = 'translateY(-2px)'
-              e.target.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)'
+              const target = e.target as HTMLButtonElement
+              target.style.backgroundColor = '#2563eb'
+              target.style.transform = 'translateY(-2px)'
+              target.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)'
             }}
             onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#3b82f6'
-              e.target.style.transform = 'translateY(0)'
-              e.target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'
+              const target = e.target as HTMLButtonElement
+              target.style.backgroundColor = '#3b82f6'
+              target.style.transform = 'translateY(0)'
+              target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'
             }}
           >
             Start Your Free Trial
