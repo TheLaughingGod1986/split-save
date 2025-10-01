@@ -45,6 +45,12 @@ export default function MobileLayout({
               font-family: system-ui, -apple-system, sans-serif;
               line-height: 1.6;
             }
+
+            /* Floating animation for mobile hero elements */
+            @keyframes float {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-10px); }
+            }
           `
         }} />
       </head>
