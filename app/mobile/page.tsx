@@ -1,9 +1,49 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function MobilePage() {
   const [showLogin, setShowLogin] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
+        if (error) throw error
+        if (data.user) {
+          // Redirect to desktop version after successful signup
+          window.location.href = '/?desktop=true&mobile=override'
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) throw error
+        if (data.user) {
+          // Redirect to desktop version after successful signin
+          window.location.href = '/?desktop=true&mobile=override'
+        }
+      }
+    } catch (error: any) {
+      setError(error.message || 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (showLogin) {
     return (
@@ -68,88 +108,108 @@ export default function MobilePage() {
             marginBottom: '24px',
             textAlign: 'center'
           }}>
-            Sign In to SplitSave
+            {isSignUp ? 'Sign Up for SplitSave' : 'Sign In to SplitSave'}
           </h2>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '1rem',
-                boxSizing: 'border-box'
-              }}
-              placeholder="Enter your email"
-            />
-          </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '1rem',
-                boxSizing: 'border-box'
-              }}
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <button
-            onClick={() => {
-              // For now, redirect to desktop version for actual login
-              window.location.href = '/?desktop=true&mobile=override'
-            }}
-            style={{
-              width: '100%',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
+          {error && (
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#dc2626',
               padding: '12px',
               borderRadius: '6px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginBottom: '16px'
-            }}
-          >
-            Sign In
-          </button>
+              marginBottom: '20px',
+              fontSize: '0.875rem'
+            }}>
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleAuth}>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                backgroundColor: loading ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                padding: '12px',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                marginBottom: '16px'
+              }}
+            >
+              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            </button>
+          </form>
 
           <div style={{
             textAlign: 'center',
             fontSize: '0.875rem',
             color: '#6b7280'
           }}>
-            Don't have an account?{' '}
+            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
             <button
               onClick={() => {
-                // Redirect to desktop version for signup
-                window.location.href = '/?desktop=true&mobile=override'
+                setIsSignUp(!isSignUp)
+                setError('')
               }}
               style={{
                 color: '#3b82f6',
@@ -159,7 +219,7 @@ export default function MobilePage() {
                 textDecoration: 'underline'
               }}
             >
-              Sign up here
+              {isSignUp ? 'Sign in here' : 'Sign up here'}
             </button>
           </div>
 
