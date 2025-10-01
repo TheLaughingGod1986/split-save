@@ -16,8 +16,9 @@ export default function Home({
   
   // Check if user explicitly wants desktop version
   const forceDesktop = searchParams.desktop === 'true'
+  const mobileOverride = searchParams.mobile === 'override'
 
-  if (isMobile && !forceDesktop) {
+  if (isMobile && !forceDesktop && !mobileOverride) {
     // Redirect mobile users to the mobile-specific page
     redirect('/mobile')
   }

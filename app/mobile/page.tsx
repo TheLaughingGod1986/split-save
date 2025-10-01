@@ -1,6 +1,184 @@
 'use client'
 
+import { useState } from 'react'
+
 export default function MobilePage() {
+  const [showLogin, setShowLogin] = useState(false)
+
+  if (showLogin) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        padding: '20px'
+      }}>
+        {/* Mobile Navigation Header */}
+        <div style={{
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e5e7eb',
+          padding: '16px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          marginBottom: '20px'
+        }}>
+          <h1 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#1e293b',
+            margin: 0
+          }}>
+            SplitSave
+          </h1>
+          <button 
+            onClick={() => setShowLogin(false)}
+            style={{
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Back
+          </button>
+        </div>
+
+        {/* Login Form */}
+        <div style={{
+          backgroundColor: 'white',
+          padding: '32px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          border: '1px solid #e5e7eb',
+          maxWidth: '400px',
+          margin: '0 auto'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#1e293b',
+            marginBottom: '24px',
+            textAlign: 'center'
+          }}>
+            Sign In to SplitSave
+          </h2>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
+              Email
+            </label>
+            <input
+              type="email"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
+              Password
+            </label>
+            <input
+              type="password"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <button
+            onClick={() => {
+              // For now, redirect to desktop version for actual login
+              window.location.href = '/?desktop=true&mobile=override'
+            }}
+            style={{
+              width: '100%',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '12px',
+              borderRadius: '6px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '16px'
+            }}
+          >
+            Sign In
+          </button>
+
+          <div style={{
+            textAlign: 'center',
+            fontSize: '0.875rem',
+            color: '#6b7280'
+          }}>
+            Don't have an account?{' '}
+            <button
+              onClick={() => {
+                // Redirect to desktop version for signup
+                window.location.href = '/?desktop=true&mobile=override'
+              }}
+              style={{
+                color: '#3b82f6',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              Sign up here
+            </button>
+          </div>
+
+          <div style={{
+            marginTop: '20px',
+            padding: '16px',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '6px',
+            fontSize: '0.875rem',
+            color: '#6b7280',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '8px' }}>🔒</div>
+            <div>Your data is encrypted and secure</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div style={{
       minHeight: '100vh',
@@ -28,10 +206,7 @@ export default function MobilePage() {
           SplitSave
         </h1>
         <button 
-          onClick={() => {
-            // Redirect to desktop version for sign in
-            window.location.href = '/?desktop=true'
-          }}
+          onClick={() => setShowLogin(true)}
           style={{
             backgroundColor: '#3b82f6',
             color: 'white',
@@ -219,7 +394,7 @@ export default function MobilePage() {
           <button 
             onClick={() => {
               // Redirect to desktop version for sign up
-              window.location.href = '/?desktop=true'
+              window.location.href = '/?desktop=true&mobile=override'
             }}
             style={{
               background: 'linear-gradient(45deg, #8b5cf6, #3b82f6)',
@@ -852,10 +1027,10 @@ export default function MobilePage() {
           Join thousands of couples who are building financial harmony together with SplitSave.
         </p>
             <button 
-              onClick={() => {
-                // Redirect to desktop version for sign up
-                window.location.href = '/?desktop=true'
-              }}
+            onClick={() => {
+              // Redirect to desktop version for sign up
+              window.location.href = '/?desktop=true&mobile=override'
+            }}
               style={{
                 backgroundColor: '#3b82f6',
                 color: 'white',
