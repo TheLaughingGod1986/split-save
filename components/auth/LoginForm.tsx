@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/lib/toast'
 import { validationRules, sanitizeInput } from '@/lib/validation'
@@ -10,6 +11,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onBack }: LoginFormProps) {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -210,6 +212,13 @@ export function LoginForm({ onBack }: LoginFormProps) {
         if (error) {
           console.error('🔐 Login error details:', error)
           throw error
+        }
+        
+        // Redirect to dashboard after successful sign-in
+        if (data.user) {
+          console.log('🔐 Sign-in successful, redirecting to dashboard')
+          toast.success('Welcome back! Redirecting to dashboard...')
+          router.push('/dashboard')
         }
       }
     } catch (error: any) {
