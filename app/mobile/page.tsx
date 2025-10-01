@@ -343,6 +343,268 @@ export default function MobilePage() {
           It goes beyond simple expense splitting to help you build a stronger financial future together.
         </p>
         
+        {/* How SplitSave Works Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '32px',
+          marginBottom: '60px'
+        }}>
+          <h4 style={{
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            color: '#1e293b',
+            textAlign: 'center',
+            marginBottom: '20px'
+          }}>
+            How SplitSave Works
+          </h4>
+          
+          {/* Step 1 */}
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
+            border: '1px solid #e5e7eb',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-12px',
+              left: '24px',
+              backgroundColor: '#8b5cf6',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.875rem',
+              fontWeight: 'bold'
+            }}>1</div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginRight: '20px'
+              }}>🤝</div>
+              <div>
+                <h4 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: '#1e293b',
+                  margin: '0 0 8px 0'
+                }}>
+                  Connect with Your Partner
+                </h4>
+                <p style={{
+                  color: '#64748b',
+                  margin: 0,
+                  fontSize: '0.9rem'
+                }}>
+                  Takes less than 2 minutes
+                </p>
+              </div>
+            </div>
+            <p style={{
+              color: '#64748b',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Invite your partner to join your shared financial space. Set up your partnership in minutes and start managing money together.
+            </p>
+          </div>
+
+          {/* Step 2 */}
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
+            border: '1px solid #e5e7eb',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-12px',
+              left: '24px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.875rem',
+              fontWeight: 'bold'
+            }}>2</div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginRight: '20px'
+              }}>💰</div>
+              <div>
+                <h4 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: '#1e293b',
+                  margin: '0 0 8px 0'
+                }}>
+                  Add Shared Expenses
+                </h4>
+                <p style={{
+                  color: '#64748b',
+                  margin: 0,
+                  fontSize: '0.9rem'
+                }}>
+                  No more manual calculations
+                </p>
+              </div>
+            </div>
+            <p style={{
+              color: '#64748b',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Record shared expenses and let SplitSave automatically calculate fair shares based on your income. 
+              See who owes what in real-time.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
+            border: '1px solid #e5e7eb',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-12px',
+              left: '24px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.875rem',
+              fontWeight: 'bold'
+            }}>3</div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginRight: '20px'
+              }}>🎯</div>
+              <div>
+                <h4 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: '#1e293b',
+                  margin: '0 0 8px 0'
+                }}>
+                  Set Goals & Track Progress
+                </h4>
+                <p style={{
+                  color: '#64748b',
+                  margin: 0,
+                  fontSize: '0.9rem'
+                }}>
+                  Stay motivated together
+                </p>
+              </div>
+            </div>
+            <p style={{
+              color: '#64748b',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Create shared savings goals and track your progress with beautiful visual charts. 
+              Celebrate milestones together and stay motivated.
+            </p>
+          </div>
+
+          {/* Step 4 */}
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
+            border: '1px solid #e5e7eb',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-12px',
+              left: '24px',
+              backgroundColor: '#f59e0b',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.875rem',
+              fontWeight: 'bold'
+            }}>4</div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginRight: '20px'
+              }}>📊</div>
+              <div>
+                <h4 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: '#1e293b',
+                  margin: '0 0 8px 0'
+                }}>
+                  Build Financial Harmony
+                </h4>
+                <p style={{
+                  color: '#64748b',
+                  margin: 0,
+                  fontSize: '0.9rem'
+                }}>
+                  Transparent & fair
+                </p>
+              </div>
+            </div>
+            <p style={{
+              color: '#64748b',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Get personalized insights, recommendations, and build a stronger financial future together. 
+              Complete transparency and fairness in every transaction.
+            </p>
+          </div>
+        </div>
+
+        {/* Features Grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr',
@@ -489,6 +751,77 @@ export default function MobilePage() {
             }}>
               Bank-level security with end-to-end encryption. Your financial data is private, 
               secure, and only accessible to you and your partner.
+            </p>
+          </div>
+
+          {/* Additional Features */}
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px 24px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+            border: '1px solid #e5e7eb'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '2.5rem',
+                marginRight: '16px'
+              }}>📱</div>
+              <h4 style={{
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                color: '#1e293b',
+                margin: 0
+              }}>
+                Mobile Optimized
+              </h4>
+            </div>
+            <p style={{
+              color: '#64748b',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Access your financial data anywhere with our mobile-optimized web app. 
+              Full functionality on all devices with offline support.
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px 24px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+            border: '1px solid #e5e7eb'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '2.5rem',
+                marginRight: '16px'
+              }}>⚡</div>
+              <h4 style={{
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                color: '#1e293b',
+                margin: 0
+              }}>
+                Real-Time Sync
+              </h4>
+            </div>
+            <p style={{
+              color: '#64748b',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              All changes sync instantly between you and your partner. 
+              Never miss an update with real-time notifications and live data.
             </p>
           </div>
         </div>

@@ -16,16 +16,14 @@ export function DesktopApp() {
   // Show loading while checking authentication
   if (!mounted || loading) {
     return (
-      <div className="hidden md:block">
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 animate-pulse">
-              Loading SplitSave...
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Preparing your financial harmony.
-            </p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 animate-pulse">
+            Loading SplitSave...
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Preparing your financial harmony.
+          </p>
         </div>
       </div>
     )
@@ -33,17 +31,9 @@ export function DesktopApp() {
 
   // Show main app for authenticated users
   if (user) {
-    return (
-      <div className="hidden md:block">
-        <SplitsaveApp />
-      </div>
-    )
+    return <SplitsaveApp />
   }
 
   // Show landing page for non-authenticated users
-  return (
-    <div className="hidden md:block">
-      <LandingPage />
-    </div>
-  )
+  return <LandingPage />
 }
