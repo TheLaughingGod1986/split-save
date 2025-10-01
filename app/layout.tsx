@@ -1,11 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { SimpleAuthProvider } from '@/components/auth/SimpleAuthProvider'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
-import { ThemeProvider } from '@/components/ui/ThemeProvider'
-import { MobilePWA } from '@/components/pwa/MobilePWA'
+import { ConditionalProviders } from '@/components/ConditionalProviders'
 // Debug components removed to prevent hydration issues
 // import { MobileDebugOverlay } from '@/components/mobile/MobileDebugOverlay'
 // import { PWAAuthDebug } from '@/components/debug/PWAAuthDebug'
@@ -273,15 +269,9 @@ export default function RootLayout({
         {/* Mobile fallback completely removed to prevent white screen issues */}
 
 
-        <SimpleAuthProvider>
-          <ThemeProvider>
-            <MobilePWA>
-              {children}
-            </MobilePWA>
-            <Analytics />
-            <SpeedInsights />
-          </ThemeProvider>
-        </SimpleAuthProvider>
+        <ConditionalProviders>
+          {children}
+        </ConditionalProviders>
       </body>
     </html>
   )
