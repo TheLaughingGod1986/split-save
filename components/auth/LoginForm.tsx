@@ -214,11 +214,11 @@ export function LoginForm({ onBack }: LoginFormProps) {
           throw error
         }
         
-        // Redirect to dashboard after successful sign-in
+        // Redirect to home page after successful sign-in
         if (data.user) {
-          console.log('🔐 Sign-in successful, redirecting to dashboard')
-          toast.success('Welcome back! Redirecting to dashboard...')
-          router.push('/dashboard')
+          console.log('🔐 Sign-in successful, redirecting to home page')
+          toast.success('Welcome back! Redirecting to your dashboard...')
+          router.push('/')
         }
       }
     } catch (error: any) {
