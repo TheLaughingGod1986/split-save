@@ -56,15 +56,47 @@ export default function Home() {
           padding: '40px 20px',
           textAlign: 'center',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white'
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
+          {/* Floating Elements */}
+          <div style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            width: '60px',
+            height: '60px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%',
+            animation: 'float 3s ease-in-out infinite'
+          }} />
+          <div style={{
+            position: 'absolute',
+            top: '60px',
+            right: '30px',
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%',
+            animation: 'float 4s ease-in-out infinite reverse'
+          }} />
+          
           <h2 style={{
             fontSize: '2.5rem',
             fontWeight: 'bold',
             marginBottom: '16px',
             margin: '0 0 16px 0'
           }}>
-            Smart Financial Management for Couples
+            Split Expenses
+            <span style={{
+              background: 'linear-gradient(45deg, #fbbf24, #f59e0b)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}> Fairly</span>
+            <br />
+            Save Together
           </h2>
           <p style={{
             fontSize: '1.1rem',
@@ -72,8 +104,59 @@ export default function Home() {
             opacity: 0.9,
             lineHeight: '1.6'
           }}>
-            Split expenses fairly, track savings goals together, and build financial harmony with your partner.
+            The smart way for couples to manage shared expenses, track savings goals, and build financial harmony together.
           </p>
+
+          {/* App Preview Image */}
+          <div style={{
+            marginBottom: '32px',
+            display: 'flex',
+            justifyContent: 'center'
+          }}>
+            <img 
+              src="/og-image.png" 
+              alt="SplitSave App Preview"
+              style={{
+                maxWidth: '300px',
+                width: '100%',
+                height: 'auto',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                border: '2px solid rgba(255,255,255,0.2)'
+              }}
+            />
+          </div>
+
+          {/* App Availability */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '32px',
+            fontSize: '0.9rem',
+            opacity: 0.9
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                width: '8px',
+                height: '8px',
+                backgroundColor: '#10b981',
+                borderRadius: '50%'
+              }}></span>
+              <span>Available now as Web App</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                width: '8px',
+                height: '8px',
+                backgroundColor: '#f59e0b',
+                borderRadius: '50%'
+              }}></span>
+              <span>iOS & Android apps coming soon</span>
+            </div>
+          </div>
+
           <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -81,36 +164,91 @@ export default function Home() {
             maxWidth: '300px',
             margin: '0 auto'
           }}>
-            <button style={{
-              backgroundColor: 'white',
-              color: '#3b82f6',
-              border: 'none',
-              padding: '14px 28px',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}>
+            <button 
+              onClick={() => {
+                // Scroll to features section
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+              style={{
+                backgroundColor: 'white',
+                color: '#3b82f6',
+                border: 'none',
+                padding: '14px 28px',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                transition: 'transform 0.2s ease'
+              }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
               Get Started Free
             </button>
-            <button style={{
-              backgroundColor: 'transparent',
-              color: 'white',
-              border: '2px solid white',
-              padding: '12px 28px',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}>
+            <button 
+              onClick={() => {
+                // Scroll to features section
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+              style={{
+                backgroundColor: 'transparent',
+                color: 'white',
+                border: '2px solid white',
+                padding: '12px 28px',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = 'white'
+                e.target.style.color = '#3b82f6'
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = 'transparent'
+                e.target.style.color = 'white'
+              }}
+            >
               Learn More
             </button>
+          </div>
+
+          {/* Social Proof */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+            marginTop: '32px',
+            fontSize: '0.9rem',
+            opacity: 0.8
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '-4px' }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(45deg, #a855f7, #3b82f6)',
+                    border: '2px solid white',
+                    marginLeft: i > 1 ? '-8px' : '0'
+                  }} />
+                ))}
+              </div>
+              <span>Join 10,000+ couples</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ color: '#fbbf24' }}>★★★★★</span>
+              <span>4.9/5 rating</span>
+            </div>
           </div>
         </div>
 
         {/* Features Grid */}
-        <div style={{
+        <div id="features" style={{
           padding: '40px 20px',
           maxWidth: '1200px',
           margin: '0 auto'
@@ -300,17 +438,34 @@ export default function Home() {
           }}>
             Join thousands of couples who are building financial harmony together with SplitSave.
           </p>
-          <button style={{
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            padding: '16px 32px',
-            borderRadius: '8px',
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
+          <button 
+            onClick={() => {
+              // For now, just show an alert. In a real app, this would open a signup modal
+              alert('Sign up functionality coming soon! For now, please use the desktop version to create an account.')
+            }}
+            style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '16px 32px',
+              borderRadius: '8px',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#2563eb'
+              e.target.style.transform = 'translateY(-2px)'
+              e.target.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)'
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#3b82f6'
+              e.target.style.transform = 'translateY(0)'
+              e.target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'
+            }}
+          >
             Start Your Free Trial
           </button>
         </div>

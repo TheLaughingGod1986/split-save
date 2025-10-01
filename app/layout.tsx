@@ -235,6 +235,12 @@ export default function RootLayout({
                 min-height: 100dvh !important; /* Dynamic viewport height */
               }
             }
+
+            /* Floating animation for mobile hero elements */
+            @keyframes float {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-10px); }
+            }
           `
         }} />
       </head>
