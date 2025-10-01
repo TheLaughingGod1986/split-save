@@ -10,7 +10,7 @@ import { analytics } from '@/lib/analytics'
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth()
-  const { isMobile, isPWA, isStandalone, isClient } = useMobileDetection()
+  const { isMobile, isClient } = useMobileDetection()
   const [mounted, setMounted] = useState(false)
   const [showLoadingScreen, setShowLoadingScreen] = useState(true)
   const loadingScreenTimeoutRef = useRef<NodeJS.Timeout | null>(null)
