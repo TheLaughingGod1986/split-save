@@ -1,122 +1,7 @@
-'use client'
-
-import { useAuth } from '@/components/auth/SimpleAuthProvider'
-import { SplitsaveApp } from '@/components/SplitsaveApp'
-import { LandingPage } from '@/components/LandingPage'
-import { useEffect, useState } from 'react'
-
 export default function Home() {
-  const { user, loading } = useAuth()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Show loading while checking authentication (desktop only)
-  if (!mounted || loading) {
-    return (
-      <>
-        {/* Mobile Loading - Simple and fast */}
-        <div className="block md:hidden">
-          <div style={{
-            minHeight: '100vh',
-            backgroundColor: '#f8fafc',
-            padding: '20px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontWeight: 'bold',
-                color: '#1e293b',
-                marginBottom: '10px'
-              }}>
-                SplitSave
-              </h1>
-              <p style={{
-                fontSize: '1.2rem',
-                color: '#64748b'
-              }}>
-                Loading...
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Desktop Loading */}
-        <div className="hidden md:block">
-          <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 animate-pulse">
-                Loading SplitSave...
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                Preparing your financial harmony.
-              </p>
-            </div>
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  // Show main app for authenticated users (desktop only for now)
-  if (user) {
-    return (
-      <>
-        {/* Mobile - Show simple message for now */}
-        <div className="block md:hidden">
-          <div style={{
-            minHeight: '100vh',
-            backgroundColor: '#f8fafc',
-            padding: '20px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontWeight: 'bold',
-                color: '#1e293b',
-                marginBottom: '10px'
-              }}>
-                SplitSave
-              </h1>
-              <p style={{
-                fontSize: '1.2rem',
-                color: '#64748b',
-                marginBottom: '20px'
-              }}>
-                Welcome back!
-              </p>
-              <p style={{
-                fontSize: '1rem',
-                color: '#64748b'
-              }}>
-                Mobile app coming soon. Please use desktop for full functionality.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Desktop - Full app */}
-        <div className="hidden md:block">
-          <SplitsaveApp />
-        </div>
-      </>
-    )
-  }
-
-  // Show landing page for non-authenticated users
   return (
     <>
-      {/* Mobile Landing Page */}
+      {/* Mobile Landing Page - Always show, no auth checks */}
       <div className="block md:hidden">
         <div style={{
           minHeight: '100vh',
@@ -286,10 +171,58 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Desktop Landing Page - Use Original Component */}
-      <div className="hidden md:block">
-        <LandingPage />
-      </div>
+      {/* Desktop - Use client-side auth */}
+      <DesktopApp />
     </>
+  )
+}
+
+// Separate client component for desktop authentication
+'use client'
+import { useAuth } from '@/components/auth/SimpleAuthProvider'
+import { SplitsaveApp } from '@/components/SplitsaveApp'
+import { LandingPage } from '@/components/LandingPage'
+import { useEffect, useState } from 'react'
+
+function DesktopApp() {
+  const { user, loading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Show loading while checking authentication
+  if (!mounted || loading) {
+    return (
+      <div className="hidden md:block">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 animate-pulse">
+              Loading SplitSave...
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Preparing your financial harmony.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show main app for authenticated users
+  if (user) {
+    return (
+      <div className="hidden md:block">
+        <SplitsaveApp />
+      </div>
+    )
+  }
+
+  // Show landing page for non-authenticated users
+  return (
+    <div className="hidden md:block">
+      <LandingPage />
+    </div>
   )
 }
