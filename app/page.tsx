@@ -6,7 +6,7 @@ import { LandingPage } from '@/components/LandingPage'
 import { StructuredData, structuredDataSchemas } from '@/components/ui/StructuredData'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { useEffect, useRef, useState } from 'react'
-import { analytics } from '@/lib/analytics'
+import { trackPageView } from '@/lib/analytics'
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth()
@@ -17,7 +17,7 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true)
-    analytics.page()
+    trackPageView('home', !!user)
 
     // Set a timeout to hide the loading screen even if auth takes too long
     loadingScreenTimeoutRef.current = setTimeout(() => {
