@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
 export default function MobilePage() {
   const [showLogin, setShowLogin] = useState(false)
@@ -17,27 +16,9 @@ export default function MobilePage() {
     setError('')
 
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        })
-        if (error) throw error
-        if (data.user) {
-          // Redirect to desktop version after successful signup
-          window.location.href = '/?desktop=true&mobile=override'
-        }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) throw error
-        if (data.user) {
-          // Redirect to desktop version after successful signin
-          window.location.href = '/?desktop=true&mobile=override'
-        }
-      }
+      // For now, just redirect to desktop version
+      // This will be replaced with real authentication later
+      window.location.href = '/?desktop=true&mobile=override'
     } catch (error: any) {
       setError(error.message || 'An error occurred')
     } finally {
