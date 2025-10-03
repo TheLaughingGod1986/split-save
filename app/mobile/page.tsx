@@ -1,3 +1,5 @@
+'use client'
+
 export default function MobilePage() {
   const handleSignIn = () => {
     // Simple redirect to desktop version
