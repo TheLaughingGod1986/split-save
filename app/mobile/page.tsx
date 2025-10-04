@@ -1,11 +1,4 @@
-'use client'
-
 export default function MobilePage() {
-  const handleSignIn = () => {
-    // Simple redirect to desktop version
-    window.location.href = '/?desktop=true&mobile=override'
-  }
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -32,8 +25,8 @@ export default function MobilePage() {
         }}>
           SplitSave
         </h1>
-        <button 
-          onClick={handleSignIn}
+        <a 
+          href="/?desktop=true&mobile=override"
           style={{
             backgroundColor: '#3b82f6',
             color: 'white',
@@ -42,11 +35,13 @@ export default function MobilePage() {
             borderRadius: '6px',
             fontSize: '0.9rem',
             fontWeight: '600',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            textDecoration: 'none',
+            display: 'inline-block'
           }}
         >
           Sign In
-        </button>
+        </a>
       </div>
 
       {/* Hero Section */}
@@ -98,8 +93,8 @@ export default function MobilePage() {
           margin: '0 auto',
           justifyContent: 'center'
         }}>
-          <button 
-            onClick={handleSignIn}
+          <a 
+            href="/?desktop=true&mobile=override"
             style={{
               background: 'linear-gradient(45deg, #8b5cf6, #3b82f6)',
               color: 'white',
@@ -111,16 +106,15 @@ export default function MobilePage() {
               cursor: 'pointer',
               boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
               transition: 'all 0.2s ease',
-              minWidth: '160px'
+              minWidth: '160px',
+              textDecoration: 'none',
+              display: 'inline-block'
             }}
           >
             Get Started Free
-          </button>
-          <button 
-            onClick={() => {
-              // Scroll to features section
-              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
-            }}
+          </a>
+          <a 
+            href="#features"
             style={{
               backgroundColor: 'transparent',
               color: '#8b5cf6',
@@ -131,11 +125,13 @@ export default function MobilePage() {
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              minWidth: '160px'
+              minWidth: '160px',
+              textDecoration: 'none',
+              display: 'inline-block'
             }}
           >
             Learn More
-          </button>
+          </a>
         </div>
       </div>
 
@@ -267,8 +263,8 @@ export default function MobilePage() {
         }}>
           Join thousands of couples who are building financial harmony together with SplitSave.
         </p>
-        <button 
-          onClick={handleSignIn}
+        <a 
+          href="/?desktop=true&mobile=override"
           style={{
             backgroundColor: '#3b82f6',
             color: 'white',
@@ -279,11 +275,13 @@ export default function MobilePage() {
             fontWeight: '600',
             cursor: 'pointer',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            textDecoration: 'none',
+            display: 'inline-block'
           }}
         >
           Get Started Free
-        </button>
+        </a>
       </div>
 
       {/* Footer */}
