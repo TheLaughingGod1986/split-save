@@ -1,4 +1,245 @@
+'use client'
+
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+
 export default function MobilePage() {
+  const [showLogin, setShowLogin] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
+        if (error) throw error
+        if (data.user) {
+          // Redirect to desktop version after successful signup
+          window.location.href = '/?desktop=true&mobile=override'
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) throw error
+        if (data.user) {
+          // Redirect to desktop version after successful signin
+          window.location.href = '/?desktop=true&mobile=override'
+        }
+      }
+    } catch (error: any) {
+      setError(error.message || 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (showLogin) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        padding: '20px'
+      }}>
+        {/* Mobile Navigation Header */}
+        <div style={{
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e5e7eb',
+          padding: '16px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          marginBottom: '20px'
+        }}>
+          <h1 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#1e293b',
+            margin: 0
+          }}>
+            SplitSave
+          </h1>
+          <button 
+            onClick={() => setShowLogin(false)}
+            style={{
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Back
+          </button>
+        </div>
+
+        {/* Login Form */}
+        <div style={{
+          backgroundColor: 'white',
+          padding: '32px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          border: '1px solid #e5e7eb',
+          maxWidth: '400px',
+          margin: '0 auto'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#1e293b',
+            marginBottom: '24px',
+            textAlign: 'center'
+          }}>
+            {isSignUp ? 'Sign Up for SplitSave' : 'Sign In to SplitSave'}
+          </h2>
+
+          {error && (
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#dc2626',
+              padding: '12px',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '0.875rem'
+            }}>
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleAuth}>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                backgroundColor: loading ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                padding: '12px',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                marginBottom: '16px'
+              }}
+            >
+              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            </button>
+          </form>
+
+          <div style={{
+            textAlign: 'center',
+            fontSize: '0.875rem',
+            color: '#6b7280'
+          }}>
+            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+            <button
+              onClick={() => {
+                setIsSignUp(!isSignUp)
+                setError('')
+              }}
+              style={{
+                color: '#3b82f6',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {isSignUp ? 'Sign in here' : 'Sign up here'}
+            </button>
+          </div>
+
+          <div style={{
+            marginTop: '20px',
+            padding: '16px',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '6px',
+            fontSize: '0.875rem',
+            color: '#6b7280',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '8px' }}>🔒</div>
+            <div>Your data is encrypted and secure</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -25,8 +266,8 @@ export default function MobilePage() {
         }}>
           SplitSave
         </h1>
-        <a 
-          href="/?desktop=true&mobile=override"
+        <button 
+          onClick={() => setShowLogin(true)}
           style={{
             backgroundColor: '#3b82f6',
             color: 'white',
@@ -36,12 +277,11 @@ export default function MobilePage() {
             fontSize: '0.9rem',
             fontWeight: '600',
             cursor: 'pointer',
-            textDecoration: 'none',
-            display: 'inline-block'
+            transition: 'all 0.2s ease'
           }}
         >
           Sign In
-        </a>
+        </button>
       </div>
 
       {/* Hero Section */}
@@ -93,8 +333,8 @@ export default function MobilePage() {
           margin: '0 auto',
           justifyContent: 'center'
         }}>
-          <a 
-            href="/?desktop=true&mobile=override"
+          <button 
+            onClick={() => setShowLogin(true)}
             style={{
               background: 'linear-gradient(45deg, #8b5cf6, #3b82f6)',
               color: 'white',
@@ -106,15 +346,16 @@ export default function MobilePage() {
               cursor: 'pointer',
               boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
               transition: 'all 0.2s ease',
-              minWidth: '160px',
-              textDecoration: 'none',
-              display: 'inline-block'
+              minWidth: '160px'
             }}
           >
             Get Started Free
-          </a>
-          <a 
-            href="#features"
+          </button>
+          <button 
+            onClick={() => {
+              // Scroll to features section
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+            }}
             style={{
               backgroundColor: 'transparent',
               color: '#8b5cf6',
@@ -125,13 +366,11 @@ export default function MobilePage() {
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              minWidth: '160px',
-              textDecoration: 'none',
-              display: 'inline-block'
+              minWidth: '160px'
             }}
           >
             Learn More
-          </a>
+          </button>
         </div>
       </div>
 
@@ -263,8 +502,8 @@ export default function MobilePage() {
         }}>
           Join thousands of couples who are building financial harmony together with SplitSave.
         </p>
-        <a 
-          href="/?desktop=true&mobile=override"
+        <button 
+          onClick={() => setShowLogin(true)}
           style={{
             backgroundColor: '#3b82f6',
             color: 'white',
@@ -275,13 +514,11 @@ export default function MobilePage() {
             fontWeight: '600',
             cursor: 'pointer',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            transition: 'all 0.2s ease',
-            textDecoration: 'none',
-            display: 'inline-block'
+            transition: 'all 0.2s ease'
           }}
         >
           Get Started Free
-        </a>
+        </button>
       </div>
 
       {/* Footer */}
