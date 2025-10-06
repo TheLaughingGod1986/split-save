@@ -218,7 +218,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
         if (data.user) {
           console.log('🔐 Sign-in successful, redirecting to home page')
           toast.success('Welcome back! Redirecting to your dashboard...')
-          router.push('/')
+          router.push('/?desktop=true&mobile=override')
         }
       }
     } catch (error: any) {
