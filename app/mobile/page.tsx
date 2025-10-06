@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function MobilePage() {
@@ -10,35 +10,69 @@ export default function MobilePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [supabaseConfigured, setSupabaseConfigured] = useState(true)
+
+  // Check if Supabase is configured
+  React.useEffect(() => {
+    const isConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && 
+                      process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co')
+    setSupabaseConfigured(isConfigured)
+    console.log('🔍 Mobile: Supabase config check', { 
+      isConfigured,
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL 
+    })
+  }, [])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
+    console.log('🔍 Mobile Auth: Starting authentication', { 
+      isSignUp, 
+      email: email.substring(0, 10) + '...',
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL 
+    })
+
     try {
       if (isSignUp) {
+        console.log('🔍 Mobile Auth: Attempting signup')
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
         })
+        console.log('🔍 Mobile Auth: Signup result', { 
+          hasUser: !!data.user, 
+          error: error?.message,
+          userId: data.user?.id 
+        })
         if (error) throw error
         if (data.user) {
+          console.log('🔍 Mobile Auth: Signup successful, redirecting')
           // Redirect to desktop version after successful signup
           window.location.href = '/?desktop=true&mobile=override'
         }
       } else {
+        console.log('🔍 Mobile Auth: Attempting signin')
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
+        console.log('🔍 Mobile Auth: Signin result', { 
+          hasUser: !!data.user, 
+          hasSession: !!data.session,
+          error: error?.message,
+          userId: data.user?.id 
+        })
         if (error) throw error
         if (data.user) {
+          console.log('🔍 Mobile Auth: Signin successful, redirecting')
           // Redirect to desktop version after successful signin
           window.location.href = '/?desktop=true&mobile=override'
         }
       }
     } catch (error: any) {
+      console.error('🔍 Mobile Auth: Error details', error)
       setError(error.message || 'An error occurred')
     } finally {
       setLoading(false)
@@ -110,6 +144,20 @@ export default function MobilePage() {
           }}>
             {isSignUp ? 'Sign Up for SplitSave' : 'Sign In to SplitSave'}
           </h2>
+
+          {!supabaseConfigured && (
+            <div style={{
+              backgroundColor: '#fef3cd',
+              border: '1px solid #fde68a',
+              color: '#92400e',
+              padding: '12px',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '0.875rem'
+            }}>
+              ⚠️ Supabase is not configured. Authentication will not work until environment variables are set.
+            </div>
+          )}
 
           {error && (
             <div style={{
