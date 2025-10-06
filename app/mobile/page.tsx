@@ -3,6 +3,20 @@
 import React, { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
+// Mobile-specific Supabase client with enhanced error handling
+const createMobileSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('🔍 Mobile: Supabase not configured')
+    return null
+  }
+
+  // Use the existing client but with mobile-specific error handling
+  return supabase
+}
+
 export default function MobilePage() {
   const [showLogin, setShowLogin] = useState(false)
   const [email, setEmail] = useState('')
@@ -31,49 +45,82 @@ export default function MobilePage() {
     console.log('🔍 Mobile Auth: Starting authentication', { 
       isSignUp, 
       email: email.substring(0, 10) + '...',
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL 
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      userAgent: navigator.userAgent,
+      isMobile: /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent)
     })
 
     try {
-      if (isSignUp) {
-        console.log('🔍 Mobile Auth: Attempting signup')
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
+      // Check if Supabase is available
+      const mobileSupabase = createMobileSupabaseClient()
+      if (!mobileSupabase) {
+        throw new Error('Authentication service is not available. Please try again later.')
+      }
+
+      // Mobile-specific timeout and retry logic
+      const authPromise = isSignUp 
+        ? mobileSupabase.auth.signUp({ email, password })
+        : mobileSupabase.auth.signInWithPassword({ email, password })
+
+      // Add mobile-specific timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Mobile authentication timeout')), 10000)
+      )
+
+      const { data, error } = await Promise.race([authPromise, timeoutPromise]) as any
+
+      console.log('🔍 Mobile Auth: Result', { 
+        isSignUp,
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        error: error?.message,
+        userId: data?.user?.id,
+        sessionExpiry: data?.session?.expires_at
+      })
+
+      if (error) {
+        console.error('🔍 Mobile Auth: Supabase error', error)
+        
+        // Handle specific mobile errors
+        if (error.message?.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials.')
+        } else if (error.message?.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link before signing in.')
+        } else if (error.message?.includes('Too many requests')) {
+          throw new Error('Too many login attempts. Please wait a moment and try again.')
+        } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+          throw new Error('Network error. Please check your internet connection and try again.')
+        } else {
+          throw error
+        }
+      }
+
+      if (data?.user) {
+        console.log('🔍 Mobile Auth: Success, waiting for session to persist')
+        
+        // Wait a moment for session to be stored
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Verify session was stored
+        const { data: { session } } = await mobileSupabase.auth.getSession()
+        console.log('🔍 Mobile Auth: Session verification', { 
+          hasSession: !!session,
+          userId: session?.user?.id 
         })
-        console.log('🔍 Mobile Auth: Signup result', { 
-          hasUser: !!data.user, 
-          error: error?.message,
-          userId: data.user?.id 
-        })
-        if (error) throw error
-        if (data.user) {
-          console.log('🔍 Mobile Auth: Signup successful, redirecting')
-          // Redirect to desktop version after successful signup
+        
+        if (session?.user) {
+          console.log('🔍 Mobile Auth: Redirecting to desktop')
+          // Redirect to desktop version after successful authentication
           window.location.href = '/?desktop=true&mobile=override'
+        } else {
+          throw new Error('Session not properly stored. Please try again.')
         }
       } else {
-        console.log('🔍 Mobile Auth: Attempting signin')
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        console.log('🔍 Mobile Auth: Signin result', { 
-          hasUser: !!data.user, 
-          hasSession: !!data.session,
-          error: error?.message,
-          userId: data.user?.id 
-        })
-        if (error) throw error
-        if (data.user) {
-          console.log('🔍 Mobile Auth: Signin successful, redirecting')
-          // Redirect to desktop version after successful signin
-          window.location.href = '/?desktop=true&mobile=override'
-        }
+        throw new Error('Authentication failed. Please try again.')
       }
     } catch (error: any) {
       console.error('🔍 Mobile Auth: Error details', error)
-      setError(error.message || 'An error occurred')
+      setError(error.message || 'An error occurred during authentication')
     } finally {
       setLoading(false)
     }
