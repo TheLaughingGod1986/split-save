@@ -1,7 +1,7 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   preload: true,
@@ -13,23 +13,30 @@ export const metadata: Metadata = {
   description: 'Smart financial management for couples - Mobile version',
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#3b82f6',
+}
+
 export default function MobileLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.className}>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-        <meta name="theme-color" content="#3b82f6" />
-        <style dangerouslySetInnerHTML={{
+    <div className={inter.className}>
+      <style
+        dangerouslySetInnerHTML={{
           __html: `
             * {
               box-sizing: border-box;
             }
-            
-            html, body {
+
+            html,
+            body {
               margin: 0 !important;
               padding: 0 !important;
               background: #f8fafc !important;
@@ -40,7 +47,7 @@ export default function MobileLayout({
               -webkit-text-size-adjust: 100%;
               -ms-text-size-adjust: 100%;
             }
-            
+
             body {
               font-family: system-ui, -apple-system, sans-serif;
               line-height: 1.6;
@@ -48,15 +55,18 @@ export default function MobileLayout({
 
             /* Floating animation for mobile hero elements */
             @keyframes float {
-              0%, 100% { transform: translateY(0px); }
-              50% { transform: translateY(-10px); }
+              0%,
+              100% {
+                transform: translateY(0px);
+              }
+              50% {
+                transform: translateY(-10px);
+              }
             }
-          `
-        }} />
-      </head>
-      <body>
-        {children}
-      </body>
-    </html>
+          `,
+        }}
+      />
+      {children}
+    </div>
   )
 }
