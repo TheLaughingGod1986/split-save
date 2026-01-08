@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth/SimpleAuthProvider'
 import { SplitsaveApp } from '@/components/SplitsaveApp'
 import { MobileLandingPage } from '@/components/mobile/MobileLandingPage'
@@ -15,9 +15,12 @@ export default function MobilePage() {
     setIsMounted(true)
   }, [])
 
+  const handleAuthTimeout = useCallback(() => {
+    setAuthTimedOut(true)
+  }, [])
+
   useEffect(() => {
-    if (!loading) {
-      setAuthTimedOut(false)
+    if (!loading || authTimedOut) {
       return
     }
 
@@ -26,12 +29,12 @@ export default function MobilePage() {
     }, 4000)
 
     return () => clearTimeout(timer)
-  }, [loading])
+  }, [authTimedOut, loading])
 
   if (!isMounted || (loading && !user && !authTimedOut)) {
     return (
       <MobileLoadingFallback
-        onTimeout={() => setAuthTimedOut(true)}
+        onTimeout={handleAuthTimeout}
         timeoutMs={4000}
       />
     )
