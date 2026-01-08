@@ -283,6 +283,7 @@ export function SplitsaveApp() {
     } catch (err) {
       console.error('Error loading data:', err)
       setError('Failed to load data. Please try again.')
+    } finally {
       setLoading(false)
     }
   }, [fetchExpenses, fetchGoals, fetchPartnerships, fetchProfile, fetchApprovals, fetchMonthlyProgress, updateProgress, stopLoading])
