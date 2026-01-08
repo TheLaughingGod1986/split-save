@@ -9,13 +9,32 @@ import { MobileLoadingFallback } from '@/components/mobile/MobileLoadingFallback
 export default function MobilePage() {
   const { user, loading } = useAuth()
   const [isMounted, setIsMounted] = useState(false)
+  const [authTimedOut, setAuthTimedOut] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  if (!isMounted || loading) {
-    return <MobileLoadingFallback />
+  useEffect(() => {
+    if (!loading) {
+      setAuthTimedOut(false)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setAuthTimedOut(true)
+    }, 4000)
+
+    return () => clearTimeout(timer)
+  }, [loading])
+
+  if (!isMounted || (loading && !user && !authTimedOut)) {
+    return (
+      <MobileLoadingFallback
+        onTimeout={() => setAuthTimedOut(true)}
+        timeoutMs={4000}
+      />
+    )
   }
 
   if (user) {
