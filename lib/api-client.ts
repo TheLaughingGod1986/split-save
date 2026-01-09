@@ -3,6 +3,26 @@ import { supabase } from './supabase'
 class ApiClient {
   private requestCounts = new Map<string, number>()
   private lastRequestTime = new Map<string, number>()
+  private readonly requestTimeoutMs = 8000
+
+  private async request(endpoint: string, options: RequestInit, timeoutMs = this.requestTimeoutMs) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+    try {
+      return await fetch(`/api${endpoint}`, {
+        ...options,
+        signal: controller.signal
+      })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error(`API ${options.method || 'GET'} ${endpoint} timed out after ${timeoutMs}ms`)
+      }
+      throw error
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
   
   private async getAuthHeaders() {
     const headers: Record<string, string> = {
@@ -84,7 +104,7 @@ class ApiClient {
         contentType: headers['Content-Type']
       })
       
-      const response = await fetch(`/api${endpoint}`, { headers })
+      const response = await this.request(endpoint, { headers })
       
       if (!response.ok) {
         console.warn(`🔍 API GET ${endpoint} failed with status: ${response.status}`)
@@ -111,7 +131,7 @@ class ApiClient {
   async post(endpoint: string, data: any) {
     try {
       const headers = await this.getAuthHeaders()
-      const response = await fetch(`/api${endpoint}`, {
+      const response = await this.request(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(data)
@@ -135,7 +155,7 @@ class ApiClient {
   async put(endpoint: string, data: any): Promise<any> {
     try {
       const headers = await this.getAuthHeaders()
-      const response = await fetch(`/api${endpoint}`, {
+      const response = await this.request(endpoint, {
         method: 'PUT',
         headers,
         body: JSON.stringify(data)
@@ -159,7 +179,7 @@ class ApiClient {
   async delete(endpoint: string): Promise<any> {
     try {
       const headers = await this.getAuthHeaders()
-      const response = await fetch(`/api${endpoint}`, {
+      const response = await this.request(endpoint, {
         method: 'DELETE',
         headers
       })
