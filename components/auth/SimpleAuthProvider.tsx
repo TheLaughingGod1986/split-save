@@ -20,11 +20,18 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     let mounted = true
+    let failsafeTimer: ReturnType<typeof setTimeout> | null = null
 
     // Simple session check with immediate timeout
     const checkSession = async () => {
       try {
         setLoading(true)
+        failsafeTimer = setTimeout(() => {
+          if (mounted) {
+            console.warn('Auth check taking too long, forcing loading to false')
+            setLoading(false)
+          }
+        }, 2000)
         
         // Very short timeout to prevent hanging
         const timeoutPromise = new Promise<null>((_, reject) => 
@@ -43,6 +50,10 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
         // Continue without authentication
       } finally {
         if (mounted) {
+          if (failsafeTimer) {
+            clearTimeout(failsafeTimer)
+            failsafeTimer = null
+          }
           setLoading(false)
         }
       }
@@ -62,6 +73,9 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
 
     return () => {
       mounted = false
+      if (failsafeTimer) {
+        clearTimeout(failsafeTimer)
+      }
       subscription.unsubscribe()
     }
   }, [])
