@@ -11,6 +11,7 @@ export function MobileLoadingFallback({ onTimeout, timeoutMs = 8000 }: MobileLoa
   const [showFallback, setShowFallback] = useState(false)
   const [timeoutReached, setTimeoutReached] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [progress, setProgress] = useState(12)
   const [deviceInfo, setDeviceInfo] = useState({
     userAgent: '',
     screenSize: '',
@@ -36,6 +37,7 @@ export function MobileLoadingFallback({ onTimeout, timeoutMs = 8000 }: MobileLoa
     // Trigger timeout callback after specified time
     const timeoutTimer = setTimeout(() => {
       setTimeoutReached(true)
+      setProgress(100)
       onTimeout?.()
     }, timeoutMs)
 
@@ -44,6 +46,23 @@ export function MobileLoadingFallback({ onTimeout, timeoutMs = 8000 }: MobileLoa
       clearTimeout(timeoutTimer)
     }
   }, [onTimeout, timeoutMs])
+
+  useEffect(() => {
+    if (timeoutReached) {
+      return
+    }
+
+    const progressTimer = setInterval(() => {
+      setProgress(prevProgress => {
+        if (prevProgress >= 90) {
+          return prevProgress
+        }
+        return Math.min(90, prevProgress + Math.max(1, Math.round(Math.random() * 6)))
+      })
+    }, 700)
+
+    return () => clearInterval(progressTimer)
+  }, [timeoutReached])
 
   const handleRefresh = () => {
     window.location.reload()
@@ -114,7 +133,7 @@ export function MobileLoadingFallback({ onTimeout, timeoutMs = 8000 }: MobileLoa
             <div 
               className="bg-purple-600 h-2 rounded-full transition-all duration-1000"
               style={{ 
-                width: timeoutReached ? '100%' : `${Math.min((Date.now() % 10000) / 100, 90)}%` 
+                width: `${progress}%`
               }}
             ></div>
           </div>
