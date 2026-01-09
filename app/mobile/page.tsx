@@ -20,7 +20,7 @@ export default function MobilePage() {
   }, [])
 
   useEffect(() => {
-    if (!loading || authTimedOut) {
+    if (authTimedOut) {
       return
     }
 
@@ -29,7 +29,7 @@ export default function MobilePage() {
     }, 4000)
 
     return () => clearTimeout(timer)
-  }, [authTimedOut, loading])
+  }, [authTimedOut])
 
   if (!isMounted || (loading && !user && !authTimedOut)) {
     return (
