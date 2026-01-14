@@ -16,37 +16,36 @@ const AuthContext = createContext<{
 
 export function SimpleAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
     let failsafeTimer: ReturnType<typeof setTimeout> | null = null
 
-    // Simple session check with immediate timeout
+    // Simple session check with longer timeout for mobile networks
     const checkSession = async () => {
       try {
         setLoading(true)
+
+        // Longer failsafe for slow mobile networks (10 seconds)
         failsafeTimer = setTimeout(() => {
           if (mounted) {
             console.warn('Auth check taking too long, forcing loading to false')
             setLoading(false)
           }
-        }, 2000)
-        
-        // Very short timeout to prevent hanging
-        const timeoutPromise = new Promise<null>((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 1000)
-        )
-        
-        const sessionPromise = supabase.auth.getSession()
-        
-        const result = await Promise.race([sessionPromise, timeoutPromise])
-        
-        if (mounted && result && result.data?.session?.user) {
-          setUser(result.data.session.user)
+        }, 10000)
+
+        // Direct session check without race condition - wait for actual result
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.log('Auth check error:', error)
+          // Continue without authentication
+        } else if (mounted && session?.user) {
+          setUser(session.user)
         }
       } catch (error) {
-        console.log('Auth check failed or timed out:', error)
+        console.log('Auth check failed:', error)
         // Continue without authentication
       } finally {
         if (mounted) {

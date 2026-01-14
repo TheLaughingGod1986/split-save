@@ -24,9 +24,10 @@ export default function MobilePage() {
       return
     }
 
+    // Increased timeout to 15 seconds for slow mobile networks
     const timer = setTimeout(() => {
       setAuthTimedOut(true)
-    }, 4000)
+    }, 15000)
 
     return () => clearTimeout(timer)
   }, [authTimedOut])
@@ -35,7 +36,7 @@ export default function MobilePage() {
     return (
       <MobileLoadingFallback
         onTimeout={handleAuthTimeout}
-        timeoutMs={4000}
+        timeoutMs={15000}
       />
     )
   }

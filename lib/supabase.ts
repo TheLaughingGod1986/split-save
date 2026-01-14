@@ -73,7 +73,7 @@ export const supabase = (() => {
             }
           } : undefined,
           storageKey: 'splitsave-auth-token',
-          debug: true // Enable debug for troubleshooting
+          debug: false // Disable debug for better mobile performance
         },
         // Mobile-optimized realtime settings
         realtime: {

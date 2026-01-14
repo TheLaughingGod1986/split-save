@@ -130,18 +130,6 @@ export function SplitsaveApp() {
   
   // Loading screen hook
   const { isLoading: showLoadingScreen, progress, message, updateProgress, stopLoading } = useLoadingScreen()
-  
-  // Additional failsafe for loading state
-  useEffect(() => {
-    const loadingFailsafe = setTimeout(() => {
-      if (loading) {
-        console.log('Loading state stuck, forcing to false')
-        setLoading(false)
-      }
-    }, 3000)
-    
-    return () => clearTimeout(loadingFailsafe)
-  }, [loading])
 
   // Navigation handler
   const handleNavigation = useCallback((view: string, params: any = {}) => {
@@ -253,33 +241,35 @@ export function SplitsaveApp() {
     }
   }, [])
 
-  // Load all data
+  // Load all data in parallel for faster loading
   const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
-      updateProgress(10, 'Syncing expense data...')
-      await fetchExpenses()
-      
-      updateProgress(25, 'Loading savings goals...')
-      await fetchGoals()
-      
-      updateProgress(40, 'Connecting partnerships...')
-      await fetchPartnerships()
-      
-      updateProgress(60, 'Loading profile settings...')
-      await fetchProfile()
-      
-      updateProgress(80, 'Checking pending approvals...')
-      await fetchApprovals()
-      
-      updateProgress(90, 'Analyzing monthly progress...')
-      await fetchMonthlyProgress()
-      
+      updateProgress(10, 'Loading your data...')
+
+      // Load all data in parallel instead of sequentially
+      const results = await Promise.allSettled([
+        fetchExpenses(),
+        fetchGoals(),
+        fetchPartnerships(),
+        fetchProfile(),
+        fetchApprovals(),
+        fetchMonthlyProgress()
+      ])
+
+      // Log any failures but don't block the app
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const names = ['expenses', 'goals', 'partnerships', 'profile', 'approvals', 'monthly progress']
+          console.warn(`Failed to load ${names[index]}:`, result.reason)
+        }
+      })
+
       updateProgress(100, 'Preparing your dashboard...')
       stopLoading()
-      
+
     } catch (err) {
       console.error('Error loading data:', err)
       setError('Failed to load data. Please try again.')
@@ -427,19 +417,19 @@ export function SplitsaveApp() {
   // Check for existing session on mount and listen for auth changes
   useEffect(() => {
     console.log('🔄 SplitsaveApp: Starting authentication check')
-    
+
     const checkSession = async () => {
       try {
         console.log('🔍 Checking for existing session...')
         const { data: { session } } = await supabase.auth.getSession()
         console.log('📊 Session check result:', { hasSession: !!session, hasUser: !!session?.user })
-        
+
         if (session?.user) {
           console.log('✅ User found in session:', session.user.id)
           setUser(session.user)
           setLoading(true)
-          
-          // Simplified loading - no minimum time requirement
+
+          // Load data in parallel (much faster!)
           try {
             await loadData()
           } catch (error) {
@@ -455,13 +445,13 @@ export function SplitsaveApp() {
         setLoading(false)
       }
     }
-    
+
     checkSession()
-    
+
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 Auth state changed:', event, session?.user?.id)
-      
+
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('✅ User signed in:', session.user.id)
         setUser(session.user)
@@ -486,21 +476,16 @@ export function SplitsaveApp() {
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         console.log('🔄 Token refreshed for user:', session.user.id)
         setUser(session.user)
-        // Optionally refresh data when token is refreshed
-        try {
-          await fetchGoals()
-        } catch (error) {
-          console.warn('Failed to refresh goals after token refresh:', error)
-        }
+        // Don't reload all data on token refresh to avoid interruption
       }
     })
-    
-    // Failsafe: Force loading to false after 5 seconds (reduced from 10)
+
+    // Longer failsafe for slow mobile networks (15 seconds)
     const failsafeTimeout = setTimeout(() => {
       console.log('🔍 Failsafe timeout: forcing loading to false')
       setLoading(false)
-    }, 5000)
-    
+    }, 15000)
+
     return () => {
       clearTimeout(failsafeTimeout)
       subscription.unsubscribe()
