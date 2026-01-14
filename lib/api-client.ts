@@ -5,6 +5,11 @@ class ApiClient {
   private lastRequestTime = new Map<string, number>()
   private readonly requestTimeoutMs = 8000
 
+  // Session caching to avoid redundant checks
+  private cachedSession: { token: string; timestamp: number } | null = null
+  private readonly sessionCacheTTL = 5000 // Cache for 5 seconds
+  private sessionCheckInProgress: Promise<string | null> | null = null
+
   private async request(endpoint: string, options: RequestInit, timeoutMs = this.requestTimeoutMs) {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -23,49 +28,77 @@ class ApiClient {
       clearTimeout(timeoutId)
     }
   }
-  
+
   private async getAuthHeaders() {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
-    
-    // Get the current session from Supabase
+
+    // Check if we have a cached session that's still valid
+    if (this.cachedSession && Date.now() - this.cachedSession.timestamp < this.sessionCacheTTL) {
+      headers['Authorization'] = `Bearer ${this.cachedSession.token}`
+      return headers
+    }
+
+    // If a session check is already in progress, wait for it
+    if (this.sessionCheckInProgress) {
+      const token = await this.sessionCheckInProgress
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      return headers
+    }
+
+    // Start a new session check
+    this.sessionCheckInProgress = this.fetchSession()
+
+    try {
+      const token = await this.sessionCheckInProgress
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+        // Cache the token
+        this.cachedSession = { token, timestamp: Date.now() }
+      }
+    } finally {
+      this.sessionCheckInProgress = null
+    }
+
+    return headers
+  }
+
+  private async fetchSession(): Promise<string | null> {
     try {
       const { data: { session }, error } = await supabase.auth.getSession()
-      console.log('🔍 API Client - Session check:', { 
-        hasSession: !!session, 
-        hasAccessToken: !!session?.access_token,
-        error: error?.message 
-      })
-      
+
       if (error) {
-        console.warn('🔍 API Client - Session error:', error)
+        console.warn('API Client - Session error:', error)
         // Try to refresh the session
         const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
         if (refreshError) {
-          console.warn('🔍 API Client - Failed to refresh session:', refreshError)
-          // If refresh fails, clear the session and redirect to login
+          console.warn('API Client - Failed to refresh session:', refreshError)
+          // If refresh fails with invalid token, clear session
           if (refreshError.message?.includes('Invalid Refresh Token') || refreshError.message?.includes('Refresh Token Not Found')) {
-            console.log('🔍 API Client - Invalid refresh token, clearing session')
             await supabase.auth.signOut()
-            // Don't set authorization header for invalid tokens
-            return headers
+            this.cachedSession = null
+            return null
           }
         } else if (refreshedSession?.access_token) {
-          headers['Authorization'] = `Bearer ${refreshedSession.access_token}`
-          console.log('🔍 API Client - Using refreshed token')
+          return refreshedSession.access_token
         }
       } else if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`
-        console.log('🔍 API Client - Using existing token')
-      } else {
-        console.warn('🔍 API Client - No session or access token found')
+        return session.access_token
       }
+
+      return null
     } catch (error) {
-      console.warn('🔍 API Client - Failed to get auth session:', error)
+      console.warn('API Client - Failed to get auth session:', error)
+      return null
     }
-    
-    return headers
+  }
+
+  // Clear cached session on signout
+  clearSessionCache() {
+    this.cachedSession = null
   }
   
   private shouldThrottle(endpoint: string): boolean {
@@ -96,34 +129,27 @@ class ApiClient {
       console.warn(`API GET ${endpoint} throttled - too many requests`)
       return { data: [] }
     }
-    
+
     try {
       const headers = await this.getAuthHeaders()
-      console.log(`🔍 API GET ${endpoint} - Headers:`, { 
-        hasAuth: !!headers.Authorization,
-        contentType: headers['Content-Type']
-      })
-      
       const response = await this.request(endpoint, { headers })
-      
+
       if (!response.ok) {
-        console.warn(`🔍 API GET ${endpoint} failed with status: ${response.status}`)
         const errorText = await response.text()
-        console.warn(`🔍 API GET ${endpoint} error response:`, errorText)
-        
+        console.warn(`API GET ${endpoint} failed with status: ${response.status}`, errorText)
+
         // Special handling for 401 errors
         if (response.status === 401) {
-          console.error(`🔍 API GET ${endpoint} - 401 Unauthorized. This usually means the user is not logged in or the session has expired.`)
+          console.error(`API GET ${endpoint} - 401 Unauthorized. Session may have expired.`)
         }
-        
+
         throw new Error(`API GET ${endpoint} failed with status: ${response.status}`)
       }
-      
+
       const data = await response.json()
-      console.log(`🔍 API GET ${endpoint} - Success:`, { hasData: !!data })
       return { data }
     } catch (error) {
-      console.warn(`🔍 API GET ${endpoint} failed:`, error)
+      console.warn(`API GET ${endpoint} failed:`, error)
       throw error
     }
   }
