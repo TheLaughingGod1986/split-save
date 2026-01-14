@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: splitsave
+    env: node
+    region: oregon # Change to your preferred region
+    plan: free # Change to paid plan for production
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false # Set this in Render dashboard
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false # Set this in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false # Set this in Render dashboard (keep secret!)
+      - key: NEXTAUTH_SECRET
+        generateValue: true # Render will auto-generate a secure secret
+      - key: NEXTAUTH_URL
+        value: https://splitsave.onrender.com # Replace with your actual Render URL
+    healthCheckPath: /
+    autoDeploy: true
+
+# Notes:
+# 1. Replace all placeholder values with your actual values
+# 2. Add Supabase credentials in Render Dashboard → Environment
+# 3. Update NEXTAUTH_URL with your actual Render URL
+# 4. This file is optional - you can also configure everything in the Render dashboard
