@@ -214,16 +214,20 @@ export default function RootLayout({
               background-color: var(--mobile-bg-dark) !important;
             }
 
-            /* Force immediate background for mobile screens */
+            /* Keep a stable base background on mobile while React hydrates.
+               Only html/body are set here on purpose: forcing the app's own
+               container divs (body > div) would override full-screen views
+               that use a dark background with light text, turning them into
+               an invisible white-on-white screen. */
             @media screen and (max-width: 768px) {
-              html, body, body > div, #__next {
+              html, body {
                 background: var(--mobile-bg-light) !important;
                 background-color: var(--mobile-bg-light) !important;
                 min-height: 100vh !important;
                 height: auto !important;
               }
 
-              html.dark, html.dark body, html.dark body > div, html.dark #__next {
+              html.dark, html.dark body {
                 background: var(--mobile-bg-dark) !important;
                 background-color: var(--mobile-bg-dark) !important;
               }
