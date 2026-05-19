@@ -102,6 +102,18 @@ const nextConfig = {
           },
         ],
       },
+      // The service worker script must never be cached, otherwise browsers
+      // (iOS Safari in particular) keep an old worker that can serve stale,
+      // content-hashed chunks and brick the app on the loading screen.
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
     ]
   },
 
