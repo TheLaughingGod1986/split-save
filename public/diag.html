@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SplitSave diagnostic</title>
+<style>
+  html,body{margin:0;padding:0;background:#fff;color:#111;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;}
+  body{padding:14px 14px 80px;}
+  h1{font-size:18px;margin:0 0 6px;}
+  h2{font-size:14px;margin:14px 0 4px;color:#555;text-transform:uppercase;letter-spacing:.05em;}
+  .row{padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#f9fafb;margin:4px 0;word-break:break-all;}
+  .ok{border-color:#bbf7d0;background:#f0fdf4;}
+  .err{border-color:#fecaca;background:#fef2f2;color:#7f1d1d;}
+  .warn{border-color:#fde68a;background:#fffbeb;}
+  pre{margin:0;white-space:pre-wrap;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;}
+  button{appearance:none;-webkit-appearance:none;border:1px solid #6366f1;background:#eef2ff;color:#312e81;padding:10px 14px;border-radius:8px;font-size:14px;margin:6px 6px 0 0;}
+  .stamp{color:#6b7280;font-size:12px;}
+</style>
+</head>
+<body>
+<h1>SplitSave diagnostic</h1>
+<div class="stamp" id="stamp">loading…</div>
+
+<h2>Environment</h2>
+<div class="row" id="env">…</div>
+
+<h2>JS feature support</h2>
+<div class="row" id="features">…</div>
+
+<h2>Service worker / caches</h2>
+<div class="row" id="sw">…</div>
+
+<h2>Storage</h2>
+<div class="row" id="storage">…</div>
+
+<h2>Network (probes)</h2>
+<div class="row" id="net">running…</div>
+
+<h2>Captured errors</h2>
+<div class="row warn" id="errs"><pre id="errs-pre">(none yet)</pre></div>
+
+<h2>Actions</h2>
+<button id="reset">Clear site data + reload</button>
+<button id="goapp">Open main app (/)</button>
+
+<script>
+(function () {
+  var errs = [];
+  function pushErr(line) {
+    errs.push(line);
+    var pre = document.getElementById('errs-pre');
+    if (pre) pre.textContent = errs.join('\n');
+    var box = document.getElementById('errs');
+    if (box) box.classList.add('err'), box.classList.remove('warn');
+  }
+  window.addEventListener('error', function (e) {
+    pushErr('[error] ' + (e.message || '') + ' @ ' + (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || '') + (e.error && e.error.stack ? '\n' + String(e.error.stack).slice(0, 600) : ''));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e && e.reason;
+    pushErr('[unhandledrejection] ' + (r && r.message ? r.message : String(r)) + (r && r.stack ? '\n' + String(r.stack).slice(0, 600) : ''));
+  });
+
+  document.getElementById('stamp').textContent = 'rendered at ' + new Date().toISOString();
+
+  // Environment
+  var nav = window.navigator || {};
+  var env = [
+    'userAgent: ' + (nav.userAgent || ''),
+    'platform: ' + (nav.platform || ''),
+    'language: ' + (nav.language || ''),
+    'online: ' + nav.onLine,
+    'screen: ' + screen.width + 'x' + screen.height + ' (dpr ' + (window.devicePixelRatio || 1) + ')',
+    'viewport: ' + window.innerWidth + 'x' + window.innerHeight,
+    'standalone: ' + (nav.standalone === true)
+  ].join('\n');
+  document.getElementById('env').innerHTML = '<pre>' + env.replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; }) + '</pre>';
+
+  // Feature probes — anything that throws here indicates a parser-level incompat in the main bundle.
+  var feat = {};
+  function probe(name, fn) {
+    try { feat[name] = !!fn(); } catch (e) { feat[name] = 'THREW: ' + (e && e.message || e); }
+  }
+  probe('optional_chaining', function () { var o = {}; return o?.a === undefined; });
+  probe('nullish_coalescing', function () { return (null ?? 'x') === 'x'; });
+  probe('BigInt', function () { return typeof BigInt === 'function' && BigInt(1) === BigInt(1); });
+  probe('Promise.allSettled', function () { return typeof Promise.allSettled === 'function'; });
+  probe('Array.flat', function () { return typeof [].flat === 'function'; });
+  probe('Object.fromEntries', function () { return typeof Object.fromEntries === 'function'; });
+  probe('globalThis', function () { return typeof globalThis !== 'undefined'; });
+  probe('structuredClone', function () { return typeof structuredClone === 'function'; });
+  probe('Intl.RelativeTimeFormat', function () { return typeof Intl !== 'undefined' && typeof Intl.RelativeTimeFormat === 'function'; });
+  probe('regex_lookbehind', function () { return new RegExp('(?<=a)b').test('ab'); });
+  probe('regex_named_group', function () { return /(?<y>\d+)/.exec('20').groups.y === '20'; });
+  probe('private_class_field', function () { eval('class X { #v = 1; get v(){return this.#v} } new X().v'); return true; });
+  probe('top_level_await_syntax', function () { return !!Function('return async function(){ await 1 }')(); });
+  document.getElementById('features').innerHTML = '<pre>' + Object.keys(feat).map(function (k) { return k + ': ' + feat[k]; }).join('\n') + '</pre>';
+
+  // Service worker / caches
+  (async function () {
+    var out = [];
+    try {
+      if (!('serviceWorker' in nav)) {
+        out.push('serviceWorker API: not supported');
+      } else {
+        out.push('controller: ' + (nav.serviceWorker.controller ? nav.serviceWorker.controller.scriptURL : 'none'));
+        var regs = await nav.serviceWorker.getRegistrations();
+        out.push('registrations: ' + regs.length);
+        for (var i = 0; i < regs.length; i++) {
+          var r = regs[i];
+          out.push('  [' + i + '] scope=' + r.scope + ' active=' + (r.active ? r.active.scriptURL : 'none') + ' waiting=' + (r.waiting ? r.waiting.scriptURL : 'none') + ' installing=' + (r.installing ? r.installing.scriptURL : 'none'));
+        }
+      }
+    } catch (e) { out.push('SW probe error: ' + (e.message || e)); }
+    try {
+      if (window.caches && caches.keys) {
+        var keys = await caches.keys();
+        out.push('caches: ' + JSON.stringify(keys));
+      } else out.push('caches API: not supported');
+    } catch (e) { out.push('caches probe error: ' + (e.message || e)); }
+    document.getElementById('sw').innerHTML = '<pre>' + out.join('\n') + '</pre>';
+  })();
+
+  // Storage
+  try {
+    var ls = 0, ss = 0;
+    try { for (var i = 0; i < localStorage.length; i++) ls++; } catch (e) {}
+    try { for (var j = 0; j < sessionStorage.length; j++) ss++; } catch (e) {}
+    document.getElementById('storage').innerHTML = '<pre>localStorage keys: ' + ls + '\nsessionStorage keys: ' + ss + '\ncookies len: ' + (document.cookie ? document.cookie.length : 0) + '</pre>';
+  } catch (e) {
+    document.getElementById('storage').innerHTML = '<pre>storage probe error: ' + (e.message || e) + '</pre>';
+  }
+
+  // Network probes — try fetching the things the main app needs
+  (async function () {
+    var rows = [];
+    async function probe(label, url) {
+      var t0 = Date.now();
+      try {
+        var r = await fetch(url, { cache: 'no-store', credentials: 'omit' });
+        rows.push(label + ': HTTP ' + r.status + ' (' + (Date.now() - t0) + 'ms) ct=' + (r.headers.get('content-type') || '') + ' cc=' + (r.headers.get('cache-control') || ''));
+      } catch (e) {
+        rows.push(label + ': THREW ' + (e.message || e) + ' (' + (Date.now() - t0) + 'ms)');
+      }
+    }
+    await probe('GET /', '/');
+    await probe('GET /mobile', '/mobile');
+    await probe('GET /sw.js', '/sw.js');
+    await probe('GET /manifest.json', '/manifest.json');
+    document.getElementById('net').innerHTML = '<pre>' + rows.join('\n') + '</pre>';
+  })();
+
+  // Actions
+  document.getElementById('reset').addEventListener('click', async function () {
+    var msgs = [];
+    try {
+      if ('serviceWorker' in nav) {
+        var regs = await nav.serviceWorker.getRegistrations();
+        for (var i = 0; i < regs.length; i++) {
+          try { var ok = await regs[i].unregister(); msgs.push('unregistered: ' + regs[i].scope + ' -> ' + ok); }
+          catch (e) { msgs.push('unregister error: ' + (e.message || e)); }
+        }
+      }
+      if (window.caches && caches.keys) {
+        var keys = await caches.keys();
+        for (var k = 0; k < keys.length; k++) {
+          try { await caches.delete(keys[k]); msgs.push('deleted cache: ' + keys[k]); }
+          catch (e) { msgs.push('cache delete error: ' + (e.message || e)); }
+        }
+      }
+      try { localStorage.clear(); sessionStorage.clear(); msgs.push('cleared local/session storage'); }
+      catch (e) { msgs.push('storage clear error: ' + (e.message || e)); }
+    } finally {
+      alert(msgs.join('\n') + '\n\nReloading…');
+      location.reload();
+    }
+  });
+  document.getElementById('goapp').addEventListener('click', function () { location.href = '/'; });
+})();
+</script>
+</body>
+</html>

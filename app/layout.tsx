@@ -127,6 +127,20 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
+        {/* Runs before any app code. Older deploys installed a caching
+            service worker; on a device that still has it, a redeploy can
+            leave the app stuck on the loading screen forever and iOS Safari
+            never fetches the replacement worker because the page never
+            finishes loading. The old worker is network-first for documents,
+            so it passes this fresh HTML through — letting this script
+            unregister it and purge its caches, then reload once into a clean,
+            worker-free app. No-ops on the vast majority of devices that have
+            no service worker. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(!('serviceWorker' in navigator))return;navigator.serviceWorker.getRegistrations().then(function(regs){if(!regs||!regs.length)return;Promise.all(regs.map(function(r){return r.unregister().catch(function(){})})).then(function(){if(window.caches&&caches.keys){return caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}).catch(function(){})}}).then(function(){try{if(!sessionStorage.getItem('ss-sw-reset')){sessionStorage.setItem('ss-sw-reset','1');location.reload()}}catch(e){location.reload()}})}).catch(function(){})}catch(e){}})();`
+          }}
+        />
         {/* Viewport meta tag for mobile responsiveness */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="format-detection" content="telephone=no" />
