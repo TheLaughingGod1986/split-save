@@ -26,8 +26,12 @@ class PushNotificationManager {
   private permission: NotificationPermission = 'default'
 
   constructor() {
-    this.isSupported = typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator
-    this.permission = typeof window !== 'undefined' ? Notification.permission : 'default'
+    const hasNotificationApi = typeof window !== 'undefined' && 'Notification' in window
+    this.isSupported = hasNotificationApi && 'serviceWorker' in navigator
+    // iOS Safari doesn't expose Notification as a global at all (not just unsupported);
+    // accessing it without an `in window` guard throws ReferenceError and crashes the
+    // bundle at module load via the singleton below.
+    this.permission = hasNotificationApi ? Notification.permission : 'default'
   }
 
   /**
