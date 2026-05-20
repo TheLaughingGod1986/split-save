@@ -835,7 +835,7 @@ export function SplitsaveApp() {
   return (
     <ErrorBoundary>
       {isMobile ? (
-        <MobileAppLayout>
+        <MobileAppLayout currentView={currentView} onNavigate={handleNavigation}>
           {mainContent}
         </MobileAppLayout>
       ) : (
