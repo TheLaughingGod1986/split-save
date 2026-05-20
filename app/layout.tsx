@@ -141,6 +141,14 @@ export default function RootLayout({
             __html: `(function(){try{if(!('serviceWorker' in navigator))return;navigator.serviceWorker.getRegistrations().then(function(regs){if(!regs||!regs.length)return;Promise.all(regs.map(function(r){return r.unregister().catch(function(){})})).then(function(){if(window.caches&&caches.keys){return caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}).catch(function(){})}}).then(function(){try{if(!sessionStorage.getItem('ss-sw-reset')){sessionStorage.setItem('ss-sw-reset','1');location.reload()}}catch(e){location.reload()}})}).catch(function(){})}catch(e){}})();`
           }}
         />
+        {/* On-page error overlay (only when URL has ?diag=1). Surfaces any
+            error or unhandled rejection visually so a device that fails to
+            hydrate can be diagnosed without a Mac+USB Web Inspector. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var on=/[?&]diag=1/.test(location.search);var off=/[?&]diag=0/.test(location.search);try{if(on)localStorage.setItem('ss-diag','1');if(off)localStorage.removeItem('ss-diag')}catch(e){}var enabled=on;try{if(!enabled&&localStorage.getItem('ss-diag')==='1')enabled=true}catch(e){}if(!enabled)return;var n=0;var show=function(label,text){n++;var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;z-index:2147483647;background:#fef2f2;color:#7f1d1d;padding:10px 12px;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;border-bottom:3px solid #dc2626;max-height:50vh;overflow:auto;top:'+((n-1)*8)+'px;';d.textContent='['+label+' #'+n+'] '+text;var attach=function(){if(document.body){document.body.appendChild(d)}else{setTimeout(attach,30)}};attach()};window.addEventListener('error',function(e){show('ERROR',(e.message||'')+' @ '+(e.filename||'')+':'+(e.lineno||'')+':'+(e.colno||'')+'\\n'+((e.error&&e.error.stack)||'').slice(0,900))});window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;show('PROMISE',(r&&r.message?r.message:String(r))+'\\n'+((r&&r.stack)||'').slice(0,900))});var stamp=document.createElement('div');stamp.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:2147483646;background:#eef2ff;color:#312e81;padding:6px 10px;font:11px ui-monospace,Menlo,monospace;border-top:2px solid #6366f1;';stamp.id='ss-diag-stamp';stamp.textContent='diag overlay armed @ '+new Date().toISOString()+' on '+location.pathname;var as=function(){if(document.body){document.body.appendChild(stamp)}else{setTimeout(as,30)}};as()}catch(e){}})();`
+          }}
+        />
         {/* Viewport meta tag for mobile responsiveness */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="format-detection" content="telephone=no" />
