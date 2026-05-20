@@ -7,12 +7,15 @@ import { useAuth } from '@/components/auth/SimpleAuthProvider'
 
 interface MobileAppLayoutProps {
   children: React.ReactNode
+  // Driven by SplitsaveApp so the bottom nav controls the same view state that
+  // renders the page. Without these the tabs only highlighted and did nothing.
+  currentView?: string
+  onNavigate?: (view: string) => void
 }
 
-export function MobileAppLayout({ children }: MobileAppLayoutProps) {
+export function MobileAppLayout({ children, currentView = 'overview', onNavigate }: MobileAppLayoutProps) {
   const { isMobile } = useMobileDetection()
   const { user, signOut } = useAuth()
-  const [currentPage, setCurrentPage] = useState('dashboard')
   const [isPWA, setIsPWA] = useState(false)
 
   // Detect PWA mode
@@ -58,9 +61,9 @@ export function MobileAppLayout({ children }: MobileAppLayoutProps) {
       </main>
 
       {/* Bottom Navigation */}
-      <MobileNavigation 
-        currentPage={currentPage} 
-        onNavigate={setCurrentPage} 
+      <MobileNavigation
+        currentPage={currentView}
+        onNavigate={onNavigate}
       />
     </div>
   )

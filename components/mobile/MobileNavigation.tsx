@@ -9,7 +9,7 @@ interface MobileNavigationProps {
   onNavigate?: (page: string) => void
 }
 
-export function MobileNavigation({ currentPage = 'dashboard', onNavigate }: MobileNavigationProps) {
+export function MobileNavigation({ currentPage = 'overview', onNavigate }: MobileNavigationProps) {
   const { isMobile } = useMobileDetection()
   const [isPWA, setIsPWA] = useState(false)
 
@@ -24,12 +24,13 @@ export function MobileNavigation({ currentPage = 'dashboard', onNavigate }: Mobi
 
   if (!isMobile) return null
 
+  // IDs must match the view names SplitsaveApp uses in currentView/handleNavigation.
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
-    { id: 'expenses', label: 'Expenses', icon: '💰' },
+    { id: 'overview', label: 'Dashboard', icon: '🏠' },
+    { id: 'expenses', label: 'Money', icon: '💰' },
     { id: 'goals', label: 'Goals', icon: '🎯' },
-    { id: 'notifications', label: 'Alerts', icon: '🔔' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'partnerships', label: 'Partners', icon: '👥' },
+    { id: 'account', label: 'Account', icon: '⚙️' },
   ]
 
   return (
