@@ -237,7 +237,7 @@ export function SmartNotifications() {
       </div>
 
       {/* Notification Permission */}
-      {Notification.permission !== 'granted' && (
+      {typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted' && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
           <div className="flex items-start space-x-3">
             <span className="text-2xl">🔔</span>
